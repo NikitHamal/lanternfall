@@ -60,6 +60,7 @@ static bool loadFig(FigAsset& a, const char* key) {
   }
   free(buf); a.ok = true; return true;
 }
+const char* figAssetDir() { return gDir; }
 bool figInit(const char* argv0) {
   if (!findDir(argv0)) { fprintf(stderr, "lanternfall: assets/ folder not found (expected next to the executable)\n"); return false; }
   bool all = true;

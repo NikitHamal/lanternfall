@@ -38,7 +38,7 @@ jobs:
       - name: Package (Linux)
         if: matrix.name == 'linux'
         run: |
-          mkdir dist && cp build/lanternfall dist/ && cp README.md dist/
+          mkdir dist && cp build/lanternfall dist/ && cp -r assets dist/assets && cp README.md dist/
           tar -C dist -czf ${{ matrix.asset }} .
       - name: Package (Windows)
         if: matrix.name == 'windows'
@@ -46,12 +46,12 @@ jobs:
         run: |
           New-Item -ItemType Directory dist | Out-Null
           $exe = Get-ChildItem -Path build -Recurse -Filter lanternfall.exe | Select-Object -First 1
-          Copy-Item $exe.FullName dist/lanternfall.exe; Copy-Item README.md dist/
+          Copy-Item $exe.FullName dist/lanternfall.exe; Copy-Item -Recurse assets dist/assets; Copy-Item README.md dist/
           Compress-Archive -Path dist/* -DestinationPath ${{ matrix.asset }}
       - name: Package (macOS)
         if: matrix.name == 'macos'
         run: |
-          mkdir dist && cp build/lanternfall dist/ && cp README.md dist/ && chmod +x dist/lanternfall
+          mkdir dist && cp build/lanternfall dist/ && cp -r assets dist/assets && cp README.md dist/ && chmod +x dist/lanternfall
           cd dist && zip -r ../${{ matrix.asset }} .
       - uses: actions/upload-artifact@v4
         with:
@@ -68,10 +68,10 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: Lanternfall v1.0.0
+          tag_name: v1.1.0
+          name: Lanternfall v1.1.0
           body: |
-            Native C++/OpenGL 3.3 desktop port of Lanternfall. Download the archive for your OS, unpack and run `lanternfall` (no installer, no external files).
+            Native C++/OpenGL 3.3 desktop port of Lanternfall. v1.1: all 15 characters rebuilt from the original three.js rigs through a Blender pipeline (skinned meshes, baked reference animation, procedural surface shader), serif UI. Download the archive for your OS, unpack and run `lanternfall` (no installer; keep the `assets/` folder next to the executable).
             - Windows: lanternfall-windows-x64.zip
             - Linux: lanternfall-linux-x64.tar.gz (needs an OpenGL 3.3 driver + X11)
             - macOS: lanternfall-macos-universal.zip (unsigned: right-click > Open the first time)

@@ -15,7 +15,7 @@ struct FigAsset {
   int fxIx(const char* n) const { for (int i = 0; i < nfx; i++) if (!strcmp(fx[i].name, n)) return i; return -1; }
 };
 extern FigAsset gFH[NCLS], gFM[NMON];
-bool figInit(const char* argv0);
+bool figInit(const char* argv0); const char* figAssetDir();
 void figShutdown();
 struct FigAnim {
   uint32_t id = 0xffffffffu; float t = 0, ph = 0, moveW = 0, readyW = 0, downW = 0, stagK = 9, dim = 1, pose[FMAXB * 7]; bool have = false, shat = false, dying = false;

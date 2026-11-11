@@ -1,5 +1,7 @@
 // Native HUD/UI: 5x7 bitmap font atlas + batched quads (one draw call per frame). Replaces the DOM overlay of the original.
 #include "ui.h"
+#include "figure.h"
+#include <vector>
 #include "render.h"
 #include "shaders.h"
 #include <cstdio>
@@ -25,11 +27,19 @@ struct Col { float r, g, b, a; };
 Col hexc(uint32_t h, float a = 1) { return {((h >> 16) & 255) / 255.f, ((h >> 8) & 255) / 255.f, (h & 255) / 255.f, a}; }
 void rect(float x, float y, float w, float h, Col c) { quad(x, y, w, h, -1, -1, -1, -1, c.r, c.g, c.b, c.a); }
 void frame(float x, float y, float w, float h, Col c, float t = 1) { rect(x, y, w, t, c); rect(x, y + h - t, w, t, c); rect(x, y, t, h, c); rect(x + w - t, y, t, h, c); }
-float tw(const char* s, float sc) { return (float)strlen(s) * 6 * sc; }
+// serif glyph atlas (assets/font.bin, rendered from a TrueType face in the Blender/Python pipeline); falls back to the built-in 5x7 bitmap font
+static bool serif = false; static int fCW = 44, fCH = 58, fEM = 40, fBase = 44; static uint8_t fAdv[96];
+static const float TRACK = 0.55f;
+float tw(const char* s, float sc) { if (!serif) return (float)strlen(s) * 6 * sc; float k = 11 * sc / fEM, w = 0; for (const char* p = s; *p; p++) { int ch = (unsigned char)*p; if (ch < 32 || ch > 127) ch = 63; w += fAdv[ch - 32] * k + TRACK * sc; } return w; }
 void text(const char* s, float x, float y, float sc, Col c, int align = 0, bool shadow = true) {
   float w = tw(s, sc); if (align == 1) x -= w / 2; else if (align == 2) x -= w;
-  for (int pass = shadow ? 0 : 1; pass < 2; pass++) { float ox = pass == 0 ? sc : 0, oy = pass == 0 ? sc : 0; Col k = pass == 0 ? Col{0, 0, 0, c.a * 0.8f} : c; float cx = x;
-    for (const char* p = s; *p; p++) { int ch = toupper((unsigned char)*p); if (ch >= 32 && ch < 96 && ch != ' ') { int i = ch - 32, col = i % 16, row = i / 16; float u0 = col * 8 / 128.f, v0 = row * 8 / 64.f; quad(cx + ox, y + oy, 8 * sc, 8 * sc, u0, v0, u0 + 8 / 128.f, v0 + 8 / 64.f, k.r, k.g, k.b, k.a); } cx += 6 * sc; } }
+  float k = 11 * sc / fEM, ty = y - (fBase - 0.66f * fEM) * k + sc;
+  for (int pass = shadow ? 0 : 1; pass < 2; pass++) { float ox = pass == 0 ? sc * 0.9f : 0, oy = pass == 0 ? sc * 0.9f : 0; Col kc = pass == 0 ? Col{0, 0, 0, c.a * 0.85f} : c; float cx = x;
+    for (const char* p = s; *p; p++) {
+      if (serif) { int ch = (unsigned char)*p; if (ch < 32 || ch > 127) ch = 63; int i = ch - 32;
+        if (ch != ' ') { int col = i % 16, row = i / 16; float aw = fCW * 16.f, ah = fCH * 6.f, u0 = col * fCW / aw, v0 = row * fCH / ah; quad(cx + ox, ty + oy, fCW * k, fCH * k, u0, v0, u0 + fCW / aw, v0 + fCH / ah, kc.r, kc.g, kc.b, kc.a); }
+        cx += fAdv[i] * k + TRACK * sc; }
+      else { int ch = toupper((unsigned char)*p); if (ch >= 32 && ch < 96 && ch != ' ') { int i = ch - 32, col = i % 16, row = i / 16; float u0 = col * 8 / 128.f, v0 = row * 8 / 64.f; quad(cx + ox, y + oy, 8 * sc, 8 * sc, u0, v0, u0 + 8 / 128.f, v0 + 8 / 64.f, kc.r, kc.g, kc.b, kc.a); } cx += 6 * sc; } } }
 }
 void fmtn(char* b, size_t n, float v) { int k = (int)v; if (k < 10000) snprintf(b, n, "%d", k); else if (k < 1000000) snprintf(b, n, "%.1fK", k / 1e3); else snprintf(b, n, "%.2fM", k / 1e6); }
 int addBtn(float x, float y, float w, float h, int id) { if (nb < 64) btns[nb++] = {x, y, w, h, id}; return id; }
@@ -46,8 +56,10 @@ void stopTimer() { G.panelTimer = false; }
 bool init() {
   prog = gfx::program(sh::UI_VS, sh::UI_FS, "ui"); uint8_t atlas[128 * 64]; memset(atlas, 0, sizeof atlas); int n = sizeof(FONT) / 7;
   for (int i = 0; i < n; i++) { int col = i % 16, row = i / 16; for (int y = 0; y < 7; y++) for (int x = 0; x < 5; x++) if (FONT[i][y] & (16 >> x)) atlas[(row * 8 + y + 1) * 128 + col * 8 + x + 1] = 255; }
-  glGenTextures(1, &tex); glBindTexture(GL_TEXTURE_2D, tex); glPixelStorei(GL_UNPACK_ALIGNMENT, 1); glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 128, 64, 0, GL_RED, GL_UNSIGNED_BYTE, atlas);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glGenTextures(1, &tex); glBindTexture(GL_TEXTURE_2D, tex); glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  { char fp[1300]; snprintf(fp, sizeof fp, "%s/font.bin", figAssetDir()); FILE* ff = fopen(fp, "rb"); if (ff) { uint16_t h[4]; if (fread(h, 2, 4, ff) == 4 && fread(fAdv, 1, 96, ff) == 96) { fCW = h[0]; fCH = h[1]; fEM = h[2]; fBase = h[3]; std::vector<uint8_t> px((size_t)fCW * 16 * fCH * 6); if (fread(px.data(), 1, px.size(), ff) == px.size()) { glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, fCW * 16, fCH * 6, 0, GL_RED, GL_UNSIGNED_BYTE, px.data()); serif = true; } } fclose(ff); } }
+  if (!serif) glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 128, 64, 0, GL_RED, GL_UNSIGNED_BYTE, atlas);
+  GLint filt = serif ? GL_LINEAR : GL_NEAREST; glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filt); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filt); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glGenVertexArrays(1, &vao); glBindVertexArray(vao); glGenBuffers(1, &vbo); glBindBuffer(GL_ARRAY_BUFFER, vbo); glBufferData(GL_ARRAY_BUFFER, sizeof vb, nullptr, GL_STREAM_DRAW);
   static uint32_t ix[MAXQ * 6]; for (int i = 0; i < MAXQ; i++) { uint32_t b = i * 4; uint32_t q[6] = {b, b + 1, b + 2, b, b + 2, b + 3}; memcpy(ix + i * 6, q, sizeof q); }
   glGenBuffers(1, &ibo); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo); glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof ix, ix, GL_STATIC_DRAW);
