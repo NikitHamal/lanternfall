@@ -1,0 +1,110 @@
+// Minimal OpenGL 3.3 core loader: every function is fetched through glfwGetProcAddress (no GL link, works on Win/Linux/macOS).
+#pragma once
+#include <cstddef>
+#include <cstdint>
+typedef unsigned int GLenum, GLbitfield, GLuint;
+typedef int GLint, GLsizei;
+typedef unsigned char GLboolean, GLubyte;
+typedef float GLfloat;
+typedef char GLchar;
+typedef ptrdiff_t GLsizeiptr, GLintptr;
+#define GL_FALSE 0
+#define GL_TRUE 1
+#define GL_COLOR_BUFFER_BIT 0x4000
+#define GL_DEPTH_BUFFER_BIT 0x0100
+#define GL_TRIANGLES 4
+#define GL_TRIANGLE_STRIP 5
+#define GL_FLOAT 0x1406
+#define GL_UNSIGNED_INT 0x1405
+#define GL_UNSIGNED_SHORT 0x1403
+#define GL_UNSIGNED_BYTE 0x1401
+#define GL_DEPTH_TEST 0x0B71
+#define GL_BLEND 0x0BE2
+#define GL_CULL_FACE 0x0B44
+#define GL_MULTISAMPLE 0x809D
+#define GL_BACK 0x0405
+#define GL_FRONT 0x0404
+#define GL_LEQUAL 0x0203
+#define GL_LESS 0x0201
+#define GL_ONE 1
+#define GL_ZERO 0
+#define GL_SRC_ALPHA 0x0302
+#define GL_ONE_MINUS_SRC_ALPHA 0x0303
+#define GL_ARRAY_BUFFER 0x8892
+#define GL_ELEMENT_ARRAY_BUFFER 0x8893
+#define GL_STATIC_DRAW 0x88E4
+#define GL_DYNAMIC_DRAW 0x88E8
+#define GL_STREAM_DRAW 0x88E0
+#define GL_VERTEX_SHADER 0x8B31
+#define GL_FRAGMENT_SHADER 0x8B30
+#define GL_COMPILE_STATUS 0x8B81
+#define GL_LINK_STATUS 0x8B82
+#define GL_INFO_LOG_LENGTH 0x8B84
+#define GL_TEXTURE_2D 0x0DE1
+#define GL_TEXTURE_2D_MULTISAMPLE 0x9100
+#define GL_TEXTURE0 0x84C0
+#define GL_TEXTURE_MIN_FILTER 0x2801
+#define GL_TEXTURE_MAG_FILTER 0x2800
+#define GL_TEXTURE_WRAP_S 0x2802
+#define GL_TEXTURE_WRAP_T 0x2803
+#define GL_TEXTURE_COMPARE_MODE 0x884C
+#define GL_TEXTURE_COMPARE_FUNC 0x884D
+#define GL_COMPARE_REF_TO_TEXTURE 0x884E
+#define GL_LINEAR 0x2601
+#define GL_NEAREST 0x2600
+#define GL_CLAMP_TO_EDGE 0x812F
+#define GL_CLAMP_TO_BORDER 0x812D
+#define GL_TEXTURE_BORDER_COLOR 0x1004
+#define GL_RGBA 0x1908
+#define GL_RED 0x1903
+#define GL_RGBA8 0x8058
+#define GL_R8 0x8229
+#define GL_RGBA16F 0x881A
+#define GL_DEPTH_COMPONENT 0x1902
+#define GL_DEPTH_COMPONENT24 0x81A6
+#define GL_DEPTH_COMPONENT32F 0x8CAC
+#define GL_FRAMEBUFFER 0x8D40
+#define GL_READ_FRAMEBUFFER 0x8CA8
+#define GL_DRAW_FRAMEBUFFER 0x8CA9
+#define GL_RENDERBUFFER 0x8D41
+#define GL_COLOR_ATTACHMENT0 0x8CE0
+#define GL_DEPTH_ATTACHMENT 0x8D00
+#define GL_FRAMEBUFFER_COMPLETE 0x8CD5
+#define GL_NONE 0
+#define GL_UNPACK_ALIGNMENT 0x0CF5
+#define GL_PACK_ALIGNMENT 0x0D05
+#define GL_POLYGON_OFFSET_FILL 0x8037
+#define GL_RENDERER 0x1F01
+#define GL_VERSION 0x1F02
+#define GL_SAMPLES 0x80A9
+#define GL_FLOAT_T GL_FLOAT
+#define GL_FUNCS(X) \
+ X(void,Clear,(GLbitfield)) X(void,ClearColor,(GLfloat,GLfloat,GLfloat,GLfloat)) X(void,Viewport,(GLint,GLint,GLsizei,GLsizei)) \
+ X(void,Enable,(GLenum)) X(void,Disable,(GLenum)) X(void,BlendFunc,(GLenum,GLenum)) X(void,DepthMask,(GLboolean)) X(void,DepthFunc,(GLenum)) \
+ X(void,CullFace,(GLenum)) X(void,PolygonOffset,(GLfloat,GLfloat)) X(void,ColorMask,(GLboolean,GLboolean,GLboolean,GLboolean)) \
+ X(void,GenTextures,(GLsizei,GLuint*)) X(void,BindTexture,(GLenum,GLuint)) X(void,TexParameteri,(GLenum,GLenum,GLint)) X(void,TexParameterfv,(GLenum,GLenum,const GLfloat*)) \
+ X(void,TexImage2D,(GLenum,GLint,GLint,GLsizei,GLsizei,GLint,GLenum,GLenum,const void*)) X(void,TexSubImage2D,(GLenum,GLint,GLint,GLint,GLsizei,GLsizei,GLenum,GLenum,const void*)) \
+ X(void,TexImage2DMultisample,(GLenum,GLsizei,GLenum,GLsizei,GLsizei,GLboolean)) X(void,DeleteTextures,(GLsizei,const GLuint*)) \
+ X(void,ActiveTexture,(GLenum)) X(void,PixelStorei,(GLenum,GLint)) X(void,ReadPixels,(GLint,GLint,GLsizei,GLsizei,GLenum,GLenum,void*)) \
+ X(void,DrawArrays,(GLenum,GLint,GLsizei)) X(void,DrawElements,(GLenum,GLsizei,GLenum,const void*)) \
+ X(void,DrawElementsInstanced,(GLenum,GLsizei,GLenum,const void*,GLsizei)) X(void,DrawArraysInstanced,(GLenum,GLint,GLsizei,GLsizei)) \
+ X(GLuint,CreateShader,(GLenum)) X(void,ShaderSource,(GLuint,GLsizei,const GLchar* const*,const GLint*)) X(void,CompileShader,(GLuint)) \
+ X(void,GetShaderiv,(GLuint,GLenum,GLint*)) X(void,GetShaderInfoLog,(GLuint,GLsizei,GLsizei*,GLchar*)) X(GLuint,CreateProgram,(void)) \
+ X(void,AttachShader,(GLuint,GLuint)) X(void,LinkProgram,(GLuint)) X(void,GetProgramiv,(GLuint,GLenum,GLint*)) X(void,GetProgramInfoLog,(GLuint,GLsizei,GLsizei*,GLchar*)) \
+ X(void,UseProgram,(GLuint)) X(void,DeleteShader,(GLuint)) X(GLint,GetUniformLocation,(GLuint,const GLchar*)) \
+ X(void,Uniform1f,(GLint,GLfloat)) X(void,Uniform2f,(GLint,GLfloat,GLfloat)) X(void,Uniform3f,(GLint,GLfloat,GLfloat,GLfloat)) X(void,Uniform4f,(GLint,GLfloat,GLfloat,GLfloat,GLfloat)) \
+ X(void,Uniform1i,(GLint,GLint)) X(void,Uniform3fv,(GLint,GLsizei,const GLfloat*)) X(void,Uniform4fv,(GLint,GLsizei,const GLfloat*)) X(void,UniformMatrix4fv,(GLint,GLsizei,GLboolean,const GLfloat*)) \
+ X(void,GenVertexArrays,(GLsizei,GLuint*)) X(void,BindVertexArray,(GLuint)) X(void,GenBuffers,(GLsizei,GLuint*)) X(void,BindBuffer,(GLenum,GLuint)) \
+ X(void,BufferData,(GLenum,GLsizeiptr,const void*,GLenum)) X(void,BufferSubData,(GLenum,GLintptr,GLsizeiptr,const void*)) \
+ X(void,EnableVertexAttribArray,(GLuint)) X(void,VertexAttribPointer,(GLuint,GLint,GLenum,GLboolean,GLsizei,const void*)) X(void,VertexAttribDivisor,(GLuint,GLuint)) \
+ X(void,GenFramebuffers,(GLsizei,GLuint*)) X(void,BindFramebuffer,(GLenum,GLuint)) X(void,FramebufferTexture2D,(GLenum,GLenum,GLenum,GLuint,GLint)) \
+ X(GLenum,CheckFramebufferStatus,(GLenum)) X(void,BlitFramebuffer,(GLint,GLint,GLint,GLint,GLint,GLint,GLint,GLint,GLbitfield,GLenum)) \
+ X(void,DeleteFramebuffers,(GLsizei,const GLuint*)) X(const GLubyte*,GetString,(GLenum)) X(void,DrawBuffer,(GLenum)) X(void,ReadBuffer,(GLenum))
+#define X(r,n,a) inline r (*gl##n) a = nullptr;
+GL_FUNCS(X)
+#undef X
+template <class F> inline void glLoadAll(F getProc) {
+#define X(r,n,a) gl##n = (r(*) a)getProc("gl" #n);
+  GL_FUNCS(X)
+#undef X
+}
