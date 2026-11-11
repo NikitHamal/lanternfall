@@ -84,7 +84,7 @@ static void drawPlayHud() {
   using namespace pl; const Player& p = P; float W_ = (float)SW, cx = SW / 2.f, cy = SH / 2.f; bool free_ = H.view == VW_FREE;
   // damage vignette + directional hit arc
   if (p.vig > 0.02f) { float a = p.vig * 0.38f, t = 22 * S; rect(0, 0, W_, t, {0.7f, 0.05f, 0.03f, a}); rect(0, SH - t, W_, t, {0.7f, 0.05f, 0.03f, a}); rect(0, 0, t, (float)SH, {0.7f, 0.05f, 0.03f, a}); rect(W_ - t, 0, t, (float)SH, {0.7f, 0.05f, 0.03f, a}); }
-  if (p.hitK > 0.05f && mode_() == 2) for (int i = -3; i <= 3; i++) { float g = p.hitDir + i * 0.09f, R = 74 * S, x = cx + std::sin(g) * -R * 1.0f, y = cy - std::cos(g) * R; rect(x - 2 * S, y - 2 * S, 4 * S, 4 * S, {1, 0.2f, 0.12f, p.hitK * (1 - std::fabs(i) * 0.2f)}); }
+  if (p.hitK > 0.05f && mode_() == 2) for (int i = -3; i <= 3; i++) { float g = p.hitDir + i * 0.09f, R = 74 * S, x = cx + std::sin(g) * -R * 1.0f, y = cy - std::cos(g) * R; rect(x - 2 * S, y - 2 * S, 4 * S, 4 * S, {1, 0.2f, 0.12f, p.hitK * (1 - std::fabs((float)i) * 0.2f)}); }
   if (!free_ && !p.down) {
     // reticle: ticks tighten with the draw curve and turn gold in the sweet spot, wobble when over-held
     float r = H.spread * S * 0.55f + 2 * S, tl = 5 * S, th = std::max(1.f, S * 0.8f); bool sw = H.sweet > 0.5f, ov = p.drawing && p.holdT > 0.9f; Col c = sw ? Col{1, 0.82f, 0.25f, 1} : ov ? Col{1, 0.5f, 0.2f, 1} : Col{0.96f, 0.92f, 0.8f, 0.92f};
