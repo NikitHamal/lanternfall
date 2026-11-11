@@ -21,8 +21,13 @@ Reference: https://github.com/loktar00/lanternfall (single-page three.js idle ba
 - post chain ported 1:1 from `40-post.js` (HDR RGBA16F, MSAA scene, AO+fog+in-scatter, 4 bloom mips, DOF, AgX, grade, grain)
 
 ## Progress
-- [x] audit
-- [ ] engine/render
-- [ ] sim
-- [ ] ui/audio
-- [ ] CI release
+- [x] audit of reference (all src/*.js except embedded music data)
+- [x] GL loader, math, data tables, simulation (game.cpp), fx, procedural audio, meshes, renderer + post chain, HUD
+- [x] local build + xvfb smoke test (title + gameplay frames render, level-up panel works)
+- [x] release workflow (Windows / Linux / macOS universal) -> GitHub Release v1.0.0
+- [ ] follow-ups: richer character models, point-light shadows, procedural music, offline progress
+
+## Decisions
+- No GLAD/GLM/stb: own loader & math keep the binary ~0.8 MB. Font is a built-in 5x7 bitmap atlas.
+- Characters are instanced primitives with a bone table (pivot + rotX/rotZ per bone) instead of rigged meshes.
+- Steward panels use real-time countdowns (cards 6 s, choice 7 s, run end 8 s) exactly like the original.
