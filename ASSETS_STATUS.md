@@ -99,9 +99,38 @@ Every rigged character asset includes baked quaternion + translation bone tracks
 - Remote `assets` already held a prior ownership/style commit (`4b97885`); this session builds on it (no force push).
 - Existing figure clip names (strings in `.lfm`): heroes `ready walk run attack <skills> stag down`; monsters `idle ready walk run attack stag [special]`, plus a baked `shatter` track on shatter-death figures.
 
-### Progress log
-- [x] Bootstrap, branch `assets`, reference clone, style spec
-- [ ] Polyfork sourcing → `assets_raw/manifest.json`
-- [ ] Blender build (`tools/blender_build_assets.py`)
-- [ ] Viewer notebook
-- [ ] CI result
+### Results (session 2)
+Pipeline: `tools/polyfork_search.py` / `tools/polyfork_fetch.py` (catalogue → `assets_raw/`, git-ignored) → `tools/blender_build_assets.py` (Blender 4.2.3 headless) → `assets/polyfork/<key>.lfm` (+ `<key>.col.json` for static assets) and preview GLBs in `assets_build/` (git-ignored) → `tools/lfm_sheet.py` (QA sheet rendered from the shipped .lfm bytes with the runtime's two-bone skinning).
+Output lives in `assets/polyfork/` so the v1.1.0 `assets/*.lfm` are untouched; no loader/gameplay code was changed (no additive loader commit was needed).
+
+| Category | Count | Source tris | Baked verts |
+|---|---|---|---|
+| hero (warden, reaver, fletcher, lamplighter, apothecary, rimebinder) | 6 | 29,840 | 89,520 |
+| monster (thornling, peatwight, gloamhound, gloamwisp, rustbound, cairnback) | 6 | 24,158 | 71,202 |
+| boss (barrowking, mossjaw, hollowstag) | 3 | 12,706 | 38,118 |
+| bonus bestiary (emberhound, thornboar, rootcolossus) | 3 | 12,637 | 37,911 |
+| weapon (8) / terrain prop (13) / building (6) | 27 | 22,470 | 67,410 |
+| **total** | **45** | **101,811 (baked 101,387)** | **304,161** |
+
+Kit sources: Grimlight Denizens (figures), The Ultimate RPG Character, Dungeon Crypt, Halloween Night, Medieval Village, Nature Forest, Three Kingdoms, Easter Island (see `assets/polyfork/manifest.json` for every Polyfork id, URL, triangle count).
+Per figure: 25 bones (humanoid: root + 22 Mixamo-derived bones renamed to the game's `hips/spine/chest/lUp/lFore/lHand/lThigh...` + `wR/wL` sockets), 27 (quadrupeds), 5 (wisp). 246 clips are baked into the 18 .lfm (runtime cap is 16 per file). The preview GLBs carry the full suite (up to 19-20 clips): idle, ready, walk, run (Polyfork's own CC0 clips, resampled for the 15 Mixamo/animal rigs), attack + class skills (`bash guard cleave sunder aimed volley kindle cinder tonic firepot quick lance hoar special`), `defend`, `dodge`, `hit_f/hit_l/hit_r`, `stag`, `down` and the five death variants `dissolve burn burst gutter shatter` (shatter = independent ballistic shards). Authored clips are written as real Blender Actions (NLA tracks) on the rebuilt armature and exported in the GLB.
+Palette: every vertex colour is snapped to a per-asset subset of the game's palette (`THEME` in the build script) with luminance preserved, and carries game surf type / rough / metal / grime; glow entries only where the source is emissive/saturated (wisp forced to gloam). Baked: AO in the hang/ready pose incl. ground contact (alpha of colour), edge cavity (`b.w`), smoothed normals (40 deg), triplanar UV.
+Triangle budget: Polyfork figures are 2.7K-5K tris / 8K-15K verts (flat-shaded, split verts), i.e. inside the 10-18K vertex budget but with about a third of the v1.1.0 triangle density (smooth lofted originals have 18-30K tris) - faceted by design.
+
+### Viewer (QA only)
+`viewer/lanternfall_viewer.py` is a marimo notebook (marimo 0.25.2 imported OK; notebook compiles) that starts `viewer/serve.py` (stdlib) and embeds `viewer/index.html` (three.js 0.160 from unpkg) at 1280x720: kit dropdown, asset dropdown, one button per clip, turntable, wireframe, loop toggle, frame counter. It polls `/index.json` every 2 s, so a `.glb` that lands in or changes under `assets_build/viewer/` appears/reloads automatically (clip selection kept). The viewer server was running on :8765 during the session and served 45 GLBs (`/index.json` verified with curl).
+
+### QA screenshots (shots/ is git-ignored)
+No headless browser exists in this sandbox, so the three.js page itself could not be screenshotted. QA used `tools/lfm_sheet.py` sheets rendered from the shipped .lfm: warden (v2/v3), reaver (v3), hollowstag (v3), peatwight (v3/v4/v5), gloamwisp (v3), rimebinder (v4), b_stone_chapel (v3/v4) and p_cairn / w_arming_sword (v3, generated, not all viewed). See the final report for what each showed.
+
+### CI
+`.github/workflows/release.yml` triggers only on pushes to `main`, `v*` tags and manual dispatch, so pushing `assets` starts no run (`/actions/runs?branch=assets` returned total_count 0). No tag or release was created and the workflow was not dispatched (it can publish a release).
+
+### Deferred / known issues
+- Authored attack/skill poses are first-pass: arm-forward poses (e.g. warden `attack` hit frame) read too high; needs a tuning pass with the viewer.
+- Colour fidelity: gloamhound / hollowstag / reaver collapse to few palette entries (pale bone/cream); peatwight needed `bone` removed from its theme.
+- Wisp uses a single cheesecloth ghost (175 tris) with a 5-bone chain instead of the original 9-bone arm rig; no hand-lantern/back-lantern geometry or `lan/lanB` bones on heroes; weapons are static .lfm, not attached to hands; no `cloak` chains.
+- Deaths other than the figure's own are only in the GLB (lfm cap of 16 clips); `fx` points (`tip/base/off/head`) are estimates.
+- Collision proxies are AABB + circle + <=12-point footprint (`*.col.json`), not meshes.
+- Terrain rocks/trees of the game's `gRock/gTree` family have only partial analogues in the Polyfork catalogue (cairn, dead trees, headstones, walls); no heather/bracken/fern.
+- Keep-alive: no molab kernel exists here; a 30 s heartbeat (`/tmp/agentB_hb.sh` pinging the local viewer server, plus a heartbeat thread cell in the notebook) ran instead.

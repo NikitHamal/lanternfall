@@ -1,0 +1,771 @@
+{
+ "source": "https://polyfork.dev",
+ "license": "free low-poly models; commercial use, no attribution",
+ "assets": {
+  "warden": {
+   "polyfork_id": "knight-of-the-forge-7e2bee",
+   "category": "hero",
+   "role": "TANK",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4996,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 2.63,
+    "y": 2.21,
+    "z": 0.54
+   },
+   "page": "https://polyfork.dev/asset/knight-of-the-forge-7e2bee",
+   "glb_url": "https://polyfork.dev/cdn/knight-of-the-forge-7e2bee.glb",
+   "mjs_url": "https://polyfork.dev/cdn/knight-of-the-forge-7e2bee.mjs"
+  },
+  "reaver": {
+   "polyfork_id": "varka-5a6264",
+   "category": "hero",
+   "role": "HEAVY MELEE",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4988,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 2.2,
+    "y": 1.96,
+    "z": 0.59
+   },
+   "page": "https://polyfork.dev/asset/varka-5a6264",
+   "glb_url": "https://polyfork.dev/cdn/varka-5a6264.glb",
+   "mjs_url": "https://polyfork.dev/cdn/varka-5a6264.mjs"
+  },
+  "fletcher": {
+   "polyfork_id": "ashen-assassin-1ab976",
+   "category": "hero",
+   "role": "RANGED",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4874,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 1.98,
+    "y": 1.83,
+    "z": 0.42
+   },
+   "page": "https://polyfork.dev/asset/ashen-assassin-1ab976",
+   "glb_url": "https://polyfork.dev/cdn/ashen-assassin-1ab976.glb",
+   "mjs_url": "https://polyfork.dev/cdn/ashen-assassin-1ab976.mjs"
+  },
+  "lamplighter": {
+   "polyfork_id": "fire-cultist-05e52e",
+   "category": "hero",
+   "role": "FIRE CASTER",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4982,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 1.88,
+    "y": 1.9,
+    "z": 0.47
+   },
+   "page": "https://polyfork.dev/asset/fire-cultist-05e52e",
+   "glb_url": "https://polyfork.dev/cdn/fire-cultist-05e52e.glb",
+   "mjs_url": "https://polyfork.dev/cdn/fire-cultist-05e52e.mjs"
+  },
+  "apothecary": {
+   "polyfork_id": "forest-witch-63e5f9",
+   "category": "hero",
+   "role": "SUPPORT",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 5000,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 1.71,
+    "y": 1.73,
+    "z": 0.51
+   },
+   "page": "https://polyfork.dev/asset/forest-witch-63e5f9",
+   "glb_url": "https://polyfork.dev/cdn/forest-witch-63e5f9.glb",
+   "mjs_url": "https://polyfork.dev/cdn/forest-witch-63e5f9.mjs"
+  },
+  "rimebinder": {
+   "polyfork_id": "order-judge-3db47a",
+   "category": "hero",
+   "role": "FROST CASTER",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 5000,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 1.79,
+    "y": 2.04,
+    "z": 0.43
+   },
+   "page": "https://polyfork.dev/asset/order-judge-3db47a",
+   "glb_url": "https://polyfork.dev/cdn/order-judge-3db47a.glb",
+   "mjs_url": "https://polyfork.dev/cdn/order-judge-3db47a.mjs"
+  },
+  "thornling": {
+   "polyfork_id": "bloom-elemental-bbe733",
+   "category": "monster",
+   "role": "swarm",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4997,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 1.93,
+    "y": 1.97,
+    "z": 0.57
+   },
+   "page": "https://polyfork.dev/asset/bloom-elemental-bbe733",
+   "glb_url": "https://polyfork.dev/cdn/bloom-elemental-bbe733.glb",
+   "mjs_url": "https://polyfork.dev/cdn/bloom-elemental-bbe733.mjs"
+  },
+  "peatwight": {
+   "polyfork_id": "bog-fiend-cfd54c",
+   "category": "monster",
+   "role": "bruiser",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4997,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 4.74,
+    "y": 3,
+    "z": 1.55
+   },
+   "page": "https://polyfork.dev/asset/bog-fiend-cfd54c",
+   "glb_url": "https://polyfork.dev/cdn/bog-fiend-cfd54c.glb",
+   "mjs_url": "https://polyfork.dev/cdn/bog-fiend-cfd54c.mjs"
+  },
+  "gloamhound": {
+   "polyfork_id": "flesh-eater-8401c3",
+   "category": "monster",
+   "role": "flanker (quadruped)",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 3702,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 1.07,
+    "y": 1.14,
+    "z": 1.49
+   },
+   "page": "https://polyfork.dev/asset/flesh-eater-8401c3",
+   "glb_url": "https://polyfork.dev/cdn/flesh-eater-8401c3.glb",
+   "mjs_url": "https://polyfork.dev/cdn/flesh-eater-8401c3.mjs"
+  },
+  "gloamwisp": {
+   "polyfork_id": "hanging-cheesecloth-ghosts-c569cf",
+   "category": "monster",
+   "role": "ranged floater",
+   "kit": "halloween-night-46ade4",
+   "triangles": 599,
+   "class": "prop",
+   "has_rig": true,
+   "size_m": {
+    "x": 2.73,
+    "y": 2.12,
+    "z": 0.93
+   },
+   "page": "https://polyfork.dev/asset/hanging-cheesecloth-ghosts-c569cf",
+   "glb_url": "https://polyfork.dev/cdn/hanging-cheesecloth-ghosts-c569cf.glb",
+   "mjs_url": "https://polyfork.dev/cdn/hanging-cheesecloth-ghosts-c569cf.mjs"
+  },
+  "rustbound": {
+   "polyfork_id": "bell-warden-838915",
+   "category": "monster",
+   "role": "elite",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4924,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 3.2,
+    "y": 2.89,
+    "z": 0.88
+   },
+   "page": "https://polyfork.dev/asset/bell-warden-838915",
+   "glb_url": "https://polyfork.dev/cdn/bell-warden-838915.glb",
+   "mjs_url": "https://polyfork.dev/cdn/bell-warden-838915.mjs"
+  },
+  "cairnback": {
+   "polyfork_id": "cathedral-statue-36eaad",
+   "category": "monster",
+   "role": "elite (stone)",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4939,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 2.6,
+    "y": 2.61,
+    "z": 0.76
+   },
+   "page": "https://polyfork.dev/asset/cathedral-statue-36eaad",
+   "glb_url": "https://polyfork.dev/cdn/cathedral-statue-36eaad.glb",
+   "mjs_url": "https://polyfork.dev/cdn/cathedral-statue-36eaad.mjs"
+  },
+  "barrowking": {
+   "polyfork_id": "bone-warrior-3a0f95",
+   "category": "boss",
+   "role": "sweep",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4996,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 2.62,
+    "y": 2.38,
+    "z": 0.65
+   },
+   "page": "https://polyfork.dev/asset/bone-warrior-3a0f95",
+   "glb_url": "https://polyfork.dev/cdn/bone-warrior-3a0f95.glb",
+   "mjs_url": "https://polyfork.dev/cdn/bone-warrior-3a0f95.mjs"
+  },
+  "mossjaw": {
+   "polyfork_id": "the-drowned-behemoth-889bd3",
+   "category": "boss",
+   "role": "slam",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4984,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 5.68,
+    "y": 3.18,
+    "z": 1.64
+   },
+   "page": "https://polyfork.dev/asset/the-drowned-behemoth-889bd3",
+   "glb_url": "https://polyfork.dev/cdn/the-drowned-behemoth-889bd3.glb",
+   "mjs_url": "https://polyfork.dev/cdn/the-drowned-behemoth-889bd3.mjs"
+  },
+  "hollowstag": {
+   "polyfork_id": "spectral-stag-d19dc1",
+   "category": "boss",
+   "role": "charge (quadruped)",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 2726,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 1.41,
+    "y": 2.16,
+    "z": 1.56
+   },
+   "page": "https://polyfork.dev/asset/spectral-stag-d19dc1",
+   "glb_url": "https://polyfork.dev/cdn/spectral-stag-d19dc1.glb",
+   "mjs_url": "https://polyfork.dev/cdn/spectral-stag-d19dc1.mjs"
+  },
+  "emberhound": {
+   "polyfork_id": "ember-dog-50b92d",
+   "category": "bonus",
+   "role": "bestiary extra (quadruped)",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 3924,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 0.34,
+    "y": 0.81,
+    "z": 1.06
+   },
+   "page": "https://polyfork.dev/asset/ember-dog-50b92d",
+   "glb_url": "https://polyfork.dev/cdn/ember-dog-50b92d.glb",
+   "mjs_url": "https://polyfork.dev/cdn/ember-dog-50b92d.mjs"
+  },
+  "thornboar": {
+   "polyfork_id": "thorn-boar-669ac9",
+   "category": "bonus",
+   "role": "bestiary extra (quadruped)",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 3796,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 0.87,
+    "y": 1.3,
+    "z": 1.7
+   },
+   "page": "https://polyfork.dev/asset/thorn-boar-669ac9",
+   "glb_url": "https://polyfork.dev/cdn/thorn-boar-669ac9.glb",
+   "mjs_url": "https://polyfork.dev/cdn/thorn-boar-669ac9.mjs"
+  },
+  "rootcolossus": {
+   "polyfork_id": "root-colossus-2b995e",
+   "category": "bonus",
+   "role": "bestiary extra",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4917,
+   "class": "animal",
+   "has_rig": true,
+   "size_m": {
+    "x": 5.91,
+    "y": 3.84,
+    "z": 1.27
+   },
+   "page": "https://polyfork.dev/asset/root-colossus-2b995e",
+   "glb_url": "https://polyfork.dev/cdn/root-colossus-2b995e.glb",
+   "mjs_url": "https://polyfork.dev/cdn/root-colossus-2b995e.mjs"
+  },
+  "w_arming_sword": {
+   "polyfork_id": "arming-sword-ab8738",
+   "category": "weapon",
+   "role": "warden main hand",
+   "kit": "the-ultimate-rpg-character-a066e1",
+   "triangles": 662,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 0.22,
+    "y": 1.01,
+    "z": 0.05
+   },
+   "page": "https://polyfork.dev/asset/arming-sword-ab8738",
+   "glb_url": "https://polyfork.dev/cdn/arming-sword-ab8738.glb",
+   "mjs_url": "https://polyfork.dev/cdn/arming-sword-ab8738.mjs"
+  },
+  "w_greatsword": {
+   "polyfork_id": "greatsword-a956f3",
+   "category": "weapon",
+   "role": "reaver",
+   "kit": "primal-future-armory-kit-d7c368",
+   "triangles": 480,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 0.4,
+    "y": 1.5,
+    "z": 0.09
+   },
+   "page": "https://polyfork.dev/asset/greatsword-a956f3",
+   "glb_url": "https://polyfork.dev/cdn/greatsword-a956f3.glb",
+   "mjs_url": "https://polyfork.dev/cdn/greatsword-a956f3.mjs"
+  },
+  "w_bow": {
+   "polyfork_id": "recurve-hunting-bow-2903c8",
+   "category": "weapon",
+   "role": "fletcher",
+   "kit": "the-ultimate-rpg-character-a066e1",
+   "triangles": 562,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 0.25,
+    "y": 1.45,
+    "z": 0.07
+   },
+   "page": "https://polyfork.dev/asset/recurve-hunting-bow-2903c8",
+   "glb_url": "https://polyfork.dev/cdn/recurve-hunting-bow-2903c8.glb",
+   "mjs_url": "https://polyfork.dev/cdn/recurve-hunting-bow-2903c8.mjs"
+  },
+  "w_kite_shield": {
+   "polyfork_id": "kite-shield-343e62",
+   "category": "weapon",
+   "role": "warden off hand",
+   "kit": "the-ultimate-rpg-character-a066e1",
+   "triangles": 764,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 0.56,
+    "y": 0.92,
+    "z": 0.17
+   },
+   "page": "https://polyfork.dev/asset/kite-shield-343e62",
+   "glb_url": "https://polyfork.dev/cdn/kite-shield-343e62.glb",
+   "mjs_url": "https://polyfork.dev/cdn/kite-shield-343e62.mjs"
+  },
+  "w_round_shield": {
+   "polyfork_id": "round-wooden-shield-b81fe3",
+   "category": "weapon",
+   "role": "spare",
+   "kit": "the-ultimate-rpg-character-a066e1",
+   "triangles": 826,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 0.79,
+    "y": 0.79,
+    "z": 0.18
+   },
+   "page": "https://polyfork.dev/asset/round-wooden-shield-b81fe3",
+   "glb_url": "https://polyfork.dev/cdn/round-wooden-shield-b81fe3.glb",
+   "mjs_url": "https://polyfork.dev/cdn/round-wooden-shield-b81fe3.mjs"
+  },
+  "w_staff": {
+   "polyfork_id": "living-wood-druid-staff-fd83c1",
+   "category": "weapon",
+   "role": "rimebinder / apothecary",
+   "kit": "the-ultimate-rpg-character-a066e1",
+   "triangles": 752,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 0.4,
+    "y": 1.7,
+    "z": 0.19
+   },
+   "page": "https://polyfork.dev/asset/living-wood-druid-staff-fd83c1",
+   "glb_url": "https://polyfork.dev/cdn/living-wood-druid-staff-fd83c1.glb",
+   "mjs_url": "https://polyfork.dev/cdn/living-wood-druid-staff-fd83c1.mjs"
+  },
+  "w_cleaver": {
+   "polyfork_id": "orcish-cleaver-7117ab",
+   "category": "weapon",
+   "role": "monster weapon",
+   "kit": "the-ultimate-rpg-character-a066e1",
+   "triangles": 672,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 0.25,
+    "y": 0.93,
+    "z": 0.08
+   },
+   "page": "https://polyfork.dev/asset/orcish-cleaver-7117ab",
+   "glb_url": "https://polyfork.dev/cdn/orcish-cleaver-7117ab.glb",
+   "mjs_url": "https://polyfork.dev/cdn/orcish-cleaver-7117ab.mjs"
+  },
+  "w_lantern": {
+   "polyfork_id": "camping-lantern-21d14b",
+   "category": "weapon",
+   "role": "lamplighter lantern",
+   "kit": "campground-lake-ad32b0",
+   "triangles": 942,
+   "class": "prop",
+   "has_rig": true,
+   "size_m": {
+    "x": 0.18,
+    "y": 0.36,
+    "z": 0.15
+   },
+   "page": "https://polyfork.dev/asset/camping-lantern-21d14b",
+   "glb_url": "https://polyfork.dev/cdn/camping-lantern-21d14b.glb",
+   "mjs_url": "https://polyfork.dev/cdn/camping-lantern-21d14b.mjs"
+  },
+  "p_cairn": {
+   "polyfork_id": "stone-cairn-a9bf48",
+   "category": "prop",
+   "role": "cairn",
+   "kit": "alpine-and-snow-092f66",
+   "triangles": 805,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 1,
+    "y": 1.37,
+    "z": 1
+   },
+   "page": "https://polyfork.dev/asset/stone-cairn-a9bf48",
+   "glb_url": "https://polyfork.dev/cdn/stone-cairn-a9bf48.glb",
+   "mjs_url": "https://polyfork.dev/cdn/stone-cairn-a9bf48.mjs"
+  },
+  "p_dead_tree": {
+   "polyfork_id": "dead-tree-6795fa",
+   "category": "prop",
+   "role": "tree",
+   "kit": "nature-forest-kit-f29d6a",
+   "triangles": 536,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 3.19,
+    "y": 5,
+    "z": 1.87
+   },
+   "page": "https://polyfork.dev/asset/dead-tree-6795fa",
+   "glb_url": "https://polyfork.dev/cdn/dead-tree-6795fa.glb",
+   "mjs_url": "https://polyfork.dev/cdn/dead-tree-6795fa.mjs"
+  },
+  "p_twisted_oak": {
+   "polyfork_id": "twisted-dead-oak-49457b",
+   "category": "prop",
+   "role": "tree",
+   "kit": "halloween-night-46ade4",
+   "triangles": 861,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 8.04,
+    "y": 6.97,
+    "z": 4.53
+   },
+   "page": "https://polyfork.dev/asset/twisted-dead-oak-49457b",
+   "glb_url": "https://polyfork.dev/cdn/twisted-dead-oak-49457b.glb",
+   "mjs_url": "https://polyfork.dev/cdn/twisted-dead-oak-49457b.mjs"
+  },
+  "p_headstone": {
+   "polyfork_id": "carved-headstone-09d9f8",
+   "category": "prop",
+   "role": "standing stone",
+   "kit": "halloween-night-46ade4",
+   "triangles": 436,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 0.72,
+    "y": 1.04,
+    "z": 0.37
+   },
+   "page": "https://polyfork.dev/asset/carved-headstone-09d9f8",
+   "glb_url": "https://polyfork.dev/cdn/carved-headstone-09d9f8.glb",
+   "mjs_url": "https://polyfork.dev/cdn/carved-headstone-09d9f8.mjs"
+  },
+  "p_grave_mound": {
+   "polyfork_id": "grave-mound-169ec3",
+   "category": "prop",
+   "role": "barrow mound",
+   "kit": "halloween-night-46ade4",
+   "triangles": 670,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 2,
+    "y": 0.62,
+    "z": 1
+   },
+   "page": "https://polyfork.dev/asset/grave-mound-169ec3",
+   "glb_url": "https://polyfork.dev/cdn/grave-mound-169ec3.glb",
+   "mjs_url": "https://polyfork.dev/cdn/grave-mound-169ec3.mjs"
+  },
+  "p_rune_stone": {
+   "polyfork_id": "glowing-rune-stone-5a5558",
+   "category": "prop",
+   "role": "waylight plinth",
+   "kit": "dungeon-crypt-c27d93",
+   "triangles": 476,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 0.6,
+    "y": 0.5,
+    "z": 0.55
+   },
+   "page": "https://polyfork.dev/asset/glowing-rune-stone-5a5558",
+   "glb_url": "https://polyfork.dev/cdn/glowing-rune-stone-5a5558.glb",
+   "mjs_url": "https://polyfork.dev/cdn/glowing-rune-stone-5a5558.mjs"
+  },
+  "p_split_fence": {
+   "polyfork_id": "split-rail-fence-run-87da39",
+   "category": "prop",
+   "role": "fence",
+   "kit": "frontier-town-a0085b",
+   "triangles": 424,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 2,
+    "y": 1.2,
+    "z": 0.16
+   },
+   "page": "https://polyfork.dev/asset/split-rail-fence-run-87da39",
+   "glb_url": "https://polyfork.dev/cdn/split-rail-fence-run-87da39.glb",
+   "mjs_url": "https://polyfork.dev/cdn/split-rail-fence-run-87da39.mjs"
+  },
+  "p_low_wall": {
+   "polyfork_id": "low-stone-wall-8a8ea3",
+   "category": "prop",
+   "role": "wall",
+   "kit": "medieval-village-kit-ca0b43",
+   "triangles": 732,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 2.05,
+    "y": 0.94,
+    "z": 0.5
+   },
+   "page": "https://polyfork.dev/asset/low-stone-wall-8a8ea3",
+   "glb_url": "https://polyfork.dev/cdn/low-stone-wall-8a8ea3.glb",
+   "mjs_url": "https://polyfork.dev/cdn/low-stone-wall-8a8ea3.mjs"
+  },
+  "p_field_wall": {
+   "polyfork_id": "cemetery-fieldstone-wall-run-ab9077",
+   "category": "prop",
+   "role": "wall",
+   "kit": "halloween-night-46ade4",
+   "triangles": 789,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 4,
+    "y": 0.6,
+    "z": 0.5
+   },
+   "page": "https://polyfork.dev/asset/cemetery-fieldstone-wall-run-ab9077",
+   "glb_url": "https://polyfork.dev/cdn/cemetery-fieldstone-wall-run-ab9077.glb",
+   "mjs_url": "https://polyfork.dev/cdn/cemetery-fieldstone-wall-run-ab9077.mjs"
+  },
+  "p_stone_well": {
+   "polyfork_id": "stone-well-2b4717",
+   "category": "prop",
+   "role": "well",
+   "kit": "nature-forest-kit-f29d6a",
+   "triangles": 608,
+   "class": "prop",
+   "has_rig": true,
+   "size_m": {
+    "x": 1.57,
+    "y": 1.86,
+    "z": 1.6
+   },
+   "page": "https://polyfork.dev/asset/stone-well-2b4717",
+   "glb_url": "https://polyfork.dev/cdn/stone-well-2b4717.glb",
+   "mjs_url": "https://polyfork.dev/cdn/stone-well-2b4717.mjs"
+  },
+  "p_brazier": {
+   "polyfork_id": "standing-brazier-c9e4ee",
+   "category": "prop",
+   "role": "brazier",
+   "kit": "dungeon-crypt-c27d93",
+   "triangles": 680,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 0.92,
+    "y": 1.11,
+    "z": 0.97
+   },
+   "page": "https://polyfork.dev/asset/standing-brazier-c9e4ee",
+   "glb_url": "https://polyfork.dev/cdn/standing-brazier-c9e4ee.glb",
+   "mjs_url": "https://polyfork.dev/cdn/standing-brazier-c9e4ee.mjs"
+  },
+  "p_wall_torch": {
+   "polyfork_id": "wall-torch-bracket-f5ad14",
+   "category": "prop",
+   "role": "torch",
+   "kit": "dungeon-crypt-c27d93",
+   "triangles": 704,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 0.22,
+    "y": 0.63,
+    "z": 0.21
+   },
+   "page": "https://polyfork.dev/asset/wall-torch-bracket-f5ad14",
+   "glb_url": "https://polyfork.dev/cdn/wall-torch-bracket-f5ad14.glb",
+   "mjs_url": "https://polyfork.dev/cdn/wall-torch-bracket-f5ad14.mjs"
+  },
+  "p_plank_bridge": {
+   "polyfork_id": "log-plank-bridge-a5f74f",
+   "category": "prop",
+   "role": "fen bridge",
+   "kit": "nature-forest-kit-f29d6a",
+   "triangles": 480,
+   "class": "prop",
+   "has_rig": false,
+   "size_m": {
+    "x": 4,
+    "y": 1.33,
+    "z": 1.72
+   },
+   "page": "https://polyfork.dev/asset/log-plank-bridge-a5f74f",
+   "glb_url": "https://polyfork.dev/cdn/log-plank-bridge-a5f74f.glb",
+   "mjs_url": "https://polyfork.dev/cdn/log-plank-bridge-a5f74f.mjs"
+  },
+  "b_stone_chapel": {
+   "polyfork_id": "stone-chapel-03e774",
+   "category": "building",
+   "role": "chapel",
+   "kit": "medieval-village-kit-ca0b43",
+   "triangles": 1949,
+   "class": "building",
+   "has_rig": true,
+   "size_m": {
+    "x": 4.47,
+    "y": 8.15,
+    "z": 6.41
+   },
+   "page": "https://polyfork.dev/asset/stone-chapel-03e774",
+   "glb_url": "https://polyfork.dev/cdn/stone-chapel-03e774.glb",
+   "mjs_url": "https://polyfork.dev/cdn/stone-chapel-03e774.mjs"
+  },
+  "b_thatch_cottage": {
+   "polyfork_id": "thatched-cottage-0e63f5",
+   "category": "building",
+   "role": "cottage",
+   "kit": "medieval-village-kit-ca0b43",
+   "triangles": 1764,
+   "class": "building",
+   "has_rig": true,
+   "size_m": {
+    "x": 6,
+    "y": 5.06,
+    "z": 3.97
+   },
+   "page": "https://polyfork.dev/asset/thatched-cottage-0e63f5",
+   "glb_url": "https://polyfork.dev/cdn/thatched-cottage-0e63f5.glb",
+   "mjs_url": "https://polyfork.dev/cdn/thatched-cottage-0e63f5.mjs"
+  },
+  "b_ruined_wall": {
+   "polyfork_id": "ruined-lair-wall-176561",
+   "category": "building",
+   "role": "ruin",
+   "kit": "dragons-lair-dark-dragon-782570",
+   "triangles": 576,
+   "class": "building",
+   "has_rig": false,
+   "size_m": {
+    "x": 4,
+    "y": 6,
+    "z": 1.46
+   },
+   "page": "https://polyfork.dev/asset/ruined-lair-wall-176561",
+   "glb_url": "https://polyfork.dev/cdn/ruined-lair-wall-176561.glb",
+   "mjs_url": "https://polyfork.dev/cdn/ruined-lair-wall-176561.mjs"
+  },
+  "b_beacon_tower": {
+   "polyfork_id": "signal-beacon-tower-9c0d1a",
+   "category": "building",
+   "role": "waylight tower",
+   "kit": "three-kingdoms-settlements-a-1e817b",
+   "triangles": 1514,
+   "class": "building",
+   "has_rig": false,
+   "size_m": {
+    "x": 4,
+    "y": 9.25,
+    "z": 4
+   },
+   "page": "https://polyfork.dev/asset/signal-beacon-tower-9c0d1a",
+   "glb_url": "https://polyfork.dev/cdn/signal-beacon-tower-9c0d1a.glb",
+   "mjs_url": "https://polyfork.dev/cdn/signal-beacon-tower-9c0d1a.mjs"
+  },
+  "b_stone_tower": {
+   "polyfork_id": "tupa-stone-tower-801c13",
+   "category": "building",
+   "role": "tower",
+   "kit": "easter-island-rapa-nui-368e86",
+   "triangles": 1786,
+   "class": "building",
+   "has_rig": false,
+   "size_m": {
+    "x": 3.96,
+    "y": 3,
+    "z": 3.96
+   },
+   "page": "https://polyfork.dev/asset/tupa-stone-tower-801c13",
+   "glb_url": "https://polyfork.dev/cdn/tupa-stone-tower-801c13.glb",
+   "mjs_url": "https://polyfork.dev/cdn/tupa-stone-tower-801c13.mjs"
+  },
+  "b_ruined_gable": {
+   "polyfork_id": "ruined-gable-end-834895",
+   "category": "building",
+   "role": "ruin",
+   "kit": "world-war-ii-ba2289",
+   "triangles": 1020,
+   "class": "building",
+   "has_rig": false,
+   "size_m": {
+    "x": 4,
+    "y": 6,
+    "z": 4
+   },
+   "page": "https://polyfork.dev/asset/ruined-gable-end-834895",
+   "glb_url": "https://polyfork.dev/cdn/ruined-gable-end-834895.glb",
+   "mjs_url": "https://polyfork.dev/cdn/ruined-gable-end-834895.mjs"
+  }
+ }
+}
