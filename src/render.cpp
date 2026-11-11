@@ -4,6 +4,7 @@
 #include "shaders.h"
 #include "meshes.h"
 #include "figure.h"
+#include "play.h"
 #include <cmath>
 #include <string>
 #include <cstdio>
@@ -22,7 +23,7 @@ int reachIdx = 0; const Reach* tgt = &REACHES[0];
 const V3 MOON_DIR = norm({0.50f, 0.40f, -0.77f});
 // camera
 struct CamS { float fx = 0, fz = 0, zoom = 1, yaw = 0, vfx = 0, vfz = 0, vzoom = 0; bool init = false; } camS;
-V3 camPos, camTgt; M4 viewM, projM, vpM, invVP, camW, invProj; float camFocus = 18, camAperture = 0.6f; float alphaI = 1, fogPull = 0, camTime = 0;
+float camNear = 0.5f; V3 camPos, camTgt; M4 viewM, projM, vpM, invVP, camW, invProj; float camFocus = 18, camAperture = 0.6f; float alphaI = 1, fogPull = 0, camTime = 0;
 // lights
 struct Lit { V3 moonCol, hemiSky, hemiGnd, fillCol, fillDir; float pl[4][4]; float plc[4][4]; M4 shadowVP; V3 fogLP[4], fogLC[4]; } lit;
 struct Way { bool used = false, lit = false; float x = 0, z = 0, glow = 0, fl = 1; }; Way ways[8];
@@ -141,16 +142,39 @@ static void buildChunk(Chunk& c, int key, int ci) {
   if (r() < R[3] * 0.35f) { float s = side(); int n = 2 + (int)(r() * 3); float off = 5.5f + r() * 9, x = x0 + r() * 4, ang = (r() - 0.5f) * 0.5f; for (int k = 0; k < n; k++) { float z = pathZ(x) + s * off; put(PK_WALL, var(PK_WALL), x, z, 1, -ang - std::atan(pathDZ(x)), 0.04f); x += 4.1f * std::cos(ang); off += std::sin(ang) * 4.1f * s; ang += (r() - 0.5f) * 0.3f; } }
   if (r() < R[5] * 0.3f) { float s = side(), off = 3.4f + r() * 3; float x = x0 + r() * 6; int n = 2 + (int)(r() * 2); for (int k = 0; k < n; k++) { put(PK_FENCE, var(PK_FENCE), x, pathZ(x) + s * off, 1, -std::atan(pathDZ(x)), 0); x += 5.6f; } }
 }
+static bool colsDirty = true; static void rebuildCols();
 static void updateChunks(float fx) {
   int c0 = (int)std::floor((fx - 50) / CH), c1 = (int)std::floor((fx + 110) / CH);
   for (int c = c0; c <= c1; c++) { int key = c + chunkBase; bool have = false; for (auto& k : chunks) if (k.used && k.key == key) have = true; if (have) continue; for (auto& k : chunks) if (!k.used) { buildChunk(k, key, c); propsDirty = true; break; } }
   for (auto& k : chunks) if (k.used) { int c = k.key - chunkBase; if (c < c0 - 1 || c > c1 + 1) { k.used = false; propsDirty = true; } }
-  if (!propsDirty) return; propsDirty = false; memset(propN, 0, sizeof propN);
+  if (!propsDirty) return; propsDirty = false; memset(propN, 0, sizeof propN); colsDirty = true;
   for (auto& k : chunks) if (k.used) for (int i = 0; i < k.n; i++) { PI_& p = k.it[i]; int& n = propN[p.k][p.v]; if (n >= 256) continue; Inst& in = propInst[p.k][p.v][n++];
     M4 m = mul(translate(p.x, p.y, p.z), mul(rotY(p.ry), mul(rotX(p.rx), scale4(p.s, p.s, p.s)))); memcpy(in.m, m.m, 64); in.tint[0] = in.tint[1] = in.tint[2] = 1; in.tint[3] = 0; in.mat[0] = in.mat[1] = in.mat[2] = 1; in.mat[3] = 0; }
 }
 
 // ---------- unit visuals ----------
+
+CamO camO; Inst shW[4][SHCAP], shV[4][160]; int shWn[4], shVn[4];
+namespace { struct Col { float x, z, r, y0, top; }; constexpr int MAXCOL = 5200; Col cols[MAXCOL]; int ncol = 0; }
+static void rebuildCols() {
+  ncol = 0; auto add = [&](float x, float z, float r, float y0, float h) { if (ncol < MAXCOL) cols[ncol++] = {x, z, r, y0, y0 + h}; };
+  for (auto& c : chunks) if (c.used) for (int i = 0; i < c.n; i++) { const PI_& p = c.it[i]; float s = p.s;
+    switch (p.k) { case PK_ROCK: if (s >= 0.5f) add(p.x, p.z, 0.6f * s, p.y, 0.9f * s); break; case PK_STAND: add(p.x, p.z, 0.5f * s, p.y, 2.8f * s); break; case PK_TREE: add(p.x, p.z, 0.3f * s, p.y, 7.f * s); break; case PK_CAIRN: add(p.x, p.z, 0.7f * s, p.y, 1.3f * s); break;
+      case PK_WALL: { float cx = std::cos(p.ry), sx = -std::sin(p.ry); for (int k = -2; k <= 2; k++) add(p.x + cx * k * 0.95f, p.z + sx * k * 0.95f, 0.45f, p.y, 1.2f); break; }
+      case PK_FENCE: { float cx = std::cos(p.ry), sx = -std::sin(p.ry); for (int k = -1; k <= 1; k++) add(p.x + cx * k * 1.8f, p.z + sx * k * 1.8f, 0.3f, p.y, 1.1f); break; } default: break; } }
+}
+void pushOut(float& x, float& z, float r) { for (int i = 0; i < ncol; i++) { const Col& c = cols[i]; float dx = x - c.x, dz = z - c.z, rr = c.r + r; if (dx * dx + dz * dz < rr * rr) { float d = std::sqrt(dx * dx + dz * dz); if (d < 1e-4f) { dx = 1; dz = 0; d = 1; } x = c.x + dx / d * rr; z = c.z + dz / d * rr; } } }
+bool rayWorld(float ax, float ay, float az, float bx, float by, float bz, float& tOut) {
+  float best = 2, dx = bx - ax, dz = bz - az, a = dx * dx + dz * dz;
+  if (a > 1e-10f) for (int i = 0; i < ncol; i++) { const Col& c = cols[i]; float ox = ax - c.x, oz = az - c.z, cc = ox * ox + oz * oz - c.r * c.r, t; if (cc <= 0) { t = 0; } else { float b = 2 * (ox * dx + oz * dz), d = b * b - 4 * a * cc; if (d < 0) continue; t = (-b - std::sqrt(d)) / (2 * a); } if (t < 0 || t > 1 || t >= best) continue; float y = ay + (by - ay) * t; if (y < c.top && y > c.y0 - 0.6f) best = t; }
+  float prevT = 0; bool prevOk = ay >= terrH(ax, az); const int NS = 10; for (int i = 1; i <= NS && prevOk; i++) { float t = (float)i / NS; if (t > best) break; float x = ax + dx * t, z = az + dz * t, y = ay + (by - ay) * t; if (y < terrH(x, z)) { float lo = prevT, hi = t; for (int k = 0; k < 6; k++) { float m = (lo + hi) * 0.5f; if (ay + (by - ay) * m < terrH(ax + dx * m, az + dz * m)) hi = m; else lo = m; } if (hi < best) best = hi; break; } prevT = t; }
+  if (best > 1) return false; tOut = best; return true;
+}
+static void drawShapes() {
+  if (!pl::active()) return; setLit(pMesh); glDisable(GL_CULL_FACE);
+  for (int k = 0; k < 4; k++) if (shWn[k]) { meshUpload(gShape[k], shW[k], shWn[k]); meshDraw(gShape[k]); drawCalls++; }
+  glDepthRange(0.0, 0.02); for (int k = 0; k < 4; k++) if (shVn[k]) { meshUpload(gShape[k], shV[k], shVn[k]); meshDraw(gShape[k]); drawCalls++; } glDepthRange(0.0, 1.0);
+}
 static inline float ix(const Unit& u) { return u.ox + (u.x - u.ox) * alphaI; }
 static inline float iz(const Unit& u) { return u.oz + (u.z - u.oz) * alphaI; }
 static float sm01(float a, float b, float x) { return smooth(a, b, x); }
@@ -181,12 +205,30 @@ static void figUnit(const Unit& u, bool mon, FigAnim& an, float dt, float t, boo
   if (mon) { if (!dead) d.glow = u.boss ? (u.enr ? 3.f + std::sin(t * 9) : 3.f) : 2.2f; }
   else { an.dim += ((u.down ? 0.4f : 1.f) - an.dim) * std::min(1.f, dt * 3); d.dim = an.dim; if (u.cls == LAMPLIGHTER) d.glow = (0.9f + 0.06f * std::sin(t * 9.1f) + 0.04f * std::sin(t * 23.7f)) * (1 + G.flareV * 3); }
 }
+static FigAnim animPl;
+static void figPlayer(float dt) {
+  const FigAsset& a = gFH[FLETCHER]; const pl::Player& P = pl::P; if (!a.ok || nfd >= 4 + MAXMON) return; FigAnim& an = animPl; if (an.id != 1u) { an = FigAnim(); an.id = 1u; }
+  float sc = a.scale, x = P.x, z = P.z, y = terrH(x, z); int ac = a.clipIx("aimed"); if (ac < 0) ac = a.clipIx("attack"); float hit = ac >= 0 && a.clips[ac].hit > 0.01f ? a.clips[ac].hit : 0.5f, au = -1;
+  if (P.drawing) au = hit * 0.985f * pl::curve(P.draw); else if (P.relT < 0.5f && ac >= 0) au = hit + (1 - hit) * (P.relT / 0.5f);   // anticipation (draw) -> release -> follow-through -> recovery
+  bool combat = P.drawing || P.blocking > 0.3f || P.relT < 2.f || pl::H.view == pl::VW_FREE;
+  figAnimUpdate(an, a, dt, P.speed / sc, combat, ac, au, P.stagT > 0.3f ? 1.f : 0.f, P.down);
+  // additive procedural layer: roll, directional hit reaction, raised-bow block
+  if (P.rollT > 0) { float u = std::min(1.f, P.rollT / pl::ROLL_T), s2 = u * u * (3 - 2 * u); figAddMove(an, a, 0, 0, -0.38f * std::sin(u * PI), 0); figAddRot(an, a, 0, 1, 0, 0, TAU * s2, a.head[1]); }
+  if (P.hitK > 0.02f && !P.down) { float g = P.hitDir; figAddRot(an, a, 2, -std::cos(g), 0, std::sin(g), 0.55f * P.hitK, a.head[2]); figAddRot(an, a, 4, std::sin(g), 0, std::cos(g) * 0.3f, 0.25f * P.hitK, a.head[4]); }
+  if (P.blocking > 0.02f && !P.down) { figAddRot(an, a, 6, 1, 0, 0, -1.45f * P.blocking, a.head[6]); figAddRot(an, a, 9, 1, 0, 0, -0.9f * P.blocking, a.head[9]); }
+  if (P.down) { figAddMove(an, a, 0, 0, 0.012f * std::sin(time_ * 2.4f) * (1 + 0), 0); }
+  figAnimPose(an, a); FigDraw& d = fdraw[nfd++]; d.a = &a; d.mat = an.mat; d.dissolve = 0; d.disH = std::max(1.f, a.height); d.glow = 1; d.shadow = true; d.dim = P.down ? 0.55f : 1.f; d.lantern = a.lant; for (int k = 0; k < 3; k++) d.disCol[k] = a.disCol[k];
+  d.model = mul(translate(x, y, z), mul(rotY(P.face), scale4(sc, sc, sc))); float fl = P.hurtT > 0 ? P.hurtT * 0.6f : 0.f; d.flash[0] = fl * 1.2f; d.flash[1] = fl * 0.5f; d.flash[2] = fl * 0.3f;
+}
 static V3 lanternPos(const Unit& c) {
   int hi = (int)(&c - &G.heroes[0]); float x = ix(c), z = iz(c), y = terrH(x, z); const FigAsset& a = gFH[c.cls]; int k = a.fxIx("lan");
   if (k >= 0 && hi >= 0 && hi < 4 && animH[hi].have) { float o[3]; figPoint(a, animH[hi].mat, a.fx[k].bone, a.fx[k].p[0], a.fx[k].p[1], a.fx[k].p[2], o); float cf = std::cos(c.face), sf = std::sin(c.face); return {x + cf * o[0] + sf * o[2], y + o[1], z - sf * o[0] + cf * o[2]}; }
   return {x, y + 2.f, z};
 }
 static void cameraUpdate(float dt) {
+  if (camO.on && pl::active()) { camPos = camO.eye; camTgt = camO.tgt; camS.fx = pl::P.x; camS.fz = pl::P.z; camS.init = true; camNear = camO.nearP; camFocus = camO.focus; camAperture = camO.ap; G.shakeA = 0;
+    camW = camWorld(camPos, camTgt); viewM = rigidInverse(camW); projM = perspective(camO.fov, (float)W / H, camNear, 2600.f); vpM = mul(projM, viewM); invVP = inverse(vpM); invProj = inverse(projM); return; }
+  camNear = 0.5f;
   float time = time_; float an = G.anchorX; float tx = an + 1.2f, tz = pathZ(an); int n = 1; bool anyHs = false;
   for (const Unit& h : G.heroes) if (!h.down) { tx += ix(h); tz += iz(h); n++; anyHs = true; } tx /= n; tz /= n; (void)anyHs;
   float mx = 0, mz = 0; int mc = 0; float lo = 1e9f, hi = -1e9f;
@@ -213,8 +255,8 @@ static void cameraUpdate(float dt) {
 }
 static void lightsUpdate(float dt) {
   float t = time_; const Unit* car = G.carrier ? G.carrier : &G.heroes[3]; 
-  float base = (0.92f + 0.05f * std::sin(t * 7.1f) + 0.035f * std::sin(t * 17.3f + 1.f) + 0.02f * std::sin(t * 31.f)) * (car->down ? 0.4f : 1.f);
-  G.flareV = std::max(0.f, G.flareV - dt * 0.9f); float R = G.hasRun ? G.lightRadius() : 9.f; V3 lp = lanternPos(*car);
+  float base = (0.92f + 0.05f * std::sin(t * 7.1f) + 0.035f * std::sin(t * 17.3f + 1.f) + 0.02f * std::sin(t * 31.f)) * ((pl::active() ? pl::P.down : car->down) ? 0.4f : 1.f);
+  G.flareV = std::max(0.f, G.flareV - dt * 0.9f); float R = G.hasRun ? G.lightRadius() : 9.f; V3 lp = pl::active() ? pl::lanternPos() : lanternPos(*car); if (pl::active()) R = 11.f;
   lit.moonCol = C(0x8fb2f2) * (2.0f * cur.moon); lit.hemiSky = C(0x2c4a7a) * (0.4f + 0.1f * cur.moon); lit.hemiGnd = C(0x0b0a08) * (0.4f + 0.1f * cur.moon); lit.fillDir = norm({-6, 9, 14}); lit.fillCol = C(0x8a9ab8) * 0.16f;
   float inten = 50 * base * (R / 9) * (1 + G.flareV * 2.5f); V3 lc = C(0xffb878);
   lit.pl[0][0] = lp.x; lit.pl[0][1] = lp.y; lit.pl[0][2] = lp.z; lit.pl[0][3] = R * 2.7f; lit.plc[0][0] = lc.x * inten; lit.plc[0][1] = lc.y * inten; lit.plc[0][2] = lc.z * inten; lit.plc[0][3] = 1.25f;
@@ -235,9 +277,10 @@ void update(float dt, float vdt, bool paused, float alpha) {
   alphaI = alpha; time_ += paused ? dt * 0.35f : std::max(vdt, dt * 0.2f); float t = time_;
   for (Unit& h : G.heroes) { h.flashV *= std::exp(-dt * 9); h.stagV *= std::exp(-dt * 6); float want = h.moving > 0.05f ? h.moving / 3.4f : 0.f; h.mAmp += (want - h.mAmp) * std::min(1.f, dt * 10); h.animT += dt * h.moving * 3.0f * (paused ? 0.f : 1.f); }
   for (Unit& m : G.mons) if (m.used) { m.flashV *= std::exp(-dt * 9); m.stagV *= std::exp(-dt * 6); float want = m.moving > 0.05f ? m.moving / 3.4f : 0.f; m.mAmp += (want - m.mAmp) * std::min(1.f, dt * 10); m.animT += dt * m.moving * (MON[m.cls].scale > 1.5f ? 2.2f : 3.0f) * (paused ? 0.f : 1.f); }
-  blendTo(1 - std::exp(-(paused ? dt * 0.35f : std::max(vdt, dt * 0.3f)) * 0.35f)); cameraUpdate(dt); lightsUpdate(dt); updateChunks(camS.fx);
+  bool play = pl::active(); if (play) { pl::camera(dt); pl::buildShapes(); }
+  blendTo(1 - std::exp(-(paused ? dt * 0.35f : std::max(vdt, dt * 0.3f)) * 0.35f)); cameraUpdate(dt); lightsUpdate(dt); updateChunks(camS.fx); if (colsDirty) { rebuildCols(); colsDirty = false; }
   // unit instances
-  nfd = 0; { float fdt = paused ? 0.f : dt; const Unit* carU = G.carrier ? G.carrier : &G.heroes[3]; for (int i = 0; i < 4; i++) figUnit(G.heroes[i], false, animH[i], fdt, t, &G.heroes[i] == carU); for (int i = 0; i < MAXMON; i++) if (G.mons[i].used) figUnit(G.mons[i], true, animM[i], fdt, t, false); }
+  nfd = 0; if (play) { for (int i = 0; i < pl::MAXFOE; i++) if (pl::foes[i].u.used) figUnit(pl::foes[i].u, true, animM[i], dt, t, false); if (pl::H.view != pl::VW_FIRST) figPlayer(dt); } else { float fdt = paused ? 0.f : dt; const Unit* carU = G.carrier ? G.carrier : &G.heroes[3]; for (int i = 0; i < 4; i++) figUnit(G.heroes[i], false, animH[i], fdt, t, &G.heroes[i] == carU); for (int i = 0; i < MAXMON; i++) if (G.mons[i].used) figUnit(G.mons[i], true, animM[i], fdt, t, false); }
   for (int k = 0; k < NPK; k++) for (int v = 0; v < PROP_VARIANTS[k]; v++) if (k != PK_WAY) { static int last[NPK][5]; (void)last; meshUpload(gProp[k][v], propInst[k][v], propN[k][v]); }
   { int n = 0; static Inst wi[8]; for (auto& w : ways) if (w.used && n < 8) { M4 m = mul(translate(w.x, 0, w.z), rotY(-PI / 2 + 0.3f)); memcpy(wi[n].m, m.m, 64); wi[n].tint[0] = wi[n].tint[1] = wi[n].tint[2] = 1; wi[n].tint[3] = 0; wi[n].mat[0] = wi[n].mat[1] = 1; wi[n].mat[2] = w.glow * 7 * w.fl; wi[n].mat[3] = 0; n++; } meshUpload(gProp[PK_WAY][0], wi, n); }
   // zone particles
@@ -277,10 +320,10 @@ void draw() {
   glUniform2f(glGetUniformLocation(pTerr, "uOrigin"), std::round(camS.fx), std::round(camS.fz - 10)); set1(pTerr, "uY", 0); glBindVertexArray(terrNear.vao); glDrawElements(GL_TRIANGLES, terrNear.nIdx, GL_UNSIGNED_INT, nullptr);
   glUniform2f(glGetUniformLocation(pTerr, "uOrigin"), std::round(camS.fx / 8) * 8, std::round((camS.fz - 120) / 8) * 8); set1(pTerr, "uY", -0.25f); glBindVertexArray(terrFar.vao); glDrawElements(GL_TRIANGLES, terrFar.nIdx, GL_UNSIGNED_INT, nullptr);
   // grass
-  setLit(pGrass); glUniform3f(glGetUniformLocation(pGrass, "uCenter"), camS.fx + 6, 0, camS.fz - 6); glUniform2f(glGetUniformLocation(pGrass, "uTile"), 72, 48); set1(pGrass, "uTime", t); set1(pGrass, "uGrassH", cur.grassH); set1(pGrass, "uHeath", 1);
+  setLit(pGrass); glUniform3f(glGetUniformLocation(pGrass, "uCenter"), camO.on ? camPos.x : camS.fx + 6, 0, camO.on ? camPos.z : camS.fz - 6); glUniform2f(glGetUniformLocation(pGrass, "uTile"), 72, 48); set1(pGrass, "uTime", t); set1(pGrass, "uGrassH", cur.grassH); set1(pGrass, "uHeath", 1);
   set3(pGrass, "uGc1", cur.g1); set3(pGrass, "uGc2", cur.g2); set3(pGrass, "uGc3", cur.g3); glBindVertexArray(grassVao); glDrawElementsInstanced(GL_TRIANGLES, 15, GL_UNSIGNED_SHORT, nullptr, (int)(grassCount * q.grass));
   // props + characters
-  setLit(pMesh); drawProps(); drawFigures(false);
+  setLit(pMesh); drawProps(); drawFigures(false); drawShapes();
   // marks + particles (blended)
   glDepthMask(GL_FALSE); glEnable(GL_BLEND); glBlendFunc(GL_ONE, GL_ONE); glEnable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(-2, -2);
   if (mn) { glUseProgram(pMark); setM(pMark, "uVP", vpM); set1(pMark, "uTime", t); glBindVertexArray(markVao); glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, mn); }
@@ -294,7 +337,7 @@ void draw() {
   glDisable(GL_DEPTH_TEST); glDisable(GL_CULL_FACE); glBindVertexArray(vaoEmpty);
   glBindFramebuffer(GL_FRAMEBUFFER, fboA); glViewport(0, 0, W, H); glUseProgram(pFog);
   glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, texScene); glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, texDepth); seti(pFog, "tC", 0); seti(pFog, "tD", 1);
-  setM(pFog, "uInvProj", invProj); setM(pFog, "uCamW", camW); glUniform2f(glGetUniformLocation(pFog, "uNF"), 0.5f, 2600.f); glUniform2f(glGetUniformLocation(pFog, "uRes"), (float)W, (float)H); set3(pFog, "uFog", cur.fog);
+  setM(pFog, "uInvProj", invProj); setM(pFog, "uCamW", camW); glUniform2f(glGetUniformLocation(pFog, "uNF"), camNear, 2600.f); glUniform2f(glGetUniformLocation(pFog, "uRes"), (float)W, (float)H); set3(pFog, "uFog", cur.fog);
   set1(pFog, "uDens", cur.dens * (1 - 0.45f * std::min(1.f, fogPull))); set1(pFog, "uAO", q.ao ? 1.f : 0.f); set1(pFog, "uTime", t); set3(pFog, "uMoon", MOON_DIR); set1(pFog, "uMoonI", cur.moon);
   { float lp[12], lc[12]; for (int i = 0; i < 4; i++) { lp[i * 3] = lit.fogLP[i].x; lp[i * 3 + 1] = lit.fogLP[i].y; lp[i * 3 + 2] = lit.fogLP[i].z; lc[i * 3] = lit.fogLC[i].x; lc[i * 3 + 1] = lit.fogLC[i].y; lc[i * 3 + 2] = lit.fogLC[i].z; } glUniform3fv(glGetUniformLocation(pFog, "uLP"), 4, lp); glUniform3fv(glGetUniformLocation(pFog, "uLC"), 4, lc); }
   glDrawArrays(GL_TRIANGLES, 0, 3);

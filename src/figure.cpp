@@ -144,6 +144,18 @@ void figAnimPose(FigAnim& an, const FigAsset& a) {
     m[8] = R[6]; m[9] = R[7]; m[10] = R[8]; m[11] = Wp[2] - (R[6] * H[0] + R[7] * H[1] + R[8] * H[2]);
   }
 }
+static bool inSub(const FigAsset& a, int b, int root) { for (int g = 0; b >= 0 && g < FMAXB; g++) { if (b == root) return true; b = a.parent[b] == (int8_t)255 || a.parent[b] < 0 ? -1 : a.parent[b]; } return false; }
+void figAddRot(FigAnim& an, const FigAsset& a, int root, float ax, float ay, float az, float ang, const float* pv) {
+  if (root < 0 || std::fabs(ang) < 1e-5f) return; float l = std::sqrt(ax * ax + ay * ay + az * az); if (l < 1e-6f) return; ax /= l; ay /= l; az /= l;
+  float s = std::sin(ang * 0.5f), c = std::cos(ang * 0.5f), qx = ax * s, qy = ay * s, qz = az * s, qw = c; float R[9]; float q[4] = {qx, qy, qz, qw}; quatR(q, R);
+  for (int b = 0; b < a.nb; b++) { if (!inSub(a, b, root)) continue; float* p = an.pose + b * 7;
+    float px = p[4] - pv[0], py = p[5] - pv[1], pz = p[6] - pv[2]; p[4] = pv[0] + R[0] * px + R[1] * py + R[2] * pz; p[5] = pv[1] + R[3] * px + R[4] * py + R[5] * pz; p[6] = pv[2] + R[6] * px + R[7] * py + R[8] * pz;
+    float x = p[0], y = p[1], z = p[2], w = p[3]; p[0] = qw * x + qx * w + qy * z - qz * y; p[1] = qw * y - qx * z + qy * w + qz * x; p[2] = qw * z + qx * y - qy * x + qz * w; p[3] = qw * w - qx * x - qy * y - qz * z; }
+}
+void figAddMove(FigAnim& an, const FigAsset& a, int root, float dx, float dy, float dz) { if (root < 0) return; for (int b = 0; b < a.nb; b++) if (inSub(a, b, root)) { an.pose[b * 7 + 4] += dx; an.pose[b * 7 + 5] += dy; an.pose[b * 7 + 6] += dz; } }
+float figClipU(const FigAsset& a, const char* clip, float u, FigAnim& an, float w) {
+  int ci = a.clipIx(clip); if (ci < 0 || w <= 0.001f) return 0; float tmp[FMAXB * 7]; const FigClip& c = a.clips[ci]; sampleClip(a, c, sat01(u) * (c.frames - 1), tmp); blendPose(an.pose, tmp, w > 1 ? 1 : w, a.nb); return c.hit;
+}
 static uint32_t rs = 0x9e3779b9u; static float rnd01() { rs ^= rs << 13; rs ^= rs >> 17; rs ^= rs << 5; return (rs >> 8) * (1.f / 16777216.f); }
 void figShatter(FigAnim& an, const FigAsset& a, float power, float dx, float dz) {
   an.shat = true;

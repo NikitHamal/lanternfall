@@ -4,11 +4,12 @@
 #include <GLFW/glfw3.h>
 #include "render.h"
 #include "ui.h"
+#include "play.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <vector>
-static GLFWwindow* win; static bool fullscreen = false, vsync = true; static int wx = 100, wy = 100, ww = 1280, wh = 720; static double mx = 0, my = 0;
+static bool rollReq = false, locked = false, firstMove = true; static double lastX = 0, lastY = 0; static GLFWwindow* win; static bool fullscreen = false, vsync = true; static int wx = 100, wy = 100, ww = 1280, wh = 720; static double mx = 0, my = 0;
 static void toggleFullscreen() {
   if (!fullscreen) { glfwGetWindowPos(win, &wx, &wy); glfwGetWindowSize(win, &ww, &wh); GLFWmonitor* m = glfwGetPrimaryMonitor(); const GLFWvidmode* v = glfwGetVideoMode(m); glfwSetWindowMonitor(win, m, 0, 0, v->width, v->height, v->refreshRate); }
   else glfwSetWindowMonitor(win, nullptr, wx, wy, ww, wh, 0);
@@ -19,6 +20,7 @@ static void onKey(GLFWwindow*, int key, int, int action, int mods) {
   int c = key == GLFW_KEY_ENTER || key == GLFW_KEY_KP_ENTER ? 13 : key == GLFW_KEY_ESCAPE ? 27 : key == GLFW_KEY_SPACE ? ' ' : (key >= GLFW_KEY_A && key <= GLFW_KEY_Z) ? key : (key >= GLFW_KEY_0 && key <= GLFW_KEY_9) ? key : (key >= GLFW_KEY_KP_0 && key <= GLFW_KEY_KP_9) ? '0' + (key - GLFW_KEY_KP_0) : 0;
   if (key == GLFW_KEY_F11 && !rep) { toggleFullscreen(); return; }
   if (key == GLFW_KEY_F10 && !rep) { vsync = !vsync; glfwSwapInterval(vsync ? 1 : 0); return; }
+  if (pl::active()) { if (rep) return; if (key == GLFW_KEY_Q) { gfx::setQuality(gfx::quality + 1); return; } if (c == 27) { if (pl::H.ended) pl::stop(); else pl::stop(); return; } if (c == ' ') rollReq = true; else if (c) pl::keyPress(c); return; }
   if (rep) return;
   if (key == GLFW_KEY_Q) { gfx::setQuality(gfx::quality + 1); return; }
   if (c == 27 && G.panel == P_NONE && G.state != S_TITLE) { G.panel = P_MENU; return; }
@@ -28,9 +30,13 @@ static void onKey(GLFWwindow*, int key, int, int action, int mods) {
   if (c == ' ') G.fireFlare(true); else if (c == 'M') { G.panel = P_MENU; G.panelTimer = false; } else if (c == 'C') gfx::closeView = !gfx::closeView;
   else if (key == GLFW_KEY_EQUAL || key == GLFW_KEY_KP_ADD) G.P.speed = G.P.speed == 1 ? 2 : 4; else if (key == GLFW_KEY_MINUS || key == GLFW_KEY_KP_SUBTRACT) G.P.speed = G.P.speed == 4 ? 2 : 1;
 }
+static void onCursor(GLFWwindow*, double x, double y) { if (!locked) return; if (firstMove) { firstMove = false; lastX = x; lastY = y; return; } pl::look((float)(x - lastX), (float)(y - lastY)); lastX = x; lastY = y; }
+static void onScroll(GLFWwindow*, double, double dy) { if (pl::active()) pl::scroll((float)dy); }
+static void lockCursor(bool on) { locked = on; firstMove = true; glfwSetInputMode(win, GLFW_CURSOR, on ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL); if (glfwRawMouseMotionSupported()) glfwSetInputMode(win, GLFW_RAW_MOUSE_MOTION, on ? GLFW_TRUE : GLFW_FALSE); }
 static void onMouse(GLFWwindow* w, int button, int action, int) {
+  if (pl::active()) return;
   if (button != GLFW_MOUSE_BUTTON_LEFT || action != GLFW_PRESS) return; double x, y; glfwGetCursorPos(w, &x, &y); int ww_, wh_, fw, fh; glfwGetWindowSize(w, &ww_, &wh_); glfwGetFramebufferSize(w, &fw, &fh); float sx = (float)(x * fw / ww_), sy = (float)(y * fh / wh_);
-  if (ui::click(sx, sy)) return; if (G.state == S_TITLE) { G.beginRun(false); return; } if (G.panel != P_NONE || !G.hasRun) return;
+  if (ui::click(sx, sy)) return; if (G.state == S_TITLE) return; if (G.panel != P_NONE || !G.hasRun) return;
   Unit* m = gfx::pickUnit(sx, sy); if (m) { G.setFocus(m); fx.ring(m->x, m->z, 0.3f, m->radius + 0.6f, 0.6f, {1.2f, 0.9f, 0.5f}); fx.floatText(m->x, MON[m->cls].hpY + 0.6f, m->z, "FOCUS", 0xffd27a, 12, 0.5f); return; }
   float gx, gz; if (gfx::pickGround(sx, sy, gx, gz)) { G.setRally(gx, gz); fx.ring(G.rallyX, G.rallyZ, 0.2f, 0.9f, 0.7f, {1.2f, 0.9f, 0.5f}); }
 }
@@ -50,9 +56,9 @@ static int lastRuns = -1;
 namespace gfx { extern const char* gArgv0; }
 int main(int argc, char** argv) {
   gfx::gArgv0 = argv[0];
-  int quality = 2, shotFrames = 0, simSpeed = 1, W0 = 1280, H0 = 720; const char* shot = nullptr; bool demo = false, noAudio = false;
+  int quality = 2, shotFrames = 0, simSpeed = 1, W0 = 1280, H0 = 720; const char* shot = nullptr; bool demo = false, noAudio = false; int startMode = 0, startView = 0; bool bot = false; float dbgDraw = -1, dbgYaw = 99, dbgPitch = 0; int ff = 0;
   for (int i = 1; i < argc; i++) { if (!strcmp(argv[i], "--shot") && i + 1 < argc) shot = argv[++i]; else if (!strcmp(argv[i], "--frames") && i + 1 < argc) shotFrames = atoi(argv[++i]); else if (!strcmp(argv[i], "--quality") && i + 1 < argc) quality = atoi(argv[++i]);
-    else if (!strcmp(argv[i], "--speed") && i + 1 < argc) simSpeed = atoi(argv[++i]); else if (!strcmp(argv[i], "--size") && i + 2 < argc) { W0 = atoi(argv[++i]); H0 = atoi(argv[++i]); } else if (!strcmp(argv[i], "--demo")) demo = true; else if (!strcmp(argv[i], "--novsync")) vsync = false; else if (!strcmp(argv[i], "--mute")) noAudio = true;
+    else if (!strcmp(argv[i], "--speed") && i + 1 < argc) simSpeed = atoi(argv[++i]); else if (!strcmp(argv[i], "--size") && i + 2 < argc) { W0 = atoi(argv[++i]); H0 = atoi(argv[++i]); } else if (!strcmp(argv[i], "--demo")) demo = true; else if (!strcmp(argv[i], "--mode") && i + 1 < argc) startMode = !strcmp(argv[++i], "waves") ? pl::M_WAVES : pl::M_RANGE; else if (!strcmp(argv[i], "--view") && i + 1 < argc) startView = atoi(argv[++i]); else if (!strcmp(argv[i], "--bot")) bot = true; else if (!strcmp(argv[i], "--ff") && i + 1 < argc) ff = atoi(argv[++i]); else if (!strcmp(argv[i], "--draw") && i + 1 < argc) dbgDraw = (float)atof(argv[++i]); else if (!strcmp(argv[i], "--yaw") && i + 2 < argc) { dbgYaw = (float)atof(argv[++i]); dbgPitch = (float)atof(argv[++i]); } else if (!strcmp(argv[i], "--novsync")) vsync = false; else if (!strcmp(argv[i], "--mute")) noAudio = true;
     else if (!strcmp(argv[i], "--help")) { printf("lanternfall [--quality 0-3] [--size W H] [--novsync] [--mute]\n"); return 0; } }
   if (!glfwInit()) { fprintf(stderr, "glfwInit failed\n"); return 1; }
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); glfwWindowHint(GLFW_SAMPLES, 0);
@@ -62,20 +68,27 @@ int main(int argc, char** argv) {
   G.onWaylight = [](float x) { gfx::addWaylight(x, false); }; G.onRelight = []() { gfx::lightLastWaylight(); }; G.onShift = [](float dx) { gfx::shiftWorld(dx); }; G.onReach = [](int r, bool inst) { gfx::setReach(r, inst); };
   G.load(); { int fw, fh; glfwGetFramebufferSize(win, &fw, &fh); gfx::winW = fw; gfx::winH = fh; } if (!gfx::init(quality)) return 1; ui::init(); if (!noAudio && !shot) audio::init(); audio::setVolume(G.P.vol, G.P.mute);
   G.newRun(); G.state = S_TITLE; gfx::addWaylight(G.anchorX + 2.2f, true); lastRuns = G.P.runs;
-  glfwSetKeyCallback(win, onKey); glfwSetMouseButtonCallback(win, onMouse);
+  glfwSetKeyCallback(win, onKey); glfwSetMouseButtonCallback(win, onMouse); glfwSetCursorPosCallback(win, onCursor); glfwSetScrollCallback(win, onScroll);
+  if (startMode) { pl::start(startMode); pl::setView(startView); pl::H.view = startView; pl::H.bot = bot; if (dbgDraw >= 0) pl::debugDraw(dbgDraw); if (dbgYaw < 90) pl::debugAim(dbgYaw, dbgPitch); if (!shot) lockCursor(true); }
+  if (startMode && ff > 0) { pl::Input in0; for (int i = 0; i < ff; i++) pl::update(1.f / 60.f, in0); }
   if (demo) { G.beginRun(false); G.P.speed = 1; }
   double last = glfwGetTime(), accum = 0; float acc = 0; const float DT = 1.f / 60.f; int frame = 0; float fpsT = 0; int fpsN = 0; char title[128];
   while (!glfwWindowShouldClose(win)) {
     glfwPollEvents(); int fw, fh; glfwGetFramebufferSize(win, &fw, &fh); if (fw < 2 || fh < 2) { glfwWaitEvents(); continue; } if (fw != gfx::winW || fh != gfx::winH) gfx::resize(fw, fh);
     double now = glfwGetTime(); float dtR = shot ? DT : (float)(now - last); last = now; if (!(dtR > 0)) dtR = 0.016f; dtR = std::min(dtR, 0.1f); (void)accum;
-    G.tickPanel(dtR); bool paused = G.panel != P_NONE || G.state == S_TITLE || !G.hasRun; float gdt = 0, adt = 0;
-    if (!paused && (G.hitStop = std::max(0.f, G.hitStop - dtR)) > 0) gdt = 0;
+    if (pl::pendingMode) { pl::start(pl::pendingMode); pl::pendingMode = 0; lockCursor(true); }
+    const bool play = pl::active(); if (!play && locked) lockCursor(false);
+    if (play) { pl::Input in; in.mx = (glfwGetKey(win, GLFW_KEY_D) == GLFW_PRESS || glfwGetKey(win, GLFW_KEY_RIGHT) == GLFW_PRESS ? 1.f : 0.f) - (glfwGetKey(win, GLFW_KEY_A) == GLFW_PRESS || glfwGetKey(win, GLFW_KEY_LEFT) == GLFW_PRESS ? 1.f : 0.f); in.mz = (glfwGetKey(win, GLFW_KEY_W) == GLFW_PRESS || glfwGetKey(win, GLFW_KEY_UP) == GLFW_PRESS ? 1.f : 0.f) - (glfwGetKey(win, GLFW_KEY_S) == GLFW_PRESS || glfwGetKey(win, GLFW_KEY_DOWN) == GLFW_PRESS ? 1.f : 0.f);
+      in.sprint = glfwGetKey(win, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS; in.lmb = glfwGetMouseButton(win, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS; in.rmb = glfwGetMouseButton(win, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS; in.roll = rollReq || glfwGetKey(win, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS; rollReq = false; pl::update(dtR, in); }
+    if (!play) G.tickPanel(dtR); bool paused = !play && (G.panel != P_NONE || G.state == S_TITLE || !G.hasRun); float gdt = 0, adt = 0;
+    if (play) adt = dtR * pl::timeScale();
+    else if (!paused && (G.hitStop = std::max(0.f, G.hitStop - dtR)) > 0) gdt = 0;
     else if (!paused) { G.slowMo = std::max(0.f, G.slowMo - dtR); float sm = G.slowMo > 0 ? lerpf(1, 0.3f, std::min(1.f, G.slowMo / 0.5f)) : 1.f; adt = dtR * G.P.speed * simSpeed * sm; acc += adt; int n = 0; while (acc >= DT && n < 14 * simSpeed) { G.step(DT); acc -= DT; n++; gdt += DT; if (G.panel != P_NONE || !G.hasRun) break; } if (acc > DT * 4) acc = 0; }
     if (G.panel != P_NONE) { /* the steward's countdown uses real time */ }
-    float alpha = paused ? 1.f : clampf(acc / DT, 0, 1); if (G.P.runs != lastRuns) { lastRuns = G.P.runs; gfx::clearWaylights(); fx.clear(); gfx::resetCamera(); if (G.state == S_RUNEND || G.state == S_WALK) {} }
+    float alpha = (paused || play) ? 1.f : clampf(acc / DT, 0, 1); if (G.P.runs != lastRuns) { lastRuns = G.P.runs; gfx::clearWaylights(); fx.clear(); gfx::resetCamera(); if (G.state == S_RUNEND || G.state == S_WALK) {} }
     for (Unit& h : G.heroes) if (paused) { h.ox = h.x; h.oz = h.z; }
     gfx::update(dtR, paused ? dtR * 0.35f : adt, paused, alpha);
-    float danger = 0; if (G.hasRun && G.state != S_TITLE) { danger = G.state == S_BOSS ? 1.f : (G.state == S_FIGHT ? 0.55f : 0.1f); if (G.partyHp() < 0.4f) danger = std::min(1.f, danger + 0.3f); }
+    float danger = play ? (pl::H.mode == pl::M_WAVES ? 0.5f : 0.f) : 0; if (!play && G.hasRun && G.state != S_TITLE) { danger = G.state == S_BOSS ? 1.f : (G.state == S_FIGHT ? 0.55f : 0.1f); if (G.partyHp() < 0.4f) danger = std::min(1.f, danger + 0.3f); }
     audio::update(dtR, danger, G.panel != P_NONE, 0.f); gfx::draw(); ui::draw(fw, fh, dtR);
     if (shot && ++frame >= shotFrames) { std::vector<uint8_t> px((size_t)fw * fh * 4), rgb((size_t)fw * fh * 3); glReadPixels(0, 0, fw, fh, GL_RGBA, GL_UNSIGNED_BYTE, px.data()); for (int y = 0; y < fh; y++) for (int x = 0; x < fw; x++) for (int k = 0; k < 3; k++) rgb[((size_t)y * fw + x) * 3 + k] = px[((size_t)(fh - 1 - y) * fw + x) * 4 + k];
       writePng(shot, fw, fh, rgb); fprintf(stderr, "wrote %s (%dx%d) stage=%d state=%d heroes hp=%.0f%% mons=%d\n", shot, fw, fh, G.run.stage, G.state, G.partyHp() * 100, G.liveMonCount()); break; }

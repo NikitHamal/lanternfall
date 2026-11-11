@@ -26,6 +26,10 @@ struct FigAnim {
 int figActClip(const FigAsset& a, int kind);
 void figAnimUpdate(FigAnim& an, const FigAsset& a, float dt, float speed, bool combat, int actClip, float actU, float stagV, bool down);
 void figAnimPose(FigAnim& an, const FigAsset& a);            // pose -> bone matrices
+// small additive procedural layer applied after the baked pose: rotate a bone subtree (axis angle) about a model-space pivot / translate it
+void figAddRot(FigAnim& an, const FigAsset& a, int root, float ax, float ay, float az, float ang, const float* pivot);
+void figAddMove(FigAnim& an, const FigAsset& a, int root, float dx, float dy, float dz);
+float figClipU(const FigAsset& a, const char* clip, float u, FigAnim& an, float w);   // blend a clip frame (u 0..1) onto the pose with weight w
 void figShatter(FigAnim& an, const FigAsset& a, float power, float dx, float dz);
 void figStepFree(FigAnim& an, const FigAsset& a, float dt);
 struct FigDraw { const FigAsset* a; M4 model; const float* mat; float flash[3], dim, dissolve, disH, disCol[3], glow; bool lantern, shadow; };

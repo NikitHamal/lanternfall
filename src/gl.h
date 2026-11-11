@@ -82,7 +82,7 @@ typedef ptrdiff_t GLsizeiptr, GLintptr;
 #define GL_FLOAT_T GL_FLOAT
 #define GL_FUNCS(X) \
  X(void,Clear,(GLbitfield)) X(void,ClearColor,(GLfloat,GLfloat,GLfloat,GLfloat)) X(void,Viewport,(GLint,GLint,GLsizei,GLsizei)) \
- X(void,Enable,(GLenum)) X(void,Disable,(GLenum)) X(void,BlendFunc,(GLenum,GLenum)) X(void,DepthMask,(GLboolean)) X(void,DepthFunc,(GLenum)) \
+ X(void,Enable,(GLenum)) X(void,Disable,(GLenum)) X(void,BlendFunc,(GLenum,GLenum)) X(void,DepthMask,(GLboolean)) X(void,DepthFunc,(GLenum)) X(void,DepthRange,(double,double)) \
  X(void,CullFace,(GLenum)) X(void,PolygonOffset,(GLfloat,GLfloat)) X(void,ColorMask,(GLboolean,GLboolean,GLboolean,GLboolean)) \
  X(void,GenTextures,(GLsizei,GLuint*)) X(void,BindTexture,(GLenum,GLuint)) X(void,TexParameteri,(GLenum,GLenum,GLint)) X(void,TexParameterfv,(GLenum,GLenum,const GLfloat*)) \
  X(void,TexImage2D,(GLenum,GLint,GLint,GLsizei,GLsizei,GLint,GLenum,GLenum,const void*)) X(void,TexSubImage2D,(GLenum,GLint,GLint,GLint,GLsizei,GLsizei,GLenum,GLenum,const void*)) \

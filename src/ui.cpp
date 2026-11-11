@@ -1,6 +1,7 @@
 // Native HUD/UI: 5x7 bitmap font atlas + batched quads (one draw call per frame). Replaces the DOM overlay of the original.
 #include "ui.h"
 #include "figure.h"
+#include "play.h"
 #include <vector>
 #include <algorithm>
 #include "render.h"
@@ -68,23 +69,61 @@ bool init() {
 }
 static void drawHud();
 static void drawPanels();
-static void drawTitle();
+static void drawTitle(); static void drawPlayHud();
 void draw(int w, int h, float dt) {
   SW = w; SH = h; S = std::max(1.f, std::round(h / 360.f)); nq = 0; memcpy(prev, btns, sizeof btns); nprev = nb; nb = 0; (void)dt;
-  if (G.state == S_TITLE) drawTitle(); else { drawHud(); }
+  if (pl::active()) drawPlayHud(); else if (G.state == S_TITLE) drawTitle(); else { drawHud(); }
   drawPanels();
   if (G.state == S_WIPE || G.state == S_RUNEND) { float a = G.state == S_RUNEND ? 0.75f : std::min(0.75f, G.stT / 2.5f) * (G.run.flames <= 0 ? 1.1f : 0.8f); rect(0, 0, (float)w, (float)h, {0.01f, 0.01f, 0.02f, std::min(0.85f, a)}); if (G.state == S_WIPE && G.run.flames <= 0 && G.stT > 0.6f) { text("THE LANTERN WENT OUT", w / 2.f, h / 2.f - 10 * S, S * 3, hexc(0xe9b872), 1); } }
   glDisable(GL_DEPTH_TEST); glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); glDisable(GL_CULL_FACE); glUseProgram(prog); glUniform2f(glGetUniformLocation(prog, "uRes"), (float)w, (float)h); glUniform1i(glGetUniformLocation(prog, "tFont"), 0);
   glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, tex); glBindVertexArray(vao); glBindBuffer(GL_ARRAY_BUFFER, vbo); glBufferSubData(GL_ARRAY_BUFFER, 0, nq * 32 * 4, vb); glDrawElements(GL_TRIANGLES, nq * 6, GL_UNSIGNED_INT, nullptr); glDisable(GL_BLEND); glEnable(GL_DEPTH_TEST);
 }
+
+static int mode_() { return pl::H.mode; }
+static void drawPlayHud() {
+  using namespace pl; const Player& p = P; float W_ = (float)SW, cx = SW / 2.f, cy = SH / 2.f; bool free_ = H.view == VW_FREE;
+  // damage vignette + directional hit arc
+  if (p.vig > 0.02f) { float a = p.vig * 0.38f, t = 22 * S; rect(0, 0, W_, t, {0.7f, 0.05f, 0.03f, a}); rect(0, SH - t, W_, t, {0.7f, 0.05f, 0.03f, a}); rect(0, 0, t, (float)SH, {0.7f, 0.05f, 0.03f, a}); rect(W_ - t, 0, t, (float)SH, {0.7f, 0.05f, 0.03f, a}); }
+  if (p.hitK > 0.05f && mode_() == 2) for (int i = -3; i <= 3; i++) { float g = p.hitDir + i * 0.09f, R = 74 * S, x = cx + std::sin(g) * -R * 1.0f, y = cy - std::cos(g) * R; rect(x - 2 * S, y - 2 * S, 4 * S, 4 * S, {1, 0.2f, 0.12f, p.hitK * (1 - std::fabs(i) * 0.2f)}); }
+  if (!free_ && !p.down) {
+    // reticle: ticks tighten with the draw curve and turn gold in the sweet spot, wobble when over-held
+    float r = H.spread * S * 0.55f + 2 * S, tl = 5 * S, th = std::max(1.f, S * 0.8f); bool sw = H.sweet > 0.5f, ov = p.drawing && p.holdT > 0.9f; Col c = sw ? Col{1, 0.82f, 0.25f, 1} : ov ? Col{1, 0.5f, 0.2f, 1} : Col{0.96f, 0.92f, 0.8f, 0.92f};
+    rect(cx - r - tl, cy - th / 2 + 0.5f, tl, th, c); rect(cx + r, cy - th / 2 + 0.5f, tl, th, c); rect(cx - th / 2 + 0.5f, cy - r - tl, th, tl, c); rect(cx - th / 2 + 0.5f, cy + r, th, tl, c); rect(cx - S * 0.6f, cy - S * 0.6f, S * 1.2f, S * 1.2f, c);
+    if (p.drawing) { // force-draw curve
+      float gw = 66 * S, gh = 15 * S, gx = cx - gw / 2, gy = cy + 40 * S; const int N = 30; rect(gx - 2 * S, gy - 3 * S, gw + 4 * S, gh + 6 * S, {0, 0, 0, 0.35f});
+      for (int i = 0; i < N; i++) { float u = (i + 0.5f) / N, f = curve(u), h = f * gh, x = gx + gw * i / N; bool on = u <= p.draw, zone = u >= SWEET0; Col k = on ? (zone ? Col{1, 0.82f, 0.25f, 1} : Col{0.95f, 0.78f, 0.45f, 0.95f}) : (zone ? Col{0.55f, 0.45f, 0.15f, 0.6f} : Col{0.35f, 0.32f, 0.28f, 0.55f}); rect(x, gy + gh - h, gw / N - 0.6f * S, h, k); }
+      text(sw ? "RELEASE" : ov ? "TIRING - HOLD STEADY" : "DRAW", cx, gy + gh + 6 * S, S * 0.8f, sw ? hexc(0xffd24a) : ov ? hexc(0xff8a4a) : hexc(0xb3a88e), 1); }
+    if (p.hmT > 0) { float k = p.hmT / 0.25f, d0 = (7 + (1 - k) * 4) * S; Col hc = p.hmKind > 1.5f ? Col{1, 0.25f, 0.2f, k} : p.hmKind > 0.5f ? Col{1, 0.82f, 0.25f, k} : Col{1, 1, 1, k}; for (int sx = -1; sx <= 1; sx += 2) for (int sy = -1; sy <= 1; sy += 2) for (int i = 0; i < 4; i++) { float d = d0 + i * 2.2f * S; rect(cx + sx * d - S, cy + sy * d - S, 2 * S, 2 * S, hc); } }
+  }
+  // bars
+  float bx = 10 * S, by = SH - 24 * S; bar(bx, by, 96 * S, 6 * S, p.hp / p.maxHp, p.hp / p.maxHp < 0.33f ? hexc(0xd0483a) : hexc(0x7fb85a)); bar(bx, by + 9 * S, 96 * S, 3 * S, p.st / 100.f, hexc(0xe0c060)); text(mode_() == 2 ? "HEALTH" : "ARCHER", bx, by - 9 * S, S * 0.75f, hexc(0xb3a88e));
+  if (mode_() == 2) for (int i = 0; i < 3; i++) { bool on = i < p.lives + 1; rect(bx + 104 * S + i * 8 * S, by - 2 * S, 5 * S, 8 * S, on ? hexc(0xffa24a) : Col{0.2f, 0.18f, 0.16f, 1}); if (on) rect(bx + 104 * S + i * 8 * S + S, by, 3 * S, 4 * S, hexc(0xffe9a0)); }
+  // top: mode / wave, score, combo, accuracy
+  rect(0, 0, W_, 14 * S, {0, 0, 0, 0.42f}); text(mode_() == 2 ? H.waveS : "PRACTICE RANGE", 6 * S, 3 * S, S, hexc(0xe9c98a)); if (mode_() == 2) { text("FOES", 6 * S + 70 * S, 3 * S, S * 0.85f, hexc(0xb3a88e)); for (int i = 0; i < std::min(H.foesLeft, 24); i++) rect(6 * S + 92 * S + i * 3.2f * S, 4 * S, 2.2f * S, 6 * S, hexc(0xc0483a)); }
+  text(H.scoreS, W_ / 2, 2 * S, S * 1.3f, hexc(0xf0dcb0), 1); if (H.combo > 1) text(H.comboS, W_ / 2 + 40 * S, 3 * S, S * 1.1f, hexc(0xffa24a)); text(H.accS, W_ - 6 * S, 3 * S, S * 0.9f, hexc(0xb3a88e), 2);
+  for (int i = 0; i < MAXFEED; i++) { const Feed& f = H.feed[i]; if (f.t <= 0 || !f.s[0]) continue; text(f.s, W_ - 6 * S, 18 * S + i * 9 * S, S * 0.85f, hexc(f.col, std::min(1.f, f.t * 1.5f)), 2); }
+  // foe health bars (+ boss)
+  for (const Foe& f : foes) { const Unit& u = f.u; if (!u.used || u.hp <= 0) continue; float sx, sy; if (u.boss) continue; if (std::hypot(u.x - p.x, u.z - p.z) > 48) continue; if (!gfx::project(u.x, terrH(u.x, u.z) + f.headY + 0.3f, u.z, sx, sy)) continue; float w = (13 + u.radius * 24) * S * 0.8f; bar(sx - w / 2, sy, w, 3 * S, u.hp / u.maxHp, u.elite ? hexc(0xe0a33c) : hexc(0xc0483a)); }
+  for (const Foe& f : foes) if (f.u.used && f.u.hp > 0 && f.u.boss) { float bw2 = 220 * S; text(MON[f.u.cls].name, W_ / 2, 17 * S, S * 1.2f, hexc(0xf0c890), 1); bar(W_ / 2 - bw2 / 2, 28 * S, bw2, 5 * S, f.u.hp / f.u.maxHp, hexc(0xb83a30)); break; }
+  for (const FloatText& f : fx.ft) if (f.on) { float sx, sy; if (!gfx::project(f.x, f.y, f.z, sx, sy)) continue; float u = f.t / f.dur, a = u < 0.1f ? u / 0.1f : 1 - std::pow(std::max(0.f, (u - 0.5f) / 0.5f), 2.f); text(f.s, sx, sy, S * f.size / 11.f * 0.95f, hexc(f.col, a), 1); }
+  // banner + downed + help
+  if (H.bannerT > 0 || H.ended) { float a = H.ended ? 1.f : std::min(1.f, H.bannerT * 1.5f); text(H.banner, cx, SH * 0.2f, S * 2.4f, hexc(0xf1dfb6, a), 1); text(H.sub, cx, SH * 0.2f + 26 * S, S * 0.9f, hexc(0xb3a88e, a), 1); }
+  if (p.down && !p.over) { rect(0, 0, W_, (float)SH, {0.2f, 0.01f, 0.01f, 0.35f}); text("DOWNED", cx, SH * 0.4f, S * 3.f, hexc(0xe0685a), 1); bar(cx - 50 * S, SH * 0.4f + 36 * S, 100 * S, 4 * S, p.downT / 4.2f, hexc(0xffa24a)); }
+  if (p.over) { rect(0, 0, W_, (float)SH, {0, 0, 0, 0.6f}); text("SCORE", cx, SH * 0.42f, S * 1.2f, hexc(0xb3a88e), 1); text(H.scoreS, cx, SH * 0.42f + 14 * S, S * 3.f, hexc(0xf0dcb0), 1); text(H.accS, cx, SH * 0.42f + 44 * S, S, hexc(0xb3a88e), 1); }
+  const char* vn = H.view == VW_FIRST ? "[V] FIRST PERSON" : H.view == VW_THIRD ? "[V] THIRD PERSON" : "[V] FREE LOOK - MOUSE ORBITS, WHEEL ZOOMS"; text(vn, W_ - 6 * S, SH - 14 * S, S * 0.8f, hexc(0xe9c98a), 2);
+  text(H.assist ? "[G] ARC ASSIST ON" : "[G] ARC ASSIST OFF", W_ - 6 * S, SH - 24 * S, S * 0.7f, hexc(0x9a917c), 2);
+  text(mode_() == 2 ? "LMB DRAW/LOOSE  RMB BLOCK  SPACE ROLL  SHIFT SPRINT  R RESTART  ESC MENU" : "LMB DRAW/LOOSE  SPACE ROLL  SHIFT SPRINT  B AUTO-ARCHER  R RESET  ESC MENU", cx, SH - 8 * S, S * 0.65f, hexc(0x6a6252), 1);
+}
 static void drawTitle() {
   float cx = SW / 2.f, cy = SH / 2.f; rect(0, 0, (float)SW, SH * 0.16f, {0, 0, 0, 0.35f}); rect(0, SH * 0.84f, (float)SW, SH * 0.16f, {0, 0, 0, 0.45f});
   float sc = S * 5; const char* t = "LANTERNFALL"; float pulse = 0.85f + 0.15f * std::sin(gfx::time_ * 1.7f);
   text(t, cx + 0, SH * 0.12f, sc, {0.9f, 0.55f, 0.2f, 0.18f * pulse}, 1, false); text(t, cx, SH * 0.115f, sc, hexc(0xf1dfb6), 1);
-  text("A PARTY HOLDS A LANTERN-LIT LINE AGAINST THE DARK", cx, SH * 0.115f + 10 * sc, S, hexc(0xb3a88e), 1);
-  float bw_ = 60 * S; button(cx - bw_ / 2, SH * 0.74f, bw_, 14 * S, "BEGIN", "ENTER / SPACE / CLICK", true, false, 100);
-  char b[96]; if (G.P.bestStage > 0) { snprintf(b, 96, "BEST WAYLIGHT %d   LEVEL %d   EMBERS %d", G.P.bestStage, G.P.bestLevel, G.P.embers); text(b, cx, SH * 0.74f + 18 * S, S * 0.9f, hexc(0x8f8672), 1); }
-  text("SPACE FLARE  M MENU  C CLOSE CAMERA  + / - SPEED  Q QUALITY  F11 FULLSCREEN  ESC QUIT", cx, SH * 0.93f, S * 0.8f, hexc(0x8f8672), 1); (void)cy;
+  text("A LANTERN-LIT ROAD, AN OLD BOW, AND THE DARK BEYOND", cx, SH * 0.115f + 10 * sc, S, hexc(0xb3a88e), 1);
+  { float bw_ = 118 * S, bh = 28 * S, gap = 8 * S, x0 = cx - (3 * bw_ + 2 * gap) / 2, y0 = SH * 0.64f; const char* lb[3] = {"STEWARD", "PRACTICE RANGE", "WAVE HUNT"}; const char* sb[3] = {"[1] THE PARTY FIGHTS ON ITS OWN", "[2] YOU ARE THE ARCHER", "[3] FIRST / THIRD PERSON"};
+    for (int i = 0; i < 3; i++) { float x = x0 + i * (bw_ + gap); bool rec = i == 1; rect(x, y0, bw_, bh, rec ? Col{0.2f, 0.14f, 0.07f, 1} : Col{0.1f, 0.1f, 0.12f, 1}); frame(x, y0, bw_, bh, rec ? hexc(0xe0a33c) : hexc(0x6a5a3c)); frame(x - 2, y0 - 2, bw_ + 4, bh + 4, {0, 0, 0, 1});
+      text(lb[i], x + bw_ / 2, y0 + 5 * S, S * 1.35f, hexc(0xf0dcb0), 1); text(sb[i], x + bw_ / 2, y0 + bh - 9 * S, S * 0.62f, hexc(0x9a917c), 1); addBtn(x, y0, bw_, bh, 100 + i); } }
+  char b[96]; if (G.P.bestStage > 0) { snprintf(b, 96, "BEST WAYLIGHT %d   LEVEL %d   EMBERS %d", G.P.bestStage, G.P.bestLevel, G.P.embers); text(b, cx, SH * 0.64f + 38 * S, S * 0.9f, hexc(0x8f8672), 1); }
+  text("ARCHER: WASD MOVE  LMB DRAW  RMB BLOCK  SPACE ROLL  V VIEW  G ARC  Q QUALITY  F11 FULLSCREEN  ESC QUIT", cx, SH * 0.93f, S * 0.8f, hexc(0x8f8672), 1); (void)cy;
 }
 static void drawHud() {
   const Run& r = G.run; float W_ = (float)SW; char b[96], b2[48];
@@ -152,6 +191,7 @@ static void drawPanels() {
 static void act(int id) {
   G.panelTimer = G.panelTimer && false; Run& r = G.run;
   if (id >= 200 && id < 203) { int i = id - 200; if (i < G.nOffer) { int c = G.offer[i]; G.panel = P_NONE; G.takeCard(c); char b[64]; snprintf(b, 64, "%s", CARDS[c].name); G.toast(b, 0x8fd98a); if (G.pending) G.openPending(); } }
+  else if (id == 100) G.beginRun(false); else if (id == 101) pl::pendingMode = pl::M_RANGE; else if (id == 102) pl::pendingMode = pl::M_WAVES;
   else if (id == 210) G.choose(true); else if (id == 211) G.choose(false);
   else if (id >= 300 && id < 310) { if (G.buyBoon(id - 300)) G.save(); }
   else if (id == 220) { G.stewardBoons(); G.panel = P_NONE; G.newRun(); gfx::clearWaylights(); gfx::resetCamera(); }
@@ -161,7 +201,7 @@ static void act(int id) {
 }
 bool click(float x, float y) { for (int i = 0; i < nprev; i++) { const Btn& b = prev[i]; if (x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h) { act(b.id); return true; } } return G.panel != P_NONE; }
 bool key(int c) {
-  if (G.state == S_TITLE) { if (c == 13 || c == ' ') { G.beginRun(false); return true; } return false; }
+  if (G.state == S_TITLE) { if (c == 13 || c == ' ' || c == '1') { G.beginRun(false); return true; } if (c == '2') { pl::pendingMode = pl::M_RANGE; return true; } if (c == '3') { pl::pendingMode = pl::M_WAVES; return true; } return false; }
   switch (G.panel) {
     case P_CARDS: if (c >= '1' && c <= '3') { act(200 + c - '1'); return true; } return true;
     case P_CHOICE: if (c == '1') { act(210); return true; } if (c == '2') { act(211); return true; } return true;
