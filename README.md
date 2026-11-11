@@ -88,3 +88,12 @@ For a headless smoke test: `xvfb-run ./build/lanternfall --demo --speed 30 --sho
 
 ## Credits
 Game design, data and look: [loktar00/lanternfall](https://github.com/loktar00/lanternfall). This repository is an independent native re-implementation (not a fork). [GLFW](https://www.glfw.org/) (zlib), [miniaudio](https://miniaud.io/) (public domain / MIT-0).
+
+
+## v1.1 - rebuilt characters
+All six heroes and nine monsters are now the original three.js figures (same meshes, rigs, materials and animation) processed through a Blender pipeline (`tools/`):
+skinned meshes with real armatures, baked ambient occlusion, GPU skinning and the original procedural surface shader. Run the game with the `assets/` folder next to the executable.
+
+![heroes](docs/previews/blender_heroes.jpg)
+![title](docs/previews/ingame_title.jpg)
+![walking](docs/previews/ingame_walk.jpg)

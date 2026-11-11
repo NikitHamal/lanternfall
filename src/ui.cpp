@@ -2,6 +2,7 @@
 #include "ui.h"
 #include "figure.h"
 #include <vector>
+#include <algorithm>
 #include "render.h"
 #include "shaders.h"
 #include <cstdio>
@@ -34,7 +35,7 @@ float tw(const char* s, float sc) { if (!serif) return (float)strlen(s) * 6 * sc
 void text(const char* s, float x, float y, float sc, Col c, int align = 0, bool shadow = true) {
   float w = tw(s, sc); if (align == 1) x -= w / 2; else if (align == 2) x -= w;
   float k = 11 * sc / fEM, ty = y - (fBase - 0.66f * fEM) * k + sc;
-  for (int pass = shadow ? 0 : 1; pass < 2; pass++) { float ox = pass == 0 ? sc * 0.9f : 0, oy = pass == 0 ? sc * 0.9f : 0; Col kc = pass == 0 ? Col{0, 0, 0, c.a * 0.85f} : c; float cx = x;
+  for (int pass = shadow ? 0 : 1; pass < 2; pass++) { float ox = pass == 0 ? std::max(1.f, sc * 0.45f) : 0, oy = ox; Col kc = pass == 0 ? Col{0, 0, 0, c.a * 0.85f} : c; float cx = x;
     for (const char* p = s; *p; p++) {
       if (serif) { int ch = (unsigned char)*p; if (ch < 32 || ch > 127) ch = 63; int i = ch - 32;
         if (ch != ' ') { int col = i % 16, row = i / 16; float aw = fCW * 16.f, ah = fCH * 6.f, u0 = col * fCW / aw, v0 = row * fCH / ah; quad(cx + ox, ty + oy, fCW * k, fCH * k, u0, v0, u0 + fCW / aw, v0 + fCH / ah, kc.r, kc.g, kc.b, kc.a); }
