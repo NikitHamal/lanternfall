@@ -16,7 +16,23 @@ Grab the build for your OS from the [**latest GitHub Release**](https://github.c
 
 Unpack and run `lanternfall`. Progress (embers, boons, unlocks) is saved to `~/.lanternfall.sav` / `%APPDATA%\lanternfall.sav`.
 
-## Controls
+## v1.2 - play the archer (3D)
+
+Title screen: **STEWARD** (the original auto-battler), **PRACTICE RANGE** (static, sliding, bobbing and sweeping targets, zone scoring bullseye/inner/middle/outer/edge, combo) or **WAVE HUNT** (the monsters as ranged threats, boss every 5th wave, 3 flames).
+
+| Input | Action |
+| --- | --- |
+| Mouse | look (pointer lock); in free-look: orbit |
+| Hold LMB / release | draw (force curve, gold sweet spot) / loose; over-holding adds aim sway and drains stamina |
+| RMB | raised-bow block (waves) |
+| WASD, Shift, Space | move, sprint, dodge roll with i-frames (Ctrl also rolls) |
+| V | cycle first person / third person / free-look showcase |
+| G / B / R / Esc | arc assist toggle / auto-archer / restart / back to title |
+| Wheel | zoom (third person, free-look) |
+
+Arrows use gravity + quadratic drag with swept segment collision (foe capsules, target discs, props, terrain); the faint arc preview uses the same integrator. Death effects follow the reference (shatter, burn, burst, gutter).
+
+## Controls (steward mode)
 
 | Input | Action |
 | --- | --- |

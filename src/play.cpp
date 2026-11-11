@@ -305,7 +305,7 @@ void camera(float dt) {
 namespace {
 using gfx::shW; using gfx::shV; using gfx::shWn; using gfx::shVn;
 void put(Inst (*arr)[gfx::SHCAP], int* cnt, int sh, const M4& m, V3 col, float ro, float me, float gl) { if (cnt[sh] >= gfx::SHCAP) return; Inst& i = arr[sh][cnt[sh]++]; memcpy(i.m, m.m, 64); i.tint[0] = col.x; i.tint[1] = col.y; i.tint[2] = col.z; i.tint[3] = 0; i.mat[0] = ro; i.mat[1] = me; i.mat[2] = gl; i.mat[3] = 0; }
-void putV(int sh, const M4& m, V3 col, float ro, float me, float gl) { if (shVn[sh] >= 160) return; Inst& i = shV[sh][shVn[sh]++]; memcpy(i.m, m.m, 64); i.tint[0] = col.x; i.tint[1] = col.y; i.tint[2] = col.z; i.tint[3] = 0; i.mat[0] = ro; i.mat[1] = me; i.mat[2] = gl; i.mat[3] = 0; }
+void putV(int sh, const M4& m, V3 col, float ro, float me, float gl) { if (shVn[sh] >= 160) return; Inst& i = shV[sh][shVn[sh]++]; memcpy(i.m, m.m, 64); i.tint[0] = col.x * 0.17f; i.tint[1] = col.y * 0.17f; i.tint[2] = col.z * 0.17f; i.tint[3] = 0; i.mat[0] = ro; i.mat[1] = std::min(me, 0.3f); i.mat[2] = gl * 0.4f; i.mat[3] = 0; }
 M4 seg(V3 a, V3 b, float rx, float rz) { V3 d = b - a; float l = std::max(1e-5f, len(d)); V3 y = d * (1 / l), up = std::fabs(y.y) < 0.95f ? V3{0, 1, 0} : V3{1, 0, 0}; V3 x = norm(cross(up, y)), z = cross(x, y); V3 c = (a + b) * 0.5f; M4 m = ident(); m.m[0] = x.x * rx; m.m[1] = x.y * rx; m.m[2] = x.z * rx; m.m[4] = d.x; m.m[5] = d.y; m.m[6] = d.z; m.m[8] = z.x * rz; m.m[9] = z.y * rz; m.m[10] = z.z * rz; m.m[12] = c.x; m.m[13] = c.y; m.m[14] = c.z; return m; }
 M4 ball(V3 c, float r) { return mul(translate(c.x, c.y, c.z), scale4(r, r, r)); }
 void wCyl(V3 a, V3 b, float r, V3 col, float ro = 0.7f, float me = 0, float gl = 0) { put(shW, shWn, SH_CYL, seg(a, b, r, r), col, ro, me, gl); }
@@ -338,18 +338,18 @@ void buildShapes() {
   auto W = [&](float x, float y, float z) { return eye + rt * x + up * y + bk * z; }; auto Wd = [&](float x, float y, float z) { return norm(rt * x + up * y + bk * z); };
   float p = P.drawing ? P.draw : 0.f, e = P.drawing ? curve(p) : 0.f, blk = P.blocking, spr = clampf((P.speed - 4.8f) / 2.f, 0, 1) * (P.drawing ? 0.f : 1.f); float tmv = tm;
   float rel = P.relT < 0.5f ? std::exp(-P.relT * 14.f) : 0.f, vib = rel * std::cos(P.relT * 75.f) * 0.05f;
-  float gx = lerpf(-0.30f, -0.045f, e), gy = lerpf(-0.31f, -0.118f, e), gz = lerpf(-0.80f, -0.70f, e); float tilt = lerpf(0.22f, 0.0f, e);
+  float gx = lerpf(-0.30f, -0.15f, e), gy = lerpf(-0.31f, -0.15f, e), gz = lerpf(-0.80f, -0.74f, e); float tilt = lerpf(0.22f, 0.04f, e);
   gx = lerpf(gx, -0.02f, blk); gy = lerpf(gy, -0.07f, blk); gz = lerpf(gz, -0.66f, blk); gz += rel * 0.06f * (P.relT < 0.5f ? 1 : 0) + P.blockK * 0.04f; gy += rel * 0.015f;
   gx += 0.012f * std::sin(tmv * 1.15f) - lagX * 0.5f + spr * 0.1f; gy += 0.010f * std::sin(tmv * 1.55f + 1.f) + lagY * 0.5f - spr * 0.1f + std::sin(P.bob * 2.f) * 0.008f * std::min(1.f, P.speed / 4.f); gz += spr * 0.05f + std::sin(P.bob) * 0.006f * std::min(1.f, P.speed / 4.f);
   if (P.stagT > 0) { gx += 0.05f * nz(tmv * 30, 1); gy += 0.04f * nz(tmv * 33, 2); }
-  float ang = lerpf(tilt, 1.35f, blk); V3 U = Wd(std::sin(ang), std::cos(ang), 0), F = Wd(0.0f, lerpf(0.02f, 0.05f, e) + spr * 0.1f, -1.f); V3 G = W(gx, gy, gz); if (blk > 0.05f) F = norm(F + Wd(-0.1f, 0, 0) * blk);
-  float bend = 0.28f + 0.72f * e, L = 0.52f; V3 wood = C(0x7a4a26), tipc = C(0xd8cfae), leather = C(0x5a3a24), sleeve = C(0x2e3a2e), strc = C(0xe8dcc0);
+  float ang = lerpf(tilt, 1.35f, blk); V3 U = Wd(std::sin(ang), std::cos(ang), 0), F = Wd(lerpf(0.02f, 0.14f, e), lerpf(0.02f, 0.10f, e) + spr * 0.1f, -1.f); V3 G = W(gx, gy, gz); if (blk > 0.05f) F = norm(F + Wd(-0.1f, 0, 0) * blk);
+  float bend = 0.28f + 0.72f * e, L = 0.38f; V3 wood = C(0x7a4a26), tipc = C(0xd8cfae), leather = C(0x5a3a24), sleeve = C(0x2e3a2e), strc = C(0xe8dcc0);
   V3 prev[2]; for (int sg = 0; sg < 2; sg++) prev[sg] = G; const int N = 8;
   auto limb = [&](float s) { float sgn = s < 0 ? -1.f : 1.f, a_ = std::fabs(s); return G + U * (s * L * (1 - 0.1f * bend * a_ * a_)) - F * (bend * 0.2f * a_ * a_ * (0.7f + 0.3f * a_)) + F * (0.02f * (1 - a_ * a_)) * sgn * 0.f; };
-  for (int i = 0; i < N; i++) for (int sg = -1; sg <= 1; sg += 2) { float s0 = sg * (float)i / N, s1 = sg * (float)(i + 1) / N; V3 a0 = limb(s0), a1 = limb(s1); float th = 0.020f * (1 - 0.5f * (float)i / N); putV(SH_CYL, seg(a0, a1, th * 1.1f, th * 0.7f), wood, 0.55f, 0.f, 0.f); }
+  for (int i = 0; i < N; i++) for (int sg = -1; sg <= 1; sg += 2) { float s0 = sg * (float)i / N, s1 = sg * (float)(i + 1) / N; V3 a0 = limb(s0), a1 = limb(s1); float th = 0.011f * (1 - 0.5f * (float)i / N); putV(SH_CYL, seg(a0, a1, th * 1.1f, th * 0.7f), wood, 0.55f, 0.f, 0.f); }
   V3 tp = limb(1), bt = limb(-1); putV(SH_SPHERE, ball(tp, 0.016f), tipc, 0.5f, 0, 0); putV(SH_SPHERE, ball(bt, 0.016f), tipc, 0.5f, 0, 0);
   putV(SH_CYL, seg(G - U * 0.075f, G + U * 0.075f, 0.03f, 0.03f), leather, 0.8f, 0, 0);
-  float dd = 0.07f + 0.34f * e; V3 side = norm(cross(F, U)); V3 N0 = G - F * dd + side * vib; putV(SH_CYL, seg(tp, N0, 0.0035f, 0.0035f), strc, 0.4f, 0, 0.35f); putV(SH_CYL, seg(N0, bt, 0.0035f, 0.0035f), strc, 0.4f, 0, 0.35f);
+  float dd = 0.07f + 0.34f * e; V3 side = norm(cross(F, U)); V3 N0 = G - F * dd + side * vib; putV(SH_CYL, seg(tp, N0, 0.0022f, 0.0022f), strc, 0.6f, 0, 0); putV(SH_CYL, seg(N0, bt, 0.0022f, 0.0022f), strc, 0.6f, 0, 0);
   bool nocked = P.nockT <= 0 && !(P.relT < 0.25f) && blk < 0.5f; if (nocked) arrowGeo(G - F * dd + F * 0.0f + F * 0.58f, F, 0.58f, true);
   V3 rh = N0 + side * 0.0f; putV(SH_SPHERE, ball(rh, 0.034f), leather, 0.8f, 0, 0); putV(SH_CYL, seg(rh, W(0.16f, -0.36f, -0.05f), 0.04f, 0.04f), sleeve, 0.9f, 0, 0);
   putV(SH_SPHERE, ball(G - F * 0.01f, 0.04f), leather, 0.8f, 0, 0); putV(SH_CYL, seg(G - F * 0.03f, W(-0.22f, -0.40f, -0.12f), 0.047f, 0.047f), sleeve, 0.9f, 0, 0);

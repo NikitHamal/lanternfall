@@ -68,10 +68,10 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.1.0
-          name: Lanternfall v1.1.0
+          tag_name: v1.2.0
+          name: Lanternfall v1.2.0
           body: |
-            Native C++/OpenGL 3.3 desktop port of Lanternfall. v1.1: all 15 characters rebuilt from the original three.js rigs through a Blender pipeline (skinned meshes, baked reference animation, procedural surface shader), serif UI. Download the archive for your OS, unpack and run `lanternfall` (no installer; keep the `assets/` folder next to the executable).
+            Native C++/OpenGL 3.3 desktop port of Lanternfall. v1.2: you are the archer - first-person (pointer-lock, drawn bow view-model), third-person over-the-shoulder (spring camera with wall collision) and a free-look showcase; press-and-hold draw with a force curve and sweet spot, ballistic arrows with swept collision, practice range and wave hunt, block / dodge roll / hit reactions. Includes the v1.1 Blender-baked characters. Download the archive for your OS, unpack and run `lanternfall` (no installer; keep the `assets/` folder next to the executable).
             - Windows: lanternfall-windows-x64.zip
             - Linux: lanternfall-linux-x64.tar.gz (needs an OpenGL 3.3 driver + X11)
             - macOS: lanternfall-macos-universal.zip (unsigned: right-click > Open the first time)

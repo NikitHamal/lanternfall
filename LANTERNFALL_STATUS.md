@@ -52,3 +52,16 @@ Pipeline (all scripts in `tools/`, reproducible on the molab notebook: Blender 4
 Metrics: 15 figures, 124 k vertices, 7.2 MB assets (not embedded; `assets/` must sit next to the executable, searched in `./assets`, `../assets`, `../Resources/assets`); executable ~0.9 MB.
 Caveats: no GPU in the sandbox - frames captured with Mesa llvmpipe under Xvfb (speckled terrain in captures is software-rasteriser derivative noise from the v1 ground shader, to be checked on hardware).
 Where Blender "customisation" differs from the reference: AO + cavity baked into vertices (softened 0.4..1) and applied in the surface shader; everything else is 1:1.
+
+## v1.2.0 - 3D gameplay & feel overhaul (this session)
+Done:
+- `src/play.cpp/.h` (new): archer play modes. Views: first person (pointer-lock, procedural bow view-model with limb bend / string / nocked arrow / hands, idle sway, look lag, recoil + string vibration), third person (shoulder camera, critically-damped spring, ray-vs-props/terrain clipping guard, aim zoom), free-look orbit showcase (auto-archer demo, wheel zoom). `V` cycles with a 0.22 s blended transition (no hitch, same scene).
+- Archery: hold-to-draw with force curve `1-(1-p)^2(1-.35p)`, sweet spot (p>=.93, <0.9 s hold), over-hold => noise sway + stamina drain, reticle tightens/gold, HUD force-curve bars, arc preview (toggle G, same integrator), swept collisions, zone scoring, head x2, hit markers, damage numbers, kill feed, hit-stop + slow-mo on clean shots >= 32 m, combo.
+- Practice range (11 targets: static/slider/bobber/sweeper) and wave mode (all 9 monsters shoot projectiles or lunge, bosses every 5th wave, 3 flames, downed loop + revive).
+- Animation: additive procedural layer (`figAddRot/figAddMove`) on top of the baked clips: draw/release phases driven through the baked `aimed`/`attack` clip (`hit` frame = release), roll (somersault + crouch, i-frames), directional hit lean, raised-bow block, downed breathing. Foes reuse the baked `stag`/`attack` clips + reference death variants (shatter/burn/burst/gutter) with extra FX.
+- Renderer: camera override, circle colliders from prop chunks (`rayWorld`/`pushOut`), instanced primitive batches (world + depth-ranged view-model); no per-frame heap allocs, strings formatted on events only.
+- UI: title menu (carried defect (a) fixed: big buttons, label/sub layout), play HUD.
+- CLI test hooks: `--mode range|waves --view 0..2 --bot --draw f --yaw y p --ff N`.
+Metrics (llvmpipe, quality 0, 960x540): executable 941 KB, assets 7.4 MB, peak RSS ~210 MB (Mesa software rasteriser included).
+QA shots Read this session: title, fpv_idle, fpv_aim, tpv_idle, tpv_aim, free, title2, fpv_aim2, range_bot (9/10 bullseyes by auto-archer), combat_tpv, combat_fpv, fpv_aim3.
+Deferred / known: monster sheets (b) still not inspected individually (only seen in combat frames); FPV bow string is slightly over-bright under bloom; black speckle particles near horizon are carried from v1.1 (mote particles on llvmpipe); real-GPU frame time not measured; offline/music items unchanged.
