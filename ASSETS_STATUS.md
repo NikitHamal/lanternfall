@@ -87,3 +87,21 @@ Every rigged character asset includes baked quaternion + translation bone tracks
    - `burn`: Upward fiery dissolve (`disCol = [1.0, 0.45, 0.1]`, `peatwight`)
    - `burst`: Rapid outward spore/thorn rupture (`disCol = [0.6, 1.0, 0.5]`, `thornling`)
    - `gutter`: Shroud collapse and flame guttering out (`disCol = [0.6, 1.0, 0.75]`, `gloamwisp`)
+
+---
+
+## Session 2 notes (Agent B)
+
+### Environment findings
+- Polyfork API reachable: `/api/assets?q=…&free=1&max_triangles=2000` returns JSON (`download.glb`/`download.mjs`, `has_rig`, `kit`, `triangles`, `size_m`).
+- Blender 4.2.3 unpacked at `/tmp/agentB_run/blender-4.2.3-linux-x64/` (no system Blender).
+- No molab/marimo kernel is attached to this sandbox: the viewer is delivered as a marimo notebook file **plus** a self-contained three.js page it serves; heartbeat status is reported at the end.
+- Remote `assets` already held a prior ownership/style commit (`4b97885`); this session builds on it (no force push).
+- Existing figure clip names (strings in `.lfm`): heroes `ready walk run attack <skills> stag down`; monsters `idle ready walk run attack stag [special]`, plus a baked `shatter` track on shatter-death figures.
+
+### Progress log
+- [x] Bootstrap, branch `assets`, reference clone, style spec
+- [ ] Polyfork sourcing → `assets_raw/manifest.json`
+- [ ] Blender build (`tools/blender_build_assets.py`)
+- [ ] Viewer notebook
+- [ ] CI result
