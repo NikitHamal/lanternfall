@@ -1,0 +1,1 @@
+{"key": "b_ruined_gable", "aabb": [[-2.0, 0.0, -2.0], [2.0, 6.0, 2.0]], "radius": 2.8284271247461903, "height": 6.0, "footprint": [[-2.0, -2.0], [2.0, -2.0], [2.0, 2.0], [1.61, 2.0], [-2.0, -0.14]], "note": "collision proxy: AABB + circle + <=12-pt convex footprint, game space (Y up, origin on ground)"}
