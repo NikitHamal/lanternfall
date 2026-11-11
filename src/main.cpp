@@ -47,7 +47,9 @@ static void writePng(const char* path, int w, int h, const std::vector<uint8_t>&
   be32(z, (b << 16) | a); chunk(f, "IDAT", z); chunk(f, "IEND", {}); fclose(f);
 }
 static int lastRuns = -1;
+namespace gfx { extern const char* gArgv0; }
 int main(int argc, char** argv) {
+  gfx::gArgv0 = argv[0];
   int quality = 2, shotFrames = 0, simSpeed = 1, W0 = 1280, H0 = 720; const char* shot = nullptr; bool demo = false, noAudio = false;
   for (int i = 1; i < argc; i++) { if (!strcmp(argv[i], "--shot") && i + 1 < argc) shot = argv[++i]; else if (!strcmp(argv[i], "--frames") && i + 1 < argc) shotFrames = atoi(argv[++i]); else if (!strcmp(argv[i], "--quality") && i + 1 < argc) quality = atoi(argv[++i]);
     else if (!strcmp(argv[i], "--speed") && i + 1 < argc) simSpeed = atoi(argv[++i]); else if (!strcmp(argv[i], "--size") && i + 2 < argc) { W0 = atoi(argv[++i]); H0 = atoi(argv[++i]); } else if (!strcmp(argv[i], "--demo")) demo = true; else if (!strcmp(argv[i], "--novsync")) vsync = false; else if (!strcmp(argv[i], "--mute")) noAudio = true;

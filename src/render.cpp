@@ -3,10 +3,12 @@
 #include "render.h"
 #include "shaders.h"
 #include "meshes.h"
+#include "figure.h"
+#include <cmath>
 #include <string>
 #include <cstdio>
 namespace gfx {
-int winW = 1280, winH = 720, quality = 2, W = 2, H = 2, drawCalls = 0; bool closeView = false; float uiDim = 0, time_ = 0; const char* qualityName[4] = {"LOW", "MEDIUM", "HIGH", "ULTRA"};
+int winW = 1280, winH = 720, quality = 2, W = 2, H = 2, drawCalls = 0; bool closeView = false; float uiDim = 0, time_ = 0; const char* gArgv0 = nullptr; const char* qualityName[4] = {"LOW", "MEDIUM", "HIGH", "ULTRA"};
 namespace {
 struct Q { int msaa; float grass; bool ao, dof, shadow; float cap; };
 const Q QS[4] = {{0, 0.35f, false, false, false, 1.2e6f}, {2, 0.65f, true, false, true, 2.1e6f}, {4, 1.0f, true, true, true, 3.7e6f}, {4, 1.0f, true, true, true, 8.3e6f}};
@@ -26,7 +28,7 @@ struct Lit { V3 moonCol, hemiSky, hemiGnd, fillCol, fillDir; float pl[4][4]; flo
 struct Way { bool used = false, lit = false; float x = 0, z = 0, glow = 0, fl = 1; }; Way ways[8];
 // chunks
 constexpr int CH = 20, MAXCH = 14, MAXPI = 140; struct PI_ { uint8_t k, v; float x, y, z, ry, s, rx; }; struct Chunk { bool used = false; int key = 0; int n = 0; PI_ it[MAXPI]; } chunks[MAXCH]; int chunkBase = 0; bool propsDirty = true;
-Inst propInst[NPK][5][256]; int propN[NPK][5]; Inst shInst[4][1024]; int shN[4];
+Inst propInst[NPK][5][256]; int propN[NPK][5]; 
 struct PInst { float x, y, z, s, r, g, b, a, vx, vy, vz, kind; }; PInst pbuf[2][MAXP + 64]; int pn[2];
 struct MInst { float cx, cz, R, y, r, g, b, k0, prog, thick, alpha, kind; }; MInst mbuf[160]; int mn;
 
@@ -94,6 +96,7 @@ bool init(int q) {
   const char* fsHead = "";
   pMesh = program(src2(sh::MESH_VS + 18).c_str(), src2(sh::LIGHT, sh::MESH_FS_BODY).c_str(), "mesh");
   pShadow = program(sh::SHADOW_VS, sh::SHADOW_FS, "shadow");
+  pFig = program(src2(FIG_VS).c_str(), src2(sh::LIGHT, FIG_FS_BODY).c_str(), "figure"); pFigShadow = program(FIG_SHADOW_VS, sh::SHADOW_FS, "figshadow"); if (!figInit(gArgv0)) fprintf(stderr, "figure assets missing: units will not be drawn\n");
   pTerr = program(src2(sh::TERR, sh::TERR_VS_BODY).c_str(), src2(sh::LIGHT, sh::TERR, sh::TERR_FS_BODY).c_str(), "terrain");
   pGrass = program(src2(sh::TERR, sh::GRASS_VS_BODY).c_str(), src2(sh::LIGHT, sh::GRASS_FS_BODY).c_str(), "grass");
   pSky = program(sh::SKY_VS, sh::SKY_FS, "sky"); pPart = program(sh::PART_VS, sh::PART_FS, "particles"); pMark = program(sh::MARK_VS, sh::MARK_FS, "marks");
@@ -151,46 +154,38 @@ static void updateChunks(float fx) {
 static inline float ix(const Unit& u) { return u.ox + (u.x - u.ox) * alphaI; }
 static inline float iz(const Unit& u) { return u.oz + (u.z - u.oz) * alphaI; }
 static float sm01(float a, float b, float x) { return smooth(a, b, x); }
-struct Pose { float rx[NBONE], rz[NBONE]; float lean = 0, lift = 0, sink = 0, scale = 1, flash = 0, alphaS = 1; };
-static void pose(const Unit& u, const Figure& f, bool mon, Pose& P, float t) {
-  for (int i = 0; i < NBONE; i++) P.rx[i] = P.rz[i] = 0; bool quad = false; for (auto& p : f.parts) if (p.bone == BN_LLEG2) quad = true; (void)quad;
-  float m = clampf(u.mAmp, 0, 1.5f), ph = u.animT, s = std::sin(ph); bool isQ = quad; const MonDef* MD = mon ? &MON[u.cls] : nullptr;
-  P.scale = mon ? MD->scale : 1.f; P.lift = std::fabs(s) * 0.06f * m * (isQ ? 0.5f : 1.f);
-  P.rx[BN_LLEG] = s * 0.75f * m; P.rx[BN_RLEG] = -s * 0.75f * m;
-  if (isQ) { P.rx[BN_LLEG2] = -s * 0.75f * m; P.rx[BN_RLEG2] = s * 0.75f * m; P.rx[BN_TAIL] = std::sin(ph * 0.5f) * 0.3f * m + std::sin(t * 2 + u.id) * 0.1f; P.rx[BN_HEAD] = std::sin(ph * 2) * 0.06f * m; }
-  else { P.rx[BN_LARM] = -s * 0.55f * m; P.rx[BN_RARM] = s * 0.55f * m; P.rx[BN_HEAD] = std::sin(t * 1.3f + u.id) * 0.03f; P.lean = 0.08f * m;
-    if (u.team == 0 && u.ready && !u.act.on) { P.rx[BN_RARM] = std::min(P.rx[BN_RARM], -0.6f); P.rx[BN_LARM] = std::min(P.rx[BN_LARM], -0.3f); } else if (!u.act.on && m < 0.1f) { P.rx[BN_RARM] = -0.15f; P.rx[BN_LARM] = -0.05f; P.rz[BN_RARM] = -0.05f; P.rz[BN_LARM] = 0.05f; } }
-  if (mon && MD->mat != MC) {}
-  if (u.act.on) { const Act& a = u.act; float w = sat(a.t / std::max(0.01f, a.wind)), r = a.t < a.wind ? 0.f : sat((a.t - a.wind) / std::max(0.01f, a.rec)), ease = w * w * (3 - 2 * w), strike = a.t < a.wind ? 0.f : 1 - sm01(0, 0.5f, r);
-    float overhead = a.t < a.wind ? -2.9f * ease : -2.9f + 2.5f * sm01(0, 0.35f, r);
-    bool melee = false, fwd = false, cast = false, shield = false;
-    switch (a.kind) { case A_BASIC: if (u.cls == WARDEN || u.cls == REAVER) melee = true; else fwd = true; break; case A_RIPOSTE: case A_CLEAVE: case A_SUNDER: case A_MONATK: case A_SPECIAL: melee = true; break; case A_BASH: shield = true; break;
-      case A_AIMED: case A_PIN: case A_VOLLEY: case A_LANCE: fwd = true; break; default: cast = true; }
-    if (mon && isQ) { P.rx[BN_HEAD] = 0.5f * strike - 0.3f * (1 - ease) * (a.t < a.wind); P.rx[BN_JAW] = -0.5f * (a.t < a.wind ? ease : 1 - r); P.lean = 0.12f * strike; }
-    else if (melee) { P.rx[BN_RARM] = overhead; P.rx[BN_LARM] = (mon && (MD->boss || MD->mat == MS)) ? overhead : -0.7f * ease; P.lean = 0.28f * strike - 0.12f * (a.t < a.wind ? ease : 0); if (u.cls == REAVER && u.team == 0) P.rz[BN_RARM] = -0.5f * (a.t < a.wind ? ease : 0); if (mon && MD->mat != MC && !MD->boss && MD->mat != MS) P.rx[BN_LARM] = overhead * 0.8f; }
-    else if (fwd) { P.rx[BN_RARM] = -1.45f * std::min(1.f, w * 2); P.rx[BN_LARM] = -1.5f * std::min(1.f, w * 2); P.lean = -0.05f; if (u.cls == FLETCHER && r > 0) P.rx[BN_RARM] = -1.5f + 0.4f * r; }
-    else if (shield) { P.rx[BN_LARM] = -1.6f * (a.t < a.wind ? 0.4f * ease : 1.f - 0.6f * r); P.lean = 0.2f * strike; P.rx[BN_RARM] = -0.7f; }
-    else { float up = -2.5f * (a.t < a.wind ? ease : 1 - 0.7f * r); P.rx[BN_RARM] = up; P.rx[BN_LARM] = u.cls == LAMPLIGHTER || u.cls == RIMEBINDER ? -0.5f : up * 0.8f; P.lean = -0.1f * ease; }
+static FigAnim animH[4], animM[MAXMON]; static FigDraw fdraw[4 + MAXMON]; static int nfd = 0;
+static void figUnit(const Unit& u, bool mon, FigAnim& an, float dt, float t, bool carrier) {
+  const FigAsset& a = mon ? gFM[u.cls] : gFH[u.cls]; if (!a.ok || nfd >= 4 + MAXMON) return;
+  if (an.id != u.id) { an = FigAnim(); an.id = u.id; an.t = (u.id % 97) * 0.37f; }
+  float sc = a.scale, x = ix(u), z = iz(u), y = terrH(x, z); bool dead = mon && u.hp <= 0; FigDraw& d = fdraw[nfd++];
+  d.a = &a; d.mat = an.mat; d.dissolve = 0; d.disH = std::max(1.f, a.height); d.glow = 1; d.shadow = true; d.dim = 1; d.lantern = !mon && carrier && u.cls != LAMPLIGHTER && a.lant;
+  for (int k = 0; k < 3; k++) d.disCol[k] = a.disCol[k];
+  float sx = 1, sy = 1, sink = 0;
+  if (!dead) {
+    int ac = -1; float au = -1;
+    if (u.act.on) { ac = figActClip(a, u.act.kind); if (ac >= 0) { const Act& A = u.act; float hit = a.clips[ac].hit > 0.01f ? a.clips[ac].hit : 0.5f; au = A.t < A.wind ? A.t / std::max(0.01f, A.wind) * hit : hit + (A.t - A.wind) / std::max(0.01f, A.rec) * (1 - hit); } }
+    bool combat = mon ? (u.seen && u.target) : u.ready;
+    figAnimUpdate(an, a, dt, u.moving / sc, combat, ac, au, u.stagV, !mon && u.down); figAnimPose(an, a);
+  } else {
+    float td = u.deadT; if (!an.dying) { an.dying = true; if (!strcmp(a.death, "shatter")) figShatter(an, a, u.boss ? 3.2f : 2.4f, -std::sin(u.face) * 0.5f, -std::cos(u.face) * 0.5f); }
+    if (!strcmp(a.death, "shatter")) { figStepFree(an, a, dt); figAnimPose(an, a); float k = std::min(1.f, std::max(0.f, (td - 1.5f) / 1.5f)); d.disH = 0.6f; d.dissolve = k; d.shadow = k < 0.3f; }
+    else if (!strcmp(a.death, "burn")) { sink = -0.25f * std::min(1.f, td / 1.8f); d.dissolve = std::min(1.f, td / 1.9f); d.shadow = d.dissolve < 0.5f; }
+    else if (!strcmp(a.death, "burst")) { d.dissolve = std::min(1.f, td / 0.45f); sx = sy = 1 + td * 0.6f; d.shadow = false; }
+    else { float k = std::min(1.f, td / 0.9f); d.dissolve = k; sx = 1 - 0.5f * k; sy = 1 + 0.3f * td; d.shadow = false; }
+    d.glow = std::max(0.f, 1 - td * 2.5f);
   }
-  P.flash = u.flashV; float sg = sat(u.stagV); P.lean -= 0.35f * sg; P.rx[BN_HEAD] += 0.2f * sg; if (mon && u.stagT > 0) P.rx[BN_HEAD] += 0.2f;
-  if (u.team == 0 && u.down) { P.lean = -1.5f; P.lift = 0.12f; for (int i = 0; i < NBONE; i++) P.rx[i] *= 0.3f; P.rx[BN_RARM] = -0.4f; P.rx[BN_LARM] = -0.4f; }
-  if (mon && u.hp <= 0) { float d = u.deadT; P.lean = -std::min(1.5f, d * 4.f); P.lift = 0.1f; P.sink = std::max(0.f, d - 2.4f) * 0.9f * P.scale; P.scale *= 1 - 0.7f * sm01(2.4f, 3.4f, d); for (int i = 0; i < NBONE; i++) P.rx[i] *= 0.2f; P.flash = std::max(P.flash, 0.9f * (1 - sm01(0.0f, 0.5f, d))); }
-  if (mon && MD->mat == MC && u.hp > 0) { P.lift = 0.45f + std::sin(t * 2.3f + u.id) * 0.12f; }
+  d.model = mul(translate(x, y + sink * sc, z), mul(rotY(u.face), scale4(sc * sx, sc * sy, sc * sx)));
+  float fl = u.flashV * u.flashV * (mon ? (u.boss ? 0.05f : 0.16f) : 0.1f); d.flash[0] = fl * 1.2f; d.flash[1] = fl * 0.9f; d.flash[2] = fl * 0.6f;
+  if (mon && u.chillT > 0 && !dead) { d.flash[0] += 0.02f; d.flash[1] += 0.07f; d.flash[2] += 0.14f; }
+  if (mon) { if (!dead) d.glow = u.boss ? (u.enr ? 3.f + std::sin(t * 9) : 3.f) : 2.2f; }
+  else { an.dim += ((u.down ? 0.4f : 1.f) - an.dim) * std::min(1.f, dt * 3); d.dim = an.dim; if (u.cls == LAMPLIGHTER) d.glow = (0.9f + 0.06f * std::sin(t * 9.1f) + 0.04f * std::sin(t * 23.7f)) * (1 + G.flareV * 3); }
 }
-static void emitUnit(const Unit& u, const Figure& f, bool mon, float t, float dt) {
-  Pose P; pose(u, f, mon, P, t); float x = ix(u), z = iz(u), y = terrH(x, z) + P.lift - P.sink;
-  float face = u.face; M4 root = mul(translate(x, y, z), mul(rotY(face), mul(translate(0, f.pivot[0][1] * P.scale, 0), mul(rotX(P.lean), mul(translate(0, -f.pivot[0][1] * P.scale, 0), scale4(P.scale, P.scale, P.scale))))));
-  M4 bm[NBONE]; for (int b = 0; b < NBONE; b++) { const float* pv = f.pivot[b]; bm[b] = mul(translate(pv[0], pv[1], pv[2]), mul(rotZ(P.rz[b]), mul(rotX(P.rx[b]), translate(-pv[0], -pv[1], -pv[2])))); }
-  bool chill = mon && u.chillT > 0, dn = u.team == 0 && u.down; float dark = dn ? 0.55f : 1.f; float gl = 1.f; if (!mon && u.cls == LAMPLIGHTER) gl = (0.9f + 0.06f * std::sin(t * 9.1f) + 0.04f * std::sin(t * 23.7f)) * (1 + G.flareV * 3);
-  for (const Part& p : f.parts) { int s = p.shape; if (shN[s] >= 1024) continue; Inst& in = shInst[s][shN[s]++];
-    M4 m = mul(root, mul(bm[p.bone], mul(translate(p.x, p.y, p.z), mul(rotX(p.rx), mul(rotZ(p.rz), scale4(p.sx, p.sy, p.sz)))))); memcpy(in.m, m.m, 64);
-    float cr = p.col.x * dark, cg = p.col.y * dark, cb = p.col.z * dark; if (chill) { cr *= 0.7f; cg *= 0.95f; cb *= 1.5f; }
-    in.tint[0] = cr; in.tint[1] = cg; in.tint[2] = cb; in.tint[3] = P.flash * (p.glow > 0.5f ? 0.3f : 1.f); in.mat[0] = p.rough; in.mat[1] = p.metal; in.mat[2] = dn ? p.glow * 0.2f : (p.glow >= 5 && !mon ? p.glow * gl : p.glow * (mon && u.hp <= 0 ? 0.3f : 1.f)); in.mat[3] = 0; }
-  (void)dt;
+static V3 lanternPos(const Unit& c) {
+  int hi = (int)(&c - &G.heroes[0]); float x = ix(c), z = iz(c), y = terrH(x, z); const FigAsset& a = gFH[c.cls]; int k = a.fxIx("lan");
+  if (k >= 0 && hi >= 0 && hi < 4 && animH[hi].have) { float o[3]; figPoint(a, animH[hi].mat, a.fx[k].bone, a.fx[k].p[0], a.fx[k].p[1], a.fx[k].p[2], o); float cf = std::cos(c.face), sf = std::sin(c.face); return {x + cf * o[0] + sf * o[2], y + o[1], z - sf * o[0] + cf * o[2]}; }
+  return {x, y + 2.f, z};
 }
-
-// ---------- camera / lights / update ----------
-static V3 lanternPos(const Unit& c, const Figure& f) { float x = ix(c), z = iz(c), cf = std::cos(c.face), sf = std::sin(c.face); return {x + cf * f.lanX + sf * f.lanZ, terrH(x, z) + f.lanY + 0.02f, z - sf * f.lanX + cf * f.lanZ}; }
 static void cameraUpdate(float dt) {
   float time = time_; float an = G.anchorX; float tx = an + 1.2f, tz = pathZ(an); int n = 1; bool anyHs = false;
   for (const Unit& h : G.heroes) if (!h.down) { tx += ix(h); tz += iz(h); n++; anyHs = true; } tx /= n; tz /= n; (void)anyHs;
@@ -217,9 +212,9 @@ static void cameraUpdate(float dt) {
   camW = camWorld(camPos, camTgt); viewM = rigidInverse(camW); projM = perspective(30.f * PI / 180.f, (float)W / H, 0.5f, 2600.f); vpM = mul(projM, viewM); invVP = inverse(vpM); invProj = inverse(projM);
 }
 static void lightsUpdate(float dt) {
-  float t = time_; const Unit* car = G.carrier ? G.carrier : &G.heroes[3]; const Figure& cf = gHero[car->cls];
+  float t = time_; const Unit* car = G.carrier ? G.carrier : &G.heroes[3]; 
   float base = (0.92f + 0.05f * std::sin(t * 7.1f) + 0.035f * std::sin(t * 17.3f + 1.f) + 0.02f * std::sin(t * 31.f)) * (car->down ? 0.4f : 1.f);
-  G.flareV = std::max(0.f, G.flareV - dt * 0.9f); float R = G.hasRun ? G.lightRadius() : 9.f; V3 lp = lanternPos(*car, cf); (void)cf;
+  G.flareV = std::max(0.f, G.flareV - dt * 0.9f); float R = G.hasRun ? G.lightRadius() : 9.f; V3 lp = lanternPos(*car);
   lit.moonCol = C(0x8fb2f2) * (2.0f * cur.moon); lit.hemiSky = C(0x2c4a7a) * (0.4f + 0.1f * cur.moon); lit.hemiGnd = C(0x0b0a08) * (0.4f + 0.1f * cur.moon); lit.fillDir = norm({-6, 9, 14}); lit.fillCol = C(0x8a9ab8) * 0.16f;
   float inten = 50 * base * (R / 9) * (1 + G.flareV * 2.5f); V3 lc = C(0xffb878);
   lit.pl[0][0] = lp.x; lit.pl[0][1] = lp.y; lit.pl[0][2] = lp.z; lit.pl[0][3] = R * 2.7f; lit.plc[0][0] = lc.x * inten; lit.plc[0][1] = lc.y * inten; lit.plc[0][2] = lc.z * inten; lit.plc[0][3] = 1.25f;
@@ -242,8 +237,7 @@ void update(float dt, float vdt, bool paused, float alpha) {
   for (Unit& m : G.mons) if (m.used) { m.flashV *= std::exp(-dt * 9); m.stagV *= std::exp(-dt * 6); float want = m.moving > 0.05f ? m.moving / 3.4f : 0.f; m.mAmp += (want - m.mAmp) * std::min(1.f, dt * 10); m.animT += dt * m.moving * (MON[m.cls].scale > 1.5f ? 2.2f : 3.0f) * (paused ? 0.f : 1.f); }
   blendTo(1 - std::exp(-(paused ? dt * 0.35f : std::max(vdt, dt * 0.3f)) * 0.35f)); cameraUpdate(dt); lightsUpdate(dt); updateChunks(camS.fx);
   // unit instances
-  for (int i = 0; i < 4; i++) shN[i] = 0; for (Unit& h : G.heroes) if (G.hasRun || true) emitUnit(h, gHero[h.cls], false, t, dt); for (Unit& m : G.mons) if (m.used) emitUnit(m, gMon[m.cls], true, t, dt);
-  for (int i = 0; i < 4; i++) meshUpload(gShape[i], shInst[i], shN[i]);
+  nfd = 0; { float fdt = paused ? 0.f : dt; const Unit* carU = G.carrier ? G.carrier : &G.heroes[3]; for (int i = 0; i < 4; i++) figUnit(G.heroes[i], false, animH[i], fdt, t, &G.heroes[i] == carU); for (int i = 0; i < MAXMON; i++) if (G.mons[i].used) figUnit(G.mons[i], true, animM[i], fdt, t, false); }
   for (int k = 0; k < NPK; k++) for (int v = 0; v < PROP_VARIANTS[k]; v++) if (k != PK_WAY) { static int last[NPK][5]; (void)last; meshUpload(gProp[k][v], propInst[k][v], propN[k][v]); }
   { int n = 0; static Inst wi[8]; for (auto& w : ways) if (w.used && n < 8) { M4 m = mul(translate(w.x, 0, w.z), rotY(-PI / 2 + 0.3f)); memcpy(wi[n].m, m.m, 64); wi[n].tint[0] = wi[n].tint[1] = wi[n].tint[2] = 1; wi[n].tint[3] = 0; wi[n].mat[0] = wi[n].mat[1] = 1; wi[n].mat[2] = w.glow * 7 * w.fl; wi[n].mat[3] = 0; n++; } meshUpload(gProp[PK_WAY][0], wi, n); }
   // zone particles
@@ -267,11 +261,11 @@ void update(float dt, float vdt, bool paused, float alpha) {
 
 // ---------- draw ----------
 static void drawProps() { for (int k = 0; k < NPK; k++) for (int v = 0; v < PROP_VARIANTS[k]; v++) if (gProp[k][v].count) { meshDraw(gProp[k][v]); drawCalls++; } }
-static void drawFigures() { for (int i = 0; i < 4; i++) if (gShape[i].count) { meshDraw(gShape[i]); drawCalls++; } }
+static void drawFigures(bool shadow) { if (!nfd) return; glDisable(GL_CULL_FACE); if (shadow) { glUseProgram(pFigShadow); setM(pFigShadow, "uVP", lit.shadowVP); figDraw(pFigShadow, fdraw, nfd, true); } else { setLit(pFig); figDraw(pFig, fdraw, nfd, false); glEnable(GL_CULL_FACE); } drawCalls += nfd; }
 void draw() {
   drawCalls = 0; const Q& q = QS[quality]; float t = time_;
   glDisable(GL_BLEND); glEnable(GL_DEPTH_TEST); glDepthFunc(GL_LEQUAL); glDepthMask(GL_TRUE); glEnable(GL_CULL_FACE); glCullFace(GL_BACK);
-  if (q.shadow) { glBindFramebuffer(GL_FRAMEBUFFER, fboSh); glViewport(0, 0, SHS, SHS); glClear(GL_DEPTH_BUFFER_BIT); glUseProgram(pShadow); setM(pShadow, "uVP", lit.shadowVP); glEnable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(2.f, 4.f); glDisable(GL_CULL_FACE); drawProps(); drawFigures(); glDisable(GL_POLYGON_OFFSET_FILL); glEnable(GL_CULL_FACE); }
+  if (q.shadow) { glBindFramebuffer(GL_FRAMEBUFFER, fboSh); glViewport(0, 0, SHS, SHS); glClear(GL_DEPTH_BUFFER_BIT); glUseProgram(pShadow); setM(pShadow, "uVP", lit.shadowVP); glEnable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(2.f, 4.f); glDisable(GL_CULL_FACE); drawProps(); drawFigures(true); glDisable(GL_POLYGON_OFFSET_FILL); glEnable(GL_CULL_FACE); }
   GLuint sceneTarget = curMsaa > 0 ? fboMS : fboScene; glBindFramebuffer(GL_FRAMEBUFFER, sceneTarget); glViewport(0, 0, W, H); glClearColor(0, 0, 0, 1); glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glActiveTexture(GL_TEXTURE0 + 5); glBindTexture(GL_TEXTURE_2D, texSh); glActiveTexture(GL_TEXTURE0);
   // sky
@@ -286,7 +280,7 @@ void draw() {
   setLit(pGrass); glUniform3f(glGetUniformLocation(pGrass, "uCenter"), camS.fx + 6, 0, camS.fz - 6); glUniform2f(glGetUniformLocation(pGrass, "uTile"), 72, 48); set1(pGrass, "uTime", t); set1(pGrass, "uGrassH", cur.grassH); set1(pGrass, "uHeath", 1);
   set3(pGrass, "uGc1", cur.g1); set3(pGrass, "uGc2", cur.g2); set3(pGrass, "uGc3", cur.g3); glBindVertexArray(grassVao); glDrawElementsInstanced(GL_TRIANGLES, 15, GL_UNSIGNED_SHORT, nullptr, (int)(grassCount * q.grass));
   // props + characters
-  setLit(pMesh); drawProps(); drawFigures();
+  setLit(pMesh); drawProps(); drawFigures(false);
   // marks + particles (blended)
   glDepthMask(GL_FALSE); glEnable(GL_BLEND); glBlendFunc(GL_ONE, GL_ONE); glEnable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(-2, -2);
   if (mn) { glUseProgram(pMark); setM(pMark, "uVP", vpM); set1(pMark, "uTime", t); glBindVertexArray(markVao); glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, mn); }
