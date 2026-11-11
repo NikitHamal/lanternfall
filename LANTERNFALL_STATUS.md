@@ -65,3 +65,6 @@ Done:
 Metrics (llvmpipe, quality 0, 960x540): executable 941 KB, assets 7.4 MB, peak RSS ~210 MB (Mesa software rasteriser included).
 QA shots Read this session: title, fpv_idle, fpv_aim, tpv_idle, tpv_aim, free, title2, fpv_aim2, range_bot (9/10 bullseyes by auto-archer), combat_tpv, combat_fpv, fpv_aim3.
 Deferred / known: monster sheets (b) still not inspected individually (only seen in combat frames); FPV bow string is slightly over-bright under bloom; black speckle particles near horizon are carried from v1.1 (mote particles on llvmpipe); real-GPU frame time not measured; offline/music items unchanged.
+
+CI: run 43092334901 (commit 86d49c9) - Windows/Linux/macOS all success, release v1.2.0 published with 3 assets. (Earlier runs a5c3e5e / c2b294f failed on a double->float narrowing in ui.cpp, fixed in 86d49c9.)
+Combat capture: done (combat_tpv / combat_fpv via --bot --ff).
