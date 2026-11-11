@@ -47,7 +47,7 @@ THEME = {
  'apothecary': ['woolBrown', 'leather', 'leatherTan', 'linen', 'buff', 'skin', 'skinDk', 'hairGrey', 'turf', 'rope', 'tonic'],
  'rimebinder': ['linen', 'woolGrey', 'pale', 'plate', 'hairGrey', 'murrey', 'skinDk', 'mail', 'rime'],
  'thornling': ['wood', 'woodDk', 'root', 'thorn', 'turf', 'peat', 'tonic'],
- 'peatwight': ['peat', 'root', 'turf', 'woodDk', 'skinDk', 'bone', 'leatherDk'],
+ 'peatwight': ['peat', 'root', 'turf', 'woodDk', 'skinDk', 'leatherDk'],
  'gloamhound': ['furGrey', 'fur', 'black', 'woolGrey', 'bone', 'skinDk', 'gloam'],
  'gloamwisp': ['linen', 'woolGrey', 'pale', 'gloam'],
  'rustbound': ['rust', 'iron', 'mail', 'plate', 'brass', 'leatherDk', 'woolBrown', 'black'],
@@ -353,10 +353,10 @@ def repalette(key, C, EM):
     lum = lambda c: float(c @ np.array([.2126, .7152, .0722])) + 1e-4
     for i, c in enumerate(uq):
         mx, mn = c.max(), c.min(); sat = (mx - mn) / (mx + 1e-6); lc = lum(c)
-        if gl and ((sat > .55 and mx > .35) or em_u[i] > .05): j = gl[0] if len(gl) == 1 else gl[int(np.argmin([np.abs(c - pal[g]).sum() for g in gl]))]
+        if gl and ((key in CFG and sat > .55 and mx > .35) or em_u[i] > .05 or key == 'gloamwisp'): j = gl[0] if len(gl) == 1 else gl[int(np.argmin([np.abs(c - pal[g]).sum() for g in gl]))]
         else:
             cand = [k for k in range(len(th)) if k not in gl] or list(range(len(th)))
-            d = [np.abs(np.sqrt(c) - np.sqrt(pal[k])).sum() + 1.2 * abs(math.log(lum(pal[k]) / lc)) * .5 for k in cand]; j = cand[int(np.argmin(d))]
+            d = [np.abs(np.sqrt(c) - np.sqrt(pal[k])).sum() + 1.5 * abs(math.log(lum(pal[k]) / lc)) for k in cand]; j = cand[int(np.argmin(d))]
         nm = th[j]; pc, sf, ro, me_, gr = PALN[nm]
         if nm in GLOWS: out[i] = pc
         else:
@@ -473,6 +473,7 @@ def build(key):
         s = CFG[key]['H'] / (zmax - zmin); dz = -zmin * s + (0.3 if kind == 'wisp' else 0.0)
     else: s = 1.0; dz = -zmin
     V = to_game(P * s + np.array([0, 0, dz])); nt = len(V) // 3
+    if kind == 'wisp': V[:, 0] -= (V[:, 0].max() + V[:, 0].min()) / 2; V[:, 2] -= (V[:, 2].max() + V[:, 2].min()) / 2
     Nsm, fnu, gid = smooth_normals(V)
     Cp, surf, rough, metal, grime = repalette(key, Cc, EM)
     U = np.where((np.abs(fnu[:, 0]) > np.abs(fnu[:, 1])) & (np.abs(fnu[:, 0]) > np.abs(fnu[:, 2])), 0, np.where(np.abs(fnu[:, 1]) > np.abs(fnu[:, 2]), 1, 2)).repeat(3)
