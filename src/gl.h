@@ -18,6 +18,7 @@ typedef ptrdiff_t GLsizeiptr, GLintptr;
 #define GL_UNSIGNED_INT 0x1405
 #define GL_UNSIGNED_SHORT 0x1403
 #define GL_UNSIGNED_BYTE 0x1401
+#define GL_BYTE 0x1400
 #define GL_DEPTH_TEST 0x0B71
 #define GL_BLEND 0x0BE2
 #define GL_CULL_FACE 0x0B44
