@@ -1,0 +1,79 @@
+name: release
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            name: linux
+            asset: lanternfall-linux-x64.tar.gz
+          - os: windows-latest
+            name: windows
+            asset: lanternfall-windows-x64.zip
+          - os: macos-latest
+            name: macos
+            asset: lanternfall-macos-universal.zip
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux deps
+        if: matrix.name == 'linux'
+        run: sudo apt-get update && sudo apt-get install -y cmake xorg-dev libxkbcommon-dev libgl1-mesa-dev
+      - name: Configure (Linux/Windows)
+        if: matrix.name != 'macos'
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: Configure (macOS universal)
+        if: matrix.name == 'macos'
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+      - name: Build
+        run: cmake --build build --config Release --parallel 4
+      - name: Package (Linux)
+        if: matrix.name == 'linux'
+        run: |
+          mkdir dist && cp build/lanternfall dist/ && cp README.md dist/
+          tar -C dist -czf ${{ matrix.asset }} .
+      - name: Package (Windows)
+        if: matrix.name == 'windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory dist | Out-Null
+          $exe = Get-ChildItem -Path build -Recurse -Filter lanternfall.exe | Select-Object -First 1
+          Copy-Item $exe.FullName dist/lanternfall.exe; Copy-Item README.md dist/
+          Compress-Archive -Path dist/* -DestinationPath ${{ matrix.asset }}
+      - name: Package (macOS)
+        if: matrix.name == 'macos'
+        run: |
+          mkdir dist && cp build/lanternfall dist/ && cp README.md dist/ && chmod +x dist/lanternfall
+          cd dist && zip -r ../${{ matrix.asset }} .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.asset }}
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: Lanternfall v1.0.0
+          body: |
+            Native C++/OpenGL 3.3 desktop port of Lanternfall. Download the archive for your OS, unpack and run `lanternfall` (no installer, no external files).
+            - Windows: lanternfall-windows-x64.zip
+            - Linux: lanternfall-linux-x64.tar.gz (needs an OpenGL 3.3 driver + X11)
+            - macOS: lanternfall-macos-universal.zip (unsigned: right-click > Open the first time)
+          files: artifacts/*
+          make_latest: true

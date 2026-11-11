@@ -43,6 +43,7 @@ typedef ptrdiff_t GLsizeiptr, GLintptr;
 #define GL_TEXTURE_2D 0x0DE1
 #define GL_TEXTURE_2D_MULTISAMPLE 0x9100
 #define GL_TEXTURE0 0x84C0
+#define GL_TEXTURE1 0x84C1
 #define GL_TEXTURE_MIN_FILTER 0x2801
 #define GL_TEXTURE_MAG_FILTER 0x2800
 #define GL_TEXTURE_WRAP_S 0x2802

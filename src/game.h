@@ -10,7 +10,7 @@ struct Act { bool on = false, hit = false; float t = 0, wind = 0, rec = 0; int k
 struct Unit {
   bool used = false; int team = 0, cls = 0, idx = 0; uint32_t id = 0;
   float x = 0, z = 0, ox = 0, oz = 0, face = 0, faceT = 0, hp = 1, maxHp = 1, radius = 0.4f, dmg = 1, atk = 1, range = 1, speed = 3, armor = 0, crit = 0.08f, leech = 0, cdr = 1, power = 1;
-  float cd[3] = {0, 0, 0}, atkT = 0, stagT = 0, slowT = 0, slowK = 1, chillT = 0, markT = 0, tauntT = 0, hasteT = 0, guardT = 0, ripT = 0, regenT = 0, regenA = 0, repoT = 0, idleT = 0, specT = 0, deadT = 0, downT = 0, flashV = 0, stagV = 0, moving = 0, dashT = 0, dashX = 0, dashZ = 0, dps = 0, animT = 0, hitFrom = 0;
+  float mAmp = 0, cd[3] = {0, 0, 0}, atkT = 0, stagT = 0, slowT = 0, slowK = 1, chillT = 0, markT = 0, tauntT = 0, hasteT = 0, guardT = 0, ripT = 0, regenT = 0, regenA = 0, repoT = 0, idleT = 0, specT = 0, deadT = 0, downT = 0, flashV = 0, stagV = 0, moving = 0, dashT = 0, dashX = 0, dashZ = 0, dps = 0, animT = 0, hitFrom = 0;
   bool down = false, boss = false, elite = false, enr = false, seen = false, eng = false, fleeing = false, dodgeOk = false, hitSpec = false, ready = false;
   int side = 1; Unit* tauntBy = nullptr; Unit* ripTarget = nullptr; Unit* target = nullptr; Act act; char title[32] = {0};
 };
