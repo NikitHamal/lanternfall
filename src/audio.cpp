@@ -1,5 +1,7 @@
 // Procedural audio: every sound effect, the wind bed, campfire crackle and the low drone are synthesised in the audio callback
 // (no samples shipped). Replaces the WebAudio synth + embedded music of the original with ~0 bytes of assets.
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 #define MA_NO_DECODING
 #define MA_NO_ENCODING
 #define MA_NO_GENERATION
