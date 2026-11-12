@@ -160,3 +160,5 @@ Shipped:
 - **Hunting / combat on animals**: arrows and melee hit animals with body zones (head x2.6, torso x1, legs x0.5), floating damage text, they bleed-flee, die and fall over; meat pays food (hen 2, sheep 8, horse 10, cow 14); villagers panic if you kill pets / horses nearby.
 - **Audio ambience** (`audio::ambience`): birdsong chirps by day (more in forests), crickets at night, running-water hiss near rivers / falls / sea, the dark drone fades in daylight.
 Deferred: in-engine QA of all of the above (first capture with a display env), NPC daily schedules, animal sounds per species, Blender rebuild of Polyfork assets (not done, procedural meshes used), grass / terrain shader overhaul, chunk streaming, castle upgrade tiers, persistent save.
+
+CI: tag run 43223972335 (commit 7167e44) - Windows/Linux/macOS + release all success; release v1.9.0 published with 3 assets (linux 10.1 MB, macOS 10.7 MB, windows 10.3 MB). Main-branch run 43223955305 also green; the previous main run 43223755068 (678b8f4) green.
