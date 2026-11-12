@@ -117,3 +117,14 @@ New title button **EXPLORE** (Enter / key 6). A procedural 2 km x 2 km continent
 - CLI test hooks: `--scene explore --hour H --poi N --at X Z yawDeg pitchDeg --dist D --fly --fpv --map --frames N`.
 QA shots read (1280x720, llvmpipe via molab Xvfb): x_start (castle gate by day), x_falls, x_village (Stonebridge), x_peak, x_night, x_dusk, x_lake, x_map.
 Deferred: bow/spell projectiles for non-melee heroes in explorer, horses, interior spaces, audio ambience, NPC schedules at night (they idle near home), real-GPU timing.
+
+## v1.7.0 - fantasy overhaul I (this session) - IN PROGRESS
+Notebook died at tool call 39 (molab 410 Gone). Deferred until a display env exists: further Xvfb captures (bow FPV retune, interiors 1/2, combat/hostile frames).
+Shipped so far (built + captured on molab before it died; x_start, x_run, x_walk, x_fpv_bow, x_in0 read):
+- Procedural biped locomotion (`figure.cpp procLoco`): speed-matched cadence, planted feet via 2-bone leg IK, hip bob/sway, pelvis/shoulder counter-twist, arm swing + elbow flex, lean into acceleration, head stabilisation. Replaces baked walk/run on every 25/28-bone biped (`gProcGait`).
+- Daylight: NPC back-lanterns and staff-lanterns only at dusk/night/indoors.
+- Explorer combat: bow (B / 1 / 2 weapon switch; hold LMB draw, release loose, RMB zoom), arrows with gravity, stick into ground/walls/bodies; bone-accurate hit capsules: head x2.6, torso x1, arms x0.6, legs x0.5 (legs hobble, head stuns); floating damage text + hit marker; melee uses aim height (combo 3 overhead, combo 2 low sweep).
+- Crime: hurting people makes victims fight (brave) or flee, witnesses panic, guards/knights/soldiers hunt you; per-nation bounty with WANTED stars, decays when unseen.
+- Interiors: E at any house/hall/chapel/barn/keep -> fade into a furnished cell (cottage, great hall, chapel) with residents, chest (gold + arrows), bed (rest), hearth lights; E at the door to leave.
+- HUD: weapon/arrows/gold, bow draw bar, bow reticle, hit marker.
+Deferred: Blender rebuild of Polyfork assets, new citizens/pets/trees from Polyfork, kingdom building loop (see docs/ROADMAP.md).
