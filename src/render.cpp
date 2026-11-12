@@ -282,7 +282,7 @@ static void lightsUpdate(float dt) {
   lit.moonCol = C(0x8fb2f2) * (2.0f * cur.moon); lit.hemiSky = C(0x2c4a7a) * (0.4f + 0.1f * cur.moon); lit.hemiGnd = C(0x0b0a08) * (0.4f + 0.1f * cur.moon); lit.fillDir = norm({-6, 9, 14}); lit.fillCol = C(0x8a9ab8) * 0.16f;
   float inten = 50 * base * (R / 9) * (1 + G.flareV * 2.5f); V3 lc = C(0xffb878);
   lit.pl[0][0] = lp.x; lit.pl[0][1] = lp.y; lit.pl[0][2] = lp.z; lit.pl[0][3] = R * 2.7f; lit.plc[0][0] = lc.x * inten; lit.plc[0][1] = lc.y * inten; lit.plc[0][2] = lc.z * inten; lit.plc[0][3] = 1.25f;
-  lit.fogLP[0] = lp; lit.fogLC[0] = V3{1.0f, 0.62f, 0.3f} * (inten * 0.02f);
+  lit.fogLP[0] = lp; lit.fogLC[0] = V3{1.0f, 0.62f, 0.3f} * (inten * 0.02f * ((pl::active() && !roster::cur()->lant) ? 0.3f : 1.f));
   // waylights: nearest two lit
   int k = 1; Way* pick[2] = {nullptr, nullptr}; for (auto& w : ways) { if (!w.used) continue; w.glow = lerpf(w.glow, w.lit ? 1.f : 0.f, 1 - std::exp(-dt * 1.6f)); w.fl = 0.86f + 0.1f * std::sin(t * 9.1f + w.x) + 0.06f * std::sin(t * 23.7f + w.x * 2); if (w.glow < 0.01f || std::fabs(w.x - G.anchorX) > 60) continue;
     for (int i = 0; i < 2; i++) if (!pick[i] || std::fabs(w.x - camS.fx) < std::fabs(pick[i]->x - camS.fx)) { if (i == 0) pick[1] = pick[0]; pick[i] = &w; break; } }
