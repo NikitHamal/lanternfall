@@ -17,9 +17,9 @@ constexpr int NL = 7, TN = 128, NC = 32; constexpr float CELL = 64.f;
 struct IData { float m[16]; float tint[4]; };
 struct PMesh { GLuint vao = 0, vbo = 0, ibo = 0, inst = 0; int ni = 0, cap = 0; bool ok = false; };
 struct KindDef { const char* key; int lo; float rHi, rLo; bool shadow; };
-constexpr int SLOT_CONI = NK, SLOT_BROAD = NK + 1, NSLOT = NK + 2;
+constexpr int SLOT_CONI = NK, SLOT_BROAD = NK + 1, SLOT_BIRCH = NK + 2, SLOT_CHERRY = NK + 3, NSLOT = NK + 4;
 const KindDef KD[NK] = {
-  {"polyfork/p_pine_tall", SLOT_CONI, 150, 560, true}, {"polyfork/p_pine_young", SLOT_CONI, 110, 420, true}, {"polyfork/p_twisted_oak", SLOT_BROAD, 140, 520, true}, {"polyfork/p_dead_tree", -1, 150, 0, true},
+  {nullptr, SLOT_CONI, 125, 560, true}, {nullptr, SLOT_CONI, 100, 420, true}, {nullptr, SLOT_BROAD, 110, 520, true}, {"polyfork/p_dead_tree", -1, 150, 0, true},
   {"polyfork/p_boulder", -1, 170, 0, true}, {"polyfork/p_cairn", -1, 120, 0, true}, {"polyfork/p_round_bush", -1, 80, 0, false}, {"polyfork/p_thorn_bush", -1, 80, 0, false}, {"polyfork/p_fallen_log", -1, 100, 0, false},
   {"polyfork/p_signpost", -1, 160, 0, true}, {"polyfork/p_campfire_tripod", -1, 220, 0, false}, {"polyfork/p_brazier", -1, 220, 0, true}, {"polyfork/p_lamp_post", -1, 200, 0, true}, {"polyfork/p_banner_pole", -1, 260, 0, true},
   {"polyfork/p_iron_fence", -1, 170, 0, false}, {"polyfork/p_barrel", -1, 110, 0, true}, {"polyfork/p_crate", -1, 110, 0, true}, {"polyfork/p_stone_well", -1, 220, 0, true}, {"polyfork/b_market_stall", -1, 240, 0, true},
@@ -31,7 +31,7 @@ const KindDef KD[NK] = {
   {nullptr, -1, 320, 0, true}, {nullptr, -1, 260, 0, false}, {nullptr, -1, 700, 0, true}, {nullptr, -1, 480, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 1000, 0, true}, {nullptr, -1, 700, 0, true}, {nullptr, -1, 300, 0, false}, {nullptr, -1, 260, 0, true}, {nullptr, -1, 260, 0, true}, {nullptr, -1, 260, 0, true},
   {nullptr, -1, 340, 0, true}, {nullptr, -1, 560, 0, true}, {nullptr, -1, 560, 0, true}, {nullptr, -1, 260, 0, false}, {nullptr, -1, 260, 0, false},
   // v1.9 flora: birch, cherry, jungle, willow, palm, fern, mushroom, reeds, lily, spire, flowering bush
-  {nullptr, -1, 520, 0, true}, {nullptr, -1, 560, 0, true}, {nullptr, -1, 600, 0, true}, {nullptr, -1, 520, 0, true}, {nullptr, -1, 480, 0, true}, {nullptr, -1, 90, 0, false}, {nullptr, -1, 80, 0, false}, {nullptr, -1, 150, 0, false}, {nullptr, -1, 130, 0, false}, {nullptr, -1, 900, 0, true}, {nullptr, -1, 160, 0, false},
+  {nullptr, SLOT_BIRCH, 100, 520, true}, {nullptr, SLOT_CHERRY, 110, 560, true}, {nullptr, -1, 600, 0, true}, {nullptr, -1, 520, 0, true}, {nullptr, -1, 480, 0, true}, {nullptr, -1, 90, 0, false}, {nullptr, -1, 80, 0, false}, {nullptr, -1, 150, 0, false}, {nullptr, -1, 130, 0, false}, {nullptr, -1, 900, 0, true}, {nullptr, -1, 160, 0, false},
   // fauna: dog, cat, hen, sheep, cow, horse, bird, leg, wing, petal
   {nullptr, -1, 260, 0, true}, {nullptr, -1, 200, 0, true}, {nullptr, -1, 160, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 340, 0, true}, {nullptr, -1, 360, 0, true}, {nullptr, -1, 420, 0, false}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 420, 0, false}, {nullptr, -1, 60, 0, false}, {nullptr, -1, 300, 0, true}};
 static_assert(sizeof(KD) / sizeof(KD[0]) == NK, "kind table size");
@@ -190,6 +190,56 @@ const char* PROP_SHADOW_VS = R"GLSL(
 layout(location=0) in vec3 aPos; layout(location=6) in vec4 iM0; layout(location=7) in vec4 iM1; layout(location=8) in vec4 iM2; layout(location=9) in vec4 iM3; uniform mat4 uVP;
 void main(){ gl_Position = uVP*(mat4(iM0,iM1,iM2,iM3)*vec4(aPos,1.)); }
 )GLSL";
+const char* LEAF_GLSL = R"GLSL(
+float lh12(vec2 p){ vec3 p3 = fract(vec3(p.xyx)*.1031); p3 += dot(p3, p3.yzx+33.33); return fract((p3.x+p3.y)*p3.z); }
+vec4 leafTex(vec2 uv, float needle){
+  float pxw = max(fwidth(uv.x), fwidth(uv.y));
+  if (needle > .5) {
+    float p = (uv.x-.5)*2., q = uv.y, ap = abs(p), side = step(0., p);
+    float sv = q*15. - ap*4.2 + side*.5; float idx = floor(sv); float ln = abs(fract(sv) - .5);
+    float wd = mix(.22, .12, ap); float aa = pxw*17. + .03;
+    float m = 1. - smoothstep(wd, wd + aa, ln);
+    float env = .96 - .62*q; float rl = .62 + .38*lh12(vec2(idx, side + 3.));
+    m *= 1. - smoothstep(env*rl - .05, env*rl, ap);
+    float twig = 1. - smoothstep(.022, .04 + pxw*2., ap);
+    return vec4(max(m, twig), .3 + .6*ap + .25*q, lh12(vec2(idx, side)), twig*.7);
+  }
+  vec2 g = uv*5.; vec2 ci = floor(g); float cov = 0., bz = -1.; vec3 res = vec3(0., .5, 0.); float vein = 0.; float fw = clamp(pxw*5.*1.4, .015, .45);
+  for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
+    vec2 c = ci + vec2(float(i), float(j)); float z = lh12(c + 5.5);
+    vec2 ctr = c + .5 + (vec2(lh12(c), lh12(c + 7.7)) - .5)*.8;
+    float ang = lh12(c + 3.1)*6.2832; vec2 d = g - ctr; float cs = cos(ang), sn = sin(ang); vec2 e = vec2(cs*d.x + sn*d.y, -sn*d.x + cs*d.y);
+    float Lh = .6 + .26*lh12(c + 9.2); float u = e.x/Lh; float wmax = Lh*(.46 + .12*lh12(c + 1.3));
+    float prof = pow(max(1. - u*u, 0.), .72) * (1. + .1*sin(u*13. + z*6.)); float wv = wmax*prof;
+    float edge = max(abs(u), abs(e.y)/max(wv, .004)); float cv = 1. - smoothstep(1. - fw*2., 1., edge);
+    if (cv > .02 && z > bz) { bz = z; res = vec3(cv, u*.5 + .5, z); vein = (1. - smoothstep(0., .02 + fw*.15, abs(e.y))) * step(abs(u), .9); }
+    cov = max(cov, cv);
+  }
+  return vec4(cov, res.y, res.z, vein*.5);
+}
+)GLSL";
+const char* LEAF_SHADOW_VS = R"GLSL(
+layout(location=0) in vec3 aPos; layout(location=3) in vec2 aUv; layout(location=4) in vec4 aMat; layout(location=6) in vec4 iM0; layout(location=7) in vec4 iM1; layout(location=8) in vec4 iM2; layout(location=9) in vec4 iM3; uniform mat4 uVP;
+out vec2 vU; out vec2 vM;
+void main(){ vU = aUv; vM = vec2(aMat.z*255., aMat.y); gl_Position = uVP*(mat4(iM0,iM1,iM2,iM3)*vec4(aPos,1.)); }
+)GLSL";
+const char* LEAF_SHADOW_FS = R"GLSL(
+in vec2 vU; in vec2 vM;
+void main(){ if (vM.x > 11.5) { if (leafTex(vU, vM.y).x < .5) discard; } }
+)GLSL";
+const char* LEAF_BRANCH = R"GLSL(} else if (ty > 11.5) {
+    vec4 lt = leafTex(uv, vMat.y); if (lt.x < .35) discard; leafA = lt.x;
+    col *= (.6 + .72*lt.z) * (.68 + .52*lt.y); col = mix(col, col*vec3(1.38,1.2,.62), smoothstep(.84, 1., lt.z)*.55); col *= 1. - .5*lt.w;
+    rough = .6; metal = 0.; h = lt.z*.004; fol = 1.;
+  } else {
+    float gr = n2(vec2(uv.x*150.)GLSL";
+std::string leafPatch(std::string fs) {
+  auto rep = [&](const char* a, const std::string& b) { size_t i = fs.find(a); if (i == std::string::npos) { fprintf(stderr, "leafPatch miss: %s\n", a); return; } fs.replace(i, strlen(a), b); };
+  rep("void main(){\n  float ty = vMat.z;", std::string(LEAF_GLSL) + "void main(){\n  float ty = vMat.z;"); rep("float fol = 0.;", "float fol = 0.; float leafA = 1.;");
+  rep("} else {\n    float gr = n2(vec2(uv.x*150.", std::string(LEAF_BRANCH));
+  rep("vec3 N = normalize(vN); if (!gl_FrontFacing) N = -N;", "vec3 N = normalize(vN); if (!gl_FrontFacing && ty < 11.5) N = -N;"); rep("oC = vec4(c, 1.); }", "oC = vec4(c, leafA); }");
+  return fs;
+}
 const char* GRASS_VS = R"GLSL(
 layout(location=0) in vec4 aP; uniform mat4 uVP; uniform vec2 uCam2; uniform float uCell, uTime, uMaxD, uWorld; uniform int uG; uniform int uMode; uniform sampler2D uHeight, uInfoA, uInfoB;
 out vec3 vWp; out vec3 vCol; out vec3 vN; out float vFade;
@@ -285,7 +335,7 @@ bool init() {
   if (inited) return true; inited = true; winW = gfx::winW; winH = gfx::winH; const Q& q = QS[gfx::quality]; (void)q;
   std::string XL = xlight();
   pTerr = gfx::program(V(TERR_VS).c_str(), V(XL.c_str(), NOISE, TERR_FS).c_str(), "x-terrain"); pWater = gfx::program(V(WATER_VS).c_str(), V("uniform vec3 uCam;", NOISE, WATER_FS).c_str(), "x-water"); pSky = gfx::program(V(SKY_VS).c_str(), V(NOISE, SKY_FS).c_str(), "x-sky");
-  pProp = gfx::program(V(PROP_VS).c_str(), V(XL.c_str(), FIG_FS_BODY).c_str(), "x-prop"); pPropShadow = gfx::program(V(PROP_SHADOW_VS).c_str(), sh::SHADOW_FS, "x-propshadow"); pFigX = gfx::program(V(FIG_VS).c_str(), V(XL.c_str(), FIG_FS_BODY).c_str(), "x-figure");
+  std::string LP = leafPatch(FIG_FS_BODY); pProp = gfx::program(V(PROP_VS).c_str(), V(XL.c_str(), LP.c_str()).c_str(), "x-prop"); pPropShadow = gfx::program(V(LEAF_SHADOW_VS).c_str(), V(LEAF_GLSL, LEAF_SHADOW_FS).c_str(), "x-propshadow"); pFigX = gfx::program(V(FIG_VS).c_str(), V(XL.c_str(), FIG_FS_BODY).c_str(), "x-figure");
   pGrass = gfx::program(V(GRASS_VS).c_str(), V(XL.c_str(), GRASS_FS).c_str(), "x-grass"); pFall = gfx::program(V(FALL_VS).c_str(), V(NOISE, FALL_FS).c_str(), "x-fall"); pMapP = gfx::program(V(MAP_VS).c_str(), V(MAP_FS).c_str(), "x-map");
   pFogP = gfx::program(sh::FS_VS, sh::FOG_FS, "x-fog"); pDownP = gfx::program(sh::FS_VS, sh::DOWN_FS, "x-down"); pFinalP = gfx::program(sh::FS_VS, sh::FINAL_FS, "x-final"); glGenVertexArrays(1, &vaoEmpty);
   // world textures
@@ -298,7 +348,7 @@ bool init() {
   // props
   for (int k = 0; k < NK; k++) { std::vector<LV> v; std::vector<uint16_t> ix; if (KD[k].key) { FigAsset& a = propAsset[k]; if (!figLoad(a, KD[k].key)) { fprintf(stderr, "missing prop %s\n", KD[k].key); continue; } pm[k].vao = 0; pm[k].vbo = a.vbo; pm[k].ibo = a.ibo; pm[k].ni = a.ni; glGenVertexArrays(1, &pm[k].vao); glBindVertexArray(pm[k].vao); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, a.ibo); glBindVertexArray(0); pm[k].ok = true; }
     else if (xmBuild(k, v, ix)) { buildMeshSlot(k, v, ix); pm[k].ok = true; } }
-  { std::vector<LV> v; std::vector<uint16_t> ix; if (xmBuild(XM_LOCONI, v, ix)) { buildMeshSlot(SLOT_CONI, v, ix); pm[SLOT_CONI].ok = true; } if (xmBuild(XM_LOBROAD, v, ix)) { buildMeshSlot(SLOT_BROAD, v, ix); pm[SLOT_BROAD].ok = true; } }
+  { std::vector<LV> v; std::vector<uint16_t> ix; if (xmBuild(XM_LOCONI, v, ix)) { buildMeshSlot(SLOT_CONI, v, ix); pm[SLOT_CONI].ok = true; } if (xmBuild(XM_LOBROAD, v, ix)) { buildMeshSlot(SLOT_BROAD, v, ix); pm[SLOT_BROAD].ok = true; } if (xmBuild(XM_LOBIRCH, v, ix)) { buildMeshSlot(SLOT_BIRCH, v, ix); pm[SLOT_BIRCH].ok = true; } if (xmBuild(XM_LOCHERRY, v, ix)) { buildMeshSlot(SLOT_CHERRY, v, ix); pm[SLOT_CHERRY].ok = true; } }
   // bucket instances per kind per 64 m cell
   std::vector<std::vector<int>> per(NK); for (size_t i = 0; i < objs.size(); i++) per[objs[i].kind].push_back((int)i);
   for (int k = 0; k < NK; k++) { cellStart[k].assign(NC * NC + 1, 0); std::vector<int>& L = per[k]; auto cellId = [&](const Obj& o) { int cx = std::min(NC - 1, std::max(0, (int)((o.x + HALF) / CELL))), cz = std::min(NC - 1, std::max(0, (int)((o.z + HALF) / CELL))); return cz * NC + cx; };
@@ -353,7 +403,8 @@ void gather(const Frame& f, bool shadowOnly) {
   }
 }
 void drawProps(GLuint prog, bool shadow) {
-  for (int s = 0; s < NSLOT; s++) { if (!pm[s].ok || !stageN[s]) continue; glBindVertexArray(pm[s].vao); glBindBuffer(GL_ARRAY_BUFFER, pm[s].inst); glBufferSubData(GL_ARRAY_BUFFER, 0, (GLsizeiptr)stageN[s] * sizeof(IData), stage[s].data()); glDrawElementsInstanced(GL_TRIANGLES, pm[s].ni, GL_UNSIGNED_SHORT, nullptr, stageN[s]); drawCalls++; } (void)prog; (void)shadow;
+  if (!shadow) glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+  for (int s = 0; s < NSLOT; s++) { if (!pm[s].ok || !stageN[s]) continue; glBindVertexArray(pm[s].vao); glBindBuffer(GL_ARRAY_BUFFER, pm[s].inst); glBufferSubData(GL_ARRAY_BUFFER, 0, (GLsizeiptr)stageN[s] * sizeof(IData), stage[s].data()); glDrawElementsInstanced(GL_TRIANGLES, pm[s].ni, GL_UNSIGNED_SHORT, nullptr, stageN[s]); drawCalls++; } if (!shadow) glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE); (void)prog;
 }
 }  // namespace
 bool project(float x, float y, float z, float& sx, float& sy) { const float* m = vpM.m; float cx = m[0] * x + m[4] * y + m[8] * z + m[12], cy = m[1] * x + m[5] * y + m[9] * z + m[13], cw = m[3] * x + m[7] * y + m[11] * z + m[15]; if (cw <= 0.01f) return false; sx = (cx / cw * 0.5f + 0.5f) * winW; sy = (1 - (cy / cw * 0.5f + 0.5f)) * winH; return true; }

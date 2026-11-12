@@ -23,6 +23,7 @@ typedef ptrdiff_t GLsizeiptr, GLintptr;
 #define GL_BLEND 0x0BE2
 #define GL_CULL_FACE 0x0B44
 #define GL_MULTISAMPLE 0x809D
+#define GL_SAMPLE_ALPHA_TO_COVERAGE 0x809E
 #define GL_BACK 0x0405
 #define GL_FRONT 0x0404
 #define GL_LEQUAL 0x0203
