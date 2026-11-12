@@ -362,7 +362,7 @@ void generate(uint32_t seed) {
     infoA.assign((size_t)GS * GS * 4, 255); infoB.assign((size_t)GS * GS * 4, 0);
     for (int j = 0; j < GS; j++) for (int i = 0; i < GS; i++) { int id = j * GS + i; float x = -HALF + (i + 0.5f) * CS, z = -HALF + (j + 0.5f) * CS; float h = Hh[id]; float hxm = Hh[j * GS + std::max(0, i - 1)], hxp = Hh[j * GS + std::min(GS - 1, i + 1)], hzm = Hh[std::max(0, j - 1) * GS + i], hzp = Hh[std::min(GS - 1, j + 1) * GS + i]; float sl = std::sqrt((hxp - hxm) * (hxp - hxm) + (hzp - hzm) * (hzp - hzm)) / (2 * CS);
       float n1 = fb(x * 0.02f, z * 0.02f, 3, SEED + 21), n2 = fb(x * 0.2f, z * 0.2f, 2, SEED + 22), n3 = fb(x * 0.006f, z * 0.006f, 2, SEED + 23); float fm = forestMask(x, z, h); float q = fb(x * 0.0022f + 50, z * 0.0022f, 3, SEED + 41);
-      V3 meadow = mix3(V3{0.30f, 0.50f, 0.15f}, V3{0.50f, 0.58f, 0.19f}, n1); if (q < 0.30f && fm > 0.3f) meadow = mix3(meadow, V3{0.50f, 0.58f, 0.30f}, 0.4f); V3 col = mix3(meadow, V3{0.16f, 0.27f, 0.10f}, fm * 0.75f); float grass = 1.f - 0.4f * fm;
+      V3 meadow = mix3(V3{0.24f, 0.42f, 0.13f}, V3{0.42f, 0.50f, 0.17f}, n1); if (q < 0.30f && fm > 0.3f) meadow = mix3(meadow, V3{0.50f, 0.58f, 0.30f}, 0.4f); V3 col = mix3(meadow, V3{0.16f, 0.27f, 0.10f}, fm * 0.75f); float grass = 1.f - 0.4f * fm;
       float alp = smooth(45.f, 88.f, h + (n1 - 0.5f) * 24.f); col = mix3(col, V3{0.40f, 0.45f, 0.28f}, alp * 0.75f);
       float rk = smooth(0.50f, 0.92f, sl + (n2 - 0.5f) * 0.28f); V3 rock = mix3(V3{0.34f, 0.31f, 0.28f}, V3{0.50f, 0.47f, 0.42f}, n2); col = mix3(col, rock, rk); grass *= 1.f - rk;
       float sn = smooth(104.f, 128.f, h + (n1 - 0.5f) * 34.f - sl * 20.f); col = mix3(col, V3{0.92f, 0.94f, 0.97f}, sn); grass *= 1.f - sn;
@@ -376,7 +376,7 @@ void generate(uint32_t seed) {
       infoB[id * 4] = b8(flower); infoB[id * 4 + 1] = b8(fm); infoB[id * 4 + 2] = b8(fa / PI); infoB[id * 4 + 3] = fk * 60; } }
   // minimap (4 m / px)
   mapRGBA.assign((size_t)MAPN * MAPN * 4, 255); for (int j = 0; j < MAPN; j++) for (int i = 0; i < MAPN; i++) { int gi = std::min(GS - 1, i * 2), gj = std::min(GS - 1, j * 2); float h = Hh[gj * GS + gi]; int id = gj * GS + gi; V3 c{infoA[id * 4] / 255.f, infoA[id * 4 + 1] / 255.f, infoA[id * 4 + 2] / 255.f};
-    float hs = clampf(0.5f + (Hh[gj * GS + std::min(GS - 1, gi + 2)] - Hh[gj * GS + std::max(0, gi - 2)] + Hh[std::max(0, gj - 2) * GS + gi] - Hh[std::min(GS - 1, gj + 2) * GS + gi]) * 0.05f, 0.25f, 1.15f); c = c * (hs * 1.1f + 0.1f);
+    float hs = clampf(0.5f + (Hh[gj * GS + std::min(GS - 1, gi + 2)] - Hh[gj * GS + std::max(0, gi - 2)] + Hh[std::max(0, gj - 2) * GS + gi] - Hh[std::min(GS - 1, gj + 2) * GS + gi]) * 0.05f, 0.25f, 1.15f); c = c * (hs * 1.3f + 0.25f);
     if (Wl[id] > -1e8f && h < Wl[id] + 0.05f) c = mix3(V3{0.10f, 0.28f, 0.50f}, V3{0.18f, 0.42f, 0.62f}, clampf((Wl[id] - h) * -0.2f + 1.f, 0, 1)); else if (h < 0.f) c = V3{0.08f, 0.22f, 0.42f};
     mapRGBA[(j * MAPN + i) * 4] = (uint8_t)(clampf(c.x, 0, 1) * 255); mapRGBA[(j * MAPN + i) * 4 + 1] = (uint8_t)(clampf(c.y, 0, 1) * 255); mapRGBA[(j * MAPN + i) * 4 + 2] = (uint8_t)(clampf(c.z, 0, 1) * 255); }
   fprintf(stderr, "world: %zu objects, %zu settlements, %zu roads, %zu falls, %zu pois, %zu posts, %zu lights, %zu colliders\n", objs.size(), settles.size(), roads.size(), falls.size(), pois.size(), posts.size(), lights.size(), cols.size());

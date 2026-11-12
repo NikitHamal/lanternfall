@@ -163,10 +163,10 @@ void main(){
   float h0 = textureLod(uHeight, uv, 0.).r; float hr = h21(cell+5.5); float yaw = hr*6.2831; vec3 base = A.rgb*A.rgb; float wind = sin(uTime*1.6 + xz.x*.35 + xz.y*.22)*.5 + sin(uTime*2.7 + xz.y*.6)*.25;
   vec3 pos; vec3 col; vec3 nrm = vec3(0.,1.,0.);
   if (uMode == 0) {
-    float bid = aP.w; float ang = h21(cell*1.7 + bid*3.3)*6.2831; vec2 off = (vec2(h21(cell+bid*1.3), h21(cell-bid*2.1))-.5)*.5; float Hh = (.32 + .55*h21(cell+bid*7.7)) * (1.-.45*B.g) * vFade * (1. + .5*hr); float w = .05*(1.+h21(cell+bid)*.6);
+    float bid = aP.w; float ang = h21(cell*1.7 + bid*3.3)*6.2831; vec2 off = (vec2(h21(cell+bid*1.3), h21(cell-bid*2.1))-.5)*.5; float Hh = (.16 + .30*h21(cell+bid*7.7)) * (1.-.4*B.g) * vFade * (1. + .5*hr); float w = .032*(1.+h21(cell+bid)*.6);
     float y = aP.y; float side = aP.x*w*(1.-y*.92); vec2 dir = vec2(cos(ang), sin(ang)); float lean = (.25 + .6*h21(cell+bid*4.4)) * y*y; vec2 bend = dir*lean*Hh*.8 + vec2(wind*.18, wind*.1)*y*y*Hh;
     pos = vec3(xz.x + off.x + side*dir.y + bend.x, h0 + y*Hh, xz.y + off.y - side*dir.x + bend.y);
-    col = base*mix(.55, 1.35, y)*(.82 + .36*h21(cell+bid)); col = mix(col, col*vec3(1.25,1.15,.55), y*y*.55*h21(cell+1.9)); nrm = normalize(vec3(dir.x*.35, 1., dir.y*.35)); }
+    col = base*mix(.5, 1.05, y)*(.8 + .35*h21(cell+bid)); col = mix(col, col*vec3(1.25,1.15,.55), y*y*.55*h21(cell+1.9)); nrm = normalize(vec3(dir.x*.35, 1., dir.y*.35)); }
   else {
     vec3 lp = aP.xyz; float kind = aP.w; float sz = (.75 + .6*hr) * vFade; float c = cos(yaw), s = sin(yaw); vec3 q = vec3(lp.x*c - lp.z*s, lp.y, lp.x*s + lp.z*c)*sz; float sway = q.y*q.y*(wind*.35);
     pos = vec3(xz.x + q.x + sway, h0 + q.y, xz.y + q.z + sway*.5);
