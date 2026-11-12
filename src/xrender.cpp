@@ -137,6 +137,7 @@ in vec3 vWp; out vec4 oC; uniform sampler2D uHeight, uWater, uInfoA; uniform flo
 vec3 skyR(vec3 r){ vec3 c = mix(uHor, uZen, pow(clamp(r.y,0.,1.), .45)); float sd = max(dot(r,uSunDir),0.); c += uSunCol*(pow(sd,6.)*.12)*uSunVis; return c; }
 void main(){
   vec2 uv = vWp.xz/uWorld+.5; float th = texture(uHeight, uv).r*1024.-128.; float depth = vWp.y - th; if (depth < 0.) discard;
+  { float ee = 3./uWorld; float gx = (texture(uHeight, uv+vec2(ee,0.)).r - texture(uHeight, uv-vec2(ee,0.)).r)*1024./6., gz = (texture(uHeight, uv+vec2(0.,ee)).r - texture(uHeight, uv-vec2(0.,ee)).r)*1024./6.; if (depth > .1 && length(vec2(gx,gz)) > .85) discard; }
   vec4 Wt = texture(uWater, uv); Wt = vec4(Wt.r*1024.-128., Wt.gb*2.-1., Wt.a); if (vWp.y - Wt.r > .4) discard; vec2 flow = Wt.gb; float spd = length(flow); vec2 fd = spd > .02 ? flow/spd : vec2(0.); float river = smoothstep(.02,.6,spd);
   float t = uTime; vec2 p = vWp.xz; float v1 = mix(.25, 2.2, river), v2 = mix(.4, 3.4, river);
   vec2 q1 = p*.42 - fd*t*v1 + vec2(t*.05, t*.03), q2 = p*1.15 - fd*t*v2 + vec2(-t*.06, t*.04), q3 = p*3.1 - fd*t*v2*1.4;
@@ -177,7 +178,7 @@ void main(){
     vec3 col = mix(vec3(.14,.33,.42), vec3(.52,.74,.84), st); col = mix(col, vec3(.95,.97,.98), white*.72); col *= uAmb*1.05; col += uSunCol*.03;
     float foam = smoothstep(.22, .0, vY) * (.55 + .6*vn2(vUv*4.2 - vec2(0., t*2.))); col = mix(col, vec3(1.)*uAmb*1.15, clamp(foam, 0., 1.)*.85);
     float a = clamp(.2 + .34*st + .42*white + foam*.4, .2, .9);
-    float eg = abs(vUS) + .22*(vn2(vec2(vUS*4.5 + 2., y*.11 - t*1.1)) - .5) + .1*(vn2(vec2(vUS*13., y*.3 - t*2.3)) - .5); float edge = 1. - smoothstep(.5, .98, eg); a *= edge * edge; col = mix(col, vec3(1.)*uAmb*1.1, (1.-edge)*.5);
+    float eg = abs(vUS)*2. + .22*(vn2(vec2(vUS*4.5 + 2., y*.11 - t*1.1)) - .5) + .1*(vn2(vec2(vUS*13., y*.3 - t*2.3)) - .5); float edge = 1. - smoothstep(.5, .98, eg); a *= edge * edge; col = mix(col, vec3(1.)*uAmb*1.1, (1.-edge)*.5);
     oC = vec4(col, a); }
   else { float r = length(vUv); if (r > 1.) discard; float n = vn2(vUv*2.5 + vY); float a = pow(1.-r, 2.)*(.14 + .1*n); oC = vec4(vec3(.92,.96,1.)*uAmb*1.05, a); } }
 )GLSL";
