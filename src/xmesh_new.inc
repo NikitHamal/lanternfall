@@ -16,7 +16,12 @@ void blade(MB& b, V3 base, float yaw, float length, float width, float lean, flo
   for (int i = 1; i <= segs; i++) { float t = (float)i / segs, th = lean + droop * t * t; p = p + V3{std::sin(th) * hx * sl, std::cos(th) * sl, std::sin(th) * hz * sl}; float hw = width * 0.5f * (1.f - 0.88f * t * t);
     V3 b0 = p - wd * hw, b1 = p + wd * hw; quad2(b, a0, a1, b1, b0, s); a0 = b0; a1 = b1; }
 }
-void leafBlob(MB& b, float x, float y, float z, float rx, float ry, float rz, const Sty& s, uint32_t seed) { blob(b, x, y, z, rx, ry, rz, 8, 4, s, seed, 0.32f); }
+void leafBlob(MB& b, float x, float y, float z, float rx, float ry, float rz, const Sty& s, uint32_t seed) {   // lumpy leaf mass: core + 4 satellite clumps (sun-lit top, shaded underside)
+  blob(b, x, y, z, rx, ry, rz, 9, 5, s, seed, 0.2f);
+  for (int k = 0; k < 4; k++) { uint32_t h = (seed * 2654435761u + k * 40503u) ^ 0x9e3779b9u; h = (h ^ (h >> 15)) * 2246822519u; float a = ((h >> 4) & 0xfff) / 4095.f * TAU + k * 1.57f, e = 0.25f + ((h >> 16) & 0xff) / 255.f * 0.9f;
+    float ux = std::cos(a) * std::cos(e), uy = std::sin(e) * 0.8f, uz = std::sin(a) * std::cos(e); float sz = 0.5f + ((h >> 24) & 0xff) / 255.f * 0.14f;
+    Sty t = s; float lit = 0.88f + 0.3f * (uy > 0.f ? uy : uy * 0.5f); t.col = V3{clampf(s.col.x * lit, 0.f, 1.f), clampf(s.col.y * lit * 1.03f, 0.f, 1.f), clampf(s.col.z * lit * 0.96f, 0.f, 1.f)};
+    blob(b, x + ux * rx * 0.78f, y + uy * ry * 0.85f, z + uz * rz * 0.78f, rx * sz, ry * sz * 1.05f, rz * sz, 6, 3, t, seed + 31 * (k + 1), 0.28f); } }
 
 void buildFlora(int kind, MB& b) {
   switch (kind) {
