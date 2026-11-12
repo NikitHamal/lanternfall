@@ -82,3 +82,7 @@ Done:
 - Worlds: three biomes (ASHEN MOOR, PINE HIGHLANDS, DROWNED FEN) are mapped onto the existing five reach palettes (fog, ground, grass, props, drizzle); `T` cycles them in play, `1/2/3` in hero select.
 Deferred (not done): 64 m chunked 4-LOD terrain, heightfield stitching, water-depth plane, GPU-instanced Polyfork foliage/buildings (the assets exist but are not placed; there is no terrain kit in the merged branch), 15/30/50 m lanes + wind flags, cover/verticality, day/night toggle, foot IK / turn-in-place / coyote time, directional hit-react clips from the Polyfork `hit_f/l/r` and `dodge` clips, five-variant death for the player, combat capture.
 QA shots read: title, hero, fpv, aim, moor, highlands, fen (1280x720, llvmpipe via molab Xvfb).
+
+## v1.4.0 - full hero combat, practice/solo class overhaul, asset & animation polish (in progress)
+- Session bootstrap: `origin/assets` (`8e8dc2c`) verified already merged into `main`.
+- Notebook status: prompt carried literal `<<PASTE_MOLAB_URL>>` / `<<PASTE_MOLAB_TOKEN>>` placeholders at tool call #10 (no active molab kernel attached); building and running Xvfb + Mesa llvmpipe locally in user-space + `tools/lfm_sheet.py` for full visual QA passes.
