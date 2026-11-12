@@ -3,5 +3,5 @@ enum Snd { S_NONE, S_SWING, S_SWINGHEAVY, S_BOW, S_BOWHEAVY, S_BOWVOLLEY, S_ARRO
   S_BASH, S_HOLD, S_CLEAVE, S_SUNDER, S_KINDLE, S_QUICK, S_HITMETAL, S_HITSHIELD, S_HITSTONE, S_HITWOOD, S_HITSOFT, S_HITFIRE, S_HITFROST, S_HITGLOAM, S_DIE, S_DIEBIG, S_MONATK, S_MONHEAVY, S_GLOAMCAST,
   S_BOSSINTRO, S_BOSSWIND, S_BOSSSLAM, S_ENRAGE, S_COIN, S_GEAR, S_GEAR2, S_RELIC, S_LEVELUP, S_HERODOWN, S_REVIVE, S_FLAMEOUT, S_FLARE, S_WAYLIGHT, S_BOSSDOWN, S_PUSH, S_HOLDCH, S_CARD, S_BUY, S_CLICK, S_LANTERNFALL, S_CINDERLAND, S_UNLOCK, S_COUNT };
 namespace audio {
-bool init(); void shutdown(); void play(int snd, float pan = 0, float vol = 1); void update(float dt, float danger, bool panel, float fire); void setVolume(float v, bool mute);
+bool init(); void shutdown(); void play(int snd, float pan = 0, float vol = 1); void update(float dt, float danger, bool panel, float fire); void setVolume(float v, bool mute); void ambience(float day, float water, float forest);
 }

@@ -371,6 +371,10 @@ void update(float dtReal, const pl::Input& in) {
     }
   }
   if (!H.prompt[0] && !H.map && P.deadT <= 0 && restT <= 0 && !K.buildMode) faunaPrompt();
+  { float dayF = smooth(5.2f, 7.5f, clockH) * (1.f - smooth(18.2f, 20.5f, clockH)); if (CI.in) dayF *= 0.2f; float wat = 0.f;
+    if (!CI.in) { static const float RR[3] = {4.f, 10.f, 22.f}; for (int r = 0; r < 3; r++) for (int k = 0; k < 6; k++) { float a = k * 1.047f; if (inWater(P.x + std::cos(a) * RR[r], P.z + std::sin(a) * RR[r])) wat += 0.9f - 0.25f * r; } wat = clampf(wat / 2.5f, 0.f, 1.f);
+      for (const Fall& fl : falls) { float d = std::sqrt(dist2(fl.x, fl.z, P.x, P.z)); wat = std::max(wat, clampf(1.f - d / 90.f, 0.f, 1.f)); } }
+    audio::ambience(dayF, wat, CI.in ? 0.f : forestAt(P.x, P.z)); }
   // boss bar
   H.bossHp = -1; for (int k = 0; k < nMonL; k++) { const Npc& m = npcs[monList[k]]; if (m.boss && m.alive && m.lastPlayerD < 60.f) { H.bossHp = m.hp / m.maxHp; snprintf(H.bossName, sizeof H.bossName, "%s", m.name); } }
   // ---- camera

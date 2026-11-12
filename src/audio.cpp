@@ -58,8 +58,9 @@ void buildDefs() {
 struct Voice { bool on = false; int w = 0; float t = 0, delay = 0, dur = 0, f0 = 0, f1 = 0, vol = 0, ph = 0, lp = 0, bp = 0, pan = 0; };
 constexpr int NV = 40; Voice voices[NV];
 struct Req { int snd; float pan, vol; }; constexpr int QN = 128; Req queue[QN]; std::atomic<unsigned> qh{0}, qt{0};
-std::atomic<float> aDanger{0}, aFire{0}, aVol{0.8f}; std::atomic<bool> aMute{false}, aPanel{false};
+std::atomic<float> aDanger{0}, aFire{0}, aVol{0.8f}, aDay{0.f}, aWater{0.f}, aForest{0.3f}; std::atomic<bool> aMute{false}, aPanel{false};
 uint32_t rs = 0x1234567; float rnd() { rs = rs * 1664525u + 1013904223u; return ((rs >> 8) & 0xFFFF) / 32768.f - 1.f; }
+struct Chirp { float t = 0, wait = 0.5f, f0 = 3000, f1 = 3000, dur = 0.1f, ph = 0; int notes = 0; } chirps[3]; float daySm = 0, watSm = 0, forSm = 0.3f, wl1 = 0, wl2 = 0, crPh = 0;
 float sr = 48000; float wphase = 0, dph1 = 0, dph2 = 0, windLp = 0, windLp2 = 0, windT = 0, fireEnv = 0, fireLp = 0, duck = 1, danger = 0, fireSm = 0, hb = 0;
 ma_device dev; bool started = false;
 void spawn(const Req& r) {
@@ -68,6 +69,7 @@ void spawn(const Req& r) {
 }
 void cb(ma_device*, void* out, const void*, ma_uint32 frames) {
   float* o = (float*)out; unsigned h = qh.load(), t = qt.load(); while (t != h) { spawn(queue[t % QN]); t++; } qt.store(t);
+  float day = aDay.load(), wat = aWater.load(), forT = aForest.load();
   float vol = aMute.load() ? 0.f : aVol.load(), dg = aDanger.load(), fr = aFire.load(); float dt = 1.f / sr; float tgtDuck = aPanel.load() ? 0.55f : 1.f;
   for (ma_uint32 i = 0; i < frames; i++) {
     float L_ = 0, R_ = 0; duck += (tgtDuck - duck) * 0.0002f; danger += (dg - danger) * 0.00005f; fireSm += (fr - fireSm) * 0.0003f;
@@ -81,7 +83,16 @@ void cb(ma_device*, void* out, const void*, ma_uint32 frames) {
     float cr = 0; if (fireSm > 0.01f) { fireEnv *= 0.9992f; if (rnd() > 0.9985f) fireEnv = 0.4f + 0.6f * (rnd() * 0.5f + 0.5f); fireLp += (rnd() - fireLp) * 0.35f; cr = (fireLp * fireEnv * 0.35f + rnd() * 0.01f) * fireSm * 0.4f; }
     // danger pulse
     hb += dt * (1.1f + danger * 0.9f); if (hb > 1) hb -= 1; float pulse = danger > 0.2f ? std::exp(-hb * 18.f) * std::sin(hb * 300.f) * 0.05f * danger : 0.f;
-    float bed = wind + drone + cr + pulse; L_ += bed; R_ += bed;
+    // ambience (explorer): birdsong by day, crickets at night, running water near rivers / falls / the sea
+    daySm += (day - daySm) * 0.00003f; watSm += (wat - watSm) * 0.00005f; forSm += (forT - forSm) * 0.00003f; drone *= 1.f - 0.82f * daySm;
+    float amb = 0;
+    for (int c = 0; c < 3; c++) { Chirp& k = chirps[c];
+      if (k.notes <= 0) { k.wait -= dt; if (k.wait <= 0 && daySm > 0.25f) { k.notes = 2 + (int)((rnd() * 0.5f + 0.5f) * 4.f); k.dur = 0.07f + (rnd() * 0.5f + 0.5f) * 0.1f; k.f0 = 2300.f + (rnd() * 0.5f + 0.5f) * 2200.f; k.f1 = k.f0 * (rnd() > 0 ? 1.35f : 0.72f); k.t = 0; } }
+      if (k.notes > 0) { k.t += dt; float u = k.t / k.dur; if (u >= 1.f) { k.notes--; k.t = 0; if (k.notes <= 0) k.wait = (1.5f + (rnd() * 0.5f + 0.5f) * 7.f) / (0.35f + forSm); }
+        else { float f = k.f0 * std::pow(k.f1 / k.f0, u) * (1.f + 0.02f * std::sin(k.t * 90.f)); k.ph += TAU * f * dt; if (k.ph > TAU) k.ph -= TAU; amb += std::sin(k.ph) * std::sin(u * PI) * 0.04f * daySm * (0.4f + forSm); } } }
+    if (daySm < 0.7f) { crPh += TAU * 4300.f * dt; if (crPh > TAU) crPh -= TAU; float g = 0.5f + 0.5f * std::sin(windT * TAU * 17.f); g = g * g * g; float sl = 0.5f + 0.5f * std::sin(windT * 0.9f); amb += std::sin(crPh) * g * sl * 0.010f * (1.f - daySm / 0.7f); }
+    wl1 += (n - wl1) * 0.3f; wl2 += (wl1 - wl2) * 0.06f; amb += (wl1 - wl2) * 0.5f * watSm * (0.8f + 0.2f * std::sin(windT * 3.1f));
+    float bed = wind + drone + cr + pulse + amb; L_ += bed; R_ += bed;
     for (auto& v : voices) { if (!v.on) continue; if (v.delay > 0) { v.delay -= dt; continue; } float u = v.t / v.dur; if (u >= 1) { v.on = false; continue; }
       float f = v.f0 * std::pow(v.f1 / v.f0, u), env = std::exp(-4.5f * u) * std::min(1.f, v.t / 0.004f) * (u > 0.9f ? (1 - u) * 10.f : 1.f), s = 0;
       if (v.w == SINE) { v.ph += TAU * f * dt; if (v.ph > TAU) v.ph -= TAU; s = std::sin(v.ph); }
@@ -100,5 +111,6 @@ bool init() {
 void shutdown() { if (started) { ma_device_uninit(&dev); started = false; } }
 void play(int snd, float pan, float vol) { if (!started || snd <= 0 || snd >= S_COUNT) return; unsigned h = qh.load(); if (h - qt.load() >= QN) return; queue[h % QN] = {snd, pan, vol}; qh.store(h + 1); }
 void update(float, float danger, bool panel, float fire) { aDanger.store(danger); aPanel.store(panel); aFire.store(fire); }
+void ambience(float day, float water, float forest) { aDay.store(day); aWater.store(water); aForest.store(forest); }
 void setVolume(float v, bool mute) { aVol.store(v); aMute.store(mute); }
 }  // namespace audio
