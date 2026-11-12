@@ -331,10 +331,10 @@ void figDraw(GLuint prog, const FigDraw* d, int n, bool shadowPass) {
   static GLint lM = -1, lB, lD, lH, lC, lF, lDim, lG; static GLuint last = 0;
   if (last != prog) { last = prog; lM = glGetUniformLocation(prog, "uModel"); lB = glGetUniformLocation(prog, "uBones"); lD = glGetUniformLocation(prog, "uDissolve"); lH = glGetUniformLocation(prog, "uDisH"); lC = glGetUniformLocation(prog, "uDisCol"); lF = glGetUniformLocation(prog, "uFlash"); lDim = glGetUniformLocation(prog, "uDim"); lG = glGetUniformLocation(prog, "uGlow"); }
   for (int i = 0; i < n; i++) {
-    const FigDraw& f = d[i]; if (!f.a || !f.a->ok) continue; if (shadowPass && !f.shadow) continue;
+    const FigDraw& f = d[i]; if (!f.a || !f.a->ok) continue; if (shadowPass && !f.shadow) continue; if (f.vm) glDepthRange(0.0, 0.02);
     glUniformMatrix4fv(lM, 1, GL_FALSE, f.model.m); glUniform4fv(lB, f.a->nb * 3, f.mat);
     if (!shadowPass) { glUniform1f(lD, f.dissolve); glUniform1f(lH, f.disH); glUniform3fv(lC, 1, f.disCol); glUniform3fv(lF, 1, f.flash); glUniform1f(lDim, f.dim); glUniform1f(lG, f.glow); }
-    glBindVertexArray(f.a->vao); glDrawElements(GL_TRIANGLES, f.lantern ? f.a->ni : f.a->baseNI, GL_UNSIGNED_SHORT, nullptr);
+    glBindVertexArray(f.a->vao); glDrawElements(GL_TRIANGLES, f.lantern ? f.a->ni : f.a->baseNI, GL_UNSIGNED_SHORT, nullptr); if (f.vm) glDepthRange(0.0, 1.0);
   }
 }
 // ------------------------------------------------------------------ shaders

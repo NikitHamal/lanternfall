@@ -22,6 +22,8 @@ void step(int d);            // select() persists the choice and re-balances res
 const FigAsset* fig(int i);  // null if not resident
 const FigAsset* cur();       // currently selected figure (never null once init() ran)
 const char* styleName(int st);
+const char* styleHint(int st);   // controls line for the HUD
+const char* styleTip(int st);    // banner sub-title
 void init();
 void shutdown();
 }

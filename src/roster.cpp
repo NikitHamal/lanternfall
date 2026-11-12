@@ -54,6 +54,14 @@ const char* styleName(int st) {
   static const char* S[NSTYLE] = {"MARKSMAN BOW", "SWORD & SHIELD", "2H HEAVY MELEE", "FIRE CASTER", "ALCHEMIST", "FROST CASTER"};
   return S[(st >= 0 && st < NSTYLE) ? st : 0];
 }
+const char* styleHint(int st) {
+  static const char* S[NSTYLE] = {"LMB DRAW   RMB BLOCK   SPACE ROLL   SHIFT SPRINT", "LMB COMBO   RMB SHIELD / PARRY   SPACE ROLL", "TAP LMB CLEAVE   HOLD LMB SLAM   RMB GUARD   SPACE ROLL", "LMB FIREBOLT   HOLD CINDER ORB   RMB WARD   SPACE ROLL", "LMB FLASK   HOLD FIREPOT   RMB MEND WARD   SPACE ROLL", "LMB SHARDS   HOLD FROST LANCE   RMB ICE WARD   SPACE ROLL"};
+  return S[(st >= 0 && st < NSTYLE) ? st : 0];
+}
+const char* styleTip(int st) {
+  static const char* S[NSTYLE] = {"HOLD LMB TO DRAW - RELEASE AT THE GOLD MARK", "LMB COMBO - TAP RMB TO PARRY - LMB IN GUARD BASHES", "TAP LMB CLEAVE - HOLD AND RELEASE FOR A SLAM", "LMB BOLT - HOLD FOR A CINDER ORB - RMB WARD", "LMB FLASK - HOLD FOR AN ACID FIREPOT", "LMB RIME SHARDS - HOLD FOR A FROST LANCE"};
+  return S[(st >= 0 && st < NSTYLE) ? st : 0];
+}
 static FigAsset* resident(int i) {
   i = ((i % N) + N) % N;
   if (TAB[i].nativeIx >= 0) return gFH[TAB[i].nativeIx].ok ? &gFH[TAB[i].nativeIx] : nullptr;

@@ -40,7 +40,7 @@ float figClipU(const FigAsset& a, const char* clip, float u, FigAnim& an, float 
 void figShatter(FigAnim& an, const FigAsset& a, float power, float dx, float dz);
 void figStepFree(FigAnim& an, const FigAsset& a, float dt);
 void figWeaponMat(const FigAsset& rig, const FigAnim& an, bool left, int wpId, const M4& unitModel, float time, M4& out);
-struct FigDraw { const FigAsset* a; M4 model; const float* mat; float flash[3], dim, dissolve, disH, disCol[3], glow; bool lantern, shadow; };
+struct FigDraw { const FigAsset* a; M4 model; const float* mat; float flash[3], dim, dissolve, disH, disCol[3], glow; bool lantern, shadow; bool vm = false; };
 void figPoint(const FigAsset& a, const float* mat, int bone, float x, float y, float z, float* out);
 void figDraw(GLuint prog, const FigDraw* d, int n, bool shadowPass);
 extern GLuint pFig, pFigShadow;
