@@ -6,6 +6,7 @@
 namespace ex {
 struct Label { float x = 0, y = 0; char text[44] = {0}; float hp = -1; uint32_t col = 0xffffff; };
 struct Hud {
+  bool clean = false;   // debug: hide the whole HUD
   float hp = 100, maxHp = 100, st = 100, hour = 10, bannerT = 0, promptT = 0, dlgT = 0, hurt = 0, timeMul = 1, mapPx = 0, mapPy = 0, mapSize = 0, yaw = 0, locT = 0, bigT = 0, fade = 0, bossHp = -1;
   float rain = 0, draw = 0, hitT = 0, zoom = 0, mana = 100, maxMana = 100; int hitZone = 0, weapon = 0, arrows = 30, wanted = 0, gold = 0, murders = 0; bool hitKill = false, inside = false, bowOut = false;
   int wood = 90, stone = 95, food = 40, spell = 0, bsel = 0, troops = 0, order = 0, siegeLeft = 0, nightWave = 0, reclaimed = 0, totalRifts = 0;

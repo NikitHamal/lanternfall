@@ -16,7 +16,7 @@ struct Fauna { bool used = false, alive = true, pet = false; int sp = 0, state =
   float spdS = 0, cyc = 0, gDuty = 0.66f, gH = 0, gLift = 0, gOff[4] = {0.25f, 0.75f, 0.f, 0.5f}, bob = 0, pit = 0, look = 0, headP = 0, graze = 0, lie = 0, wag = 0, alert = 0; int act = 0; };
 constexpr int MAXF = 1800; Fauna FA[MAXF]; int nFA = 0;
 // riding: the mounted horse is a full Fauna (same rig as the herds) that follows the player; mountT / dmT drive the mount and dismount hop
-bool rideH = false; Fauna rideF; float rideX = 0, rideZ = 0, rideFace = 0, mountT = 1.f, dmT = 0.f, mountFx = 0, mountFz = 0; constexpr float RIDE_OFF = 0.66f;
+bool rideH = false; Fauna rideF; float rideX = 0, rideZ = 0, rideFace = 0, mountT = 1.f, dmT = 0.f, mountFx = 0, mountFz = 0; constexpr float RIDE_OFF = 0.66f; bool dbgClean = false; int dbgTrack = -1; float dbgAng = 1.1f, dbgDist = 4.f, dbgHF = 0.9f;
 #include "xfauna_rig.inc"
 float riderLift() { if (K.mounted && rideH) { float e = smooth(0.f, 1.f, mountT); return RIDE_OFF * e + (mountT < 1.f ? 0.3f * std::sin(PI * mountT) : 0.f) + (mountT >= 1.f ? rideF.bob * 0.9f : 0.f); } if (!K.mounted && dmT > 0.f) return RIDE_OFF * smooth(0.f, 1.f, dmT / 0.45f); return 0.f; }
 float riderPose() { if (K.mounted && rideH) return smooth(0.f, 1.f, mountT * 1.5f); if (!K.mounted && dmT > 0.f) return smooth(0.f, 1.f, dmT / 0.45f); return 1.f; }

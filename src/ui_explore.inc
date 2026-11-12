@@ -1,6 +1,6 @@
 // Explorer HUD (included inside namespace ui, after the shared UI helpers).
 static void drawExploreHud() {
-  using ex::H; const float W_ = (float)SW, H_ = (float)SH; const float M = 8 * S;
+  using ex::H; if (H.clean) return; const float W_ = (float)SW, H_ = (float)SH; const float M = 8 * S;
   if (H.rain > 0.03f) { const float rw = H.rain; rect(0, 0, W_, H_, {0.30f, 0.36f, 0.46f, 0.10f * rw});
     for (int i = 0; i < 150; i++) { float u = (float)i * 0.61803f; u -= std::floor(u); float v = (float)i * 0.7548776f; v -= std::floor(v); float sp = 1.1f + 0.9f * v; float y = gfx::time_ * sp + (float)i * 0.37f; y -= std::floor(y);
       float len = (16.f + 26.f * v) * S; rect(u * W_, y * (H_ + len) - len, std::max(1.f, 1.1f * S), len, {0.78f, 0.84f, 0.95f, (0.10f + 0.12f * v) * rw}); } }

@@ -54,13 +54,13 @@ int emitAnimal(xr::Dyn* out, int k, int cap, const Fauna& f, bool saddle, float 
   put(A.body, bm, tr, tg, tb);
   // head / neck: look yaw, graze pitch, gait nod, chew
   { float chew = f.graze > 0.85f ? 0.05f * std::sin(tAbsNow * 6.5f + f.ph) * (A.grazeP > 0.8f ? 1.f : 0.5f) : 0.f; float nod = f.alive ? 0.045f * std::sin(f.cyc * TAU + 0.5f) * smooth(0.1f, 1.f, f.spdS) * (1.f - smooth(A.vG * 0.8f, A.vG, f.spdS)) : 0.f;
-    float pt = f.headP + f.graze * A.grazeP + chew + nod + dead * 0.6f + lie * 0.18f; M4 hm = mul(bm, mul(translate(0, A.nY - A.bodyY, A.nZ), mul(rotY(f.alive ? f.look : 0.f), rotX(pt)))); if (A.head >= 0) put(A.head, hm, tr, tg, tb); }
+    float pt = f.headP + f.graze * A.grazeP + chew + nod + dead * 0.6f + lie * 0.18f; M4 hm = mul(bm, mul(translate(0, A.nY, A.nZ), mul(rotY(f.alive ? f.look : 0.f), rotX(pt)))); if (A.head >= 0) put(A.head, hm, tr, tg, tb); }
   if (A.tail >= 0) { float sp = f.spdS; float sw = std::sin(tAbsNow * (f.sp == SP_DOG ? (f.wag > 0.f ? 12.f : 2.f) : 1.7f) + f.ph) * (f.sp == SP_DOG ? (f.wag > 0.f ? 0.55f : 0.12f) : 0.22f) * (1.f + sp * 0.04f);
-    float up = f.sp == SP_HORSE || f.sp == SP_COW ? -0.15f - 0.5f * smooth(A.vT, A.vG * 1.2f, sp) : f.sp == SP_DOG ? -0.2f * smooth(1.f, 3.f, sp) : 0.f; M4 tm = mul(bm, mul(translate(0, A.tY - A.bodyY, A.tZ), mul(rotY(sw), rotX(up + (f.sp == SP_COW ? 0.05f * std::sin(tAbsNow * 2.3f + f.ph) : 0.f))))); put(A.tail, tm, tr, tg, tb); }
+    float up = f.sp == SP_HORSE || f.sp == SP_COW ? -0.15f - 0.5f * smooth(A.vT, A.vG * 1.2f, sp) : f.sp == SP_DOG ? -0.2f * smooth(1.f, 3.f, sp) : 0.f; M4 tm = mul(bm, mul(translate(0, A.tY, A.tZ), mul(rotY(sw), rotX(up + (f.sp == SP_COW ? 0.05f * std::sin(tAbsNow * 2.3f + f.ph) : 0.f))))); put(A.tail, tm, tr, tg, tb); }
   if (saddle) put(K_AN_SADDLE, bm, 1.f, 1.f, 1.f);
   // legs: gait -> foot targets -> 2-bone IK (feet stay planted through the stance phase)
   float Lt = A.f1 + A.f2, h = f.alive ? f.gH * Lt : 0.f; float cp = std::cos(pit), sp2 = std::sin(pit);
-  for (int l = 0; l < 4; l++) { bool fore = l < 2; float side = (l & 1) ? 1.f : -1.f; float hx = (fore ? A.fx : A.hx) * side, hy = fore ? A.fy : A.hy, hz = fore ? A.fz : A.hz; float L1 = fore ? A.f1 : A.h1, L2 = fore ? A.f2 : A.h2, wU = fore ? A.wUf : A.wUh;
+  for (int l = 0; l < 4; l++) { bool fore = l < 2; float side = (l & 1) ? 1.f : -1.f; float hx = (fore ? A.fx : A.hx) * side, hy = fore ? A.fy : A.hy, hz = fore ? A.fz : A.hz; float L1 = fore ? A.f1 : A.h1, L2 = fore ? A.f2 : A.h2, wU = (fore ? A.wUf : A.wUh) * 1.3f;
     float ry = hy - A.bodyY, rz = hz; float wy = A.bodyY + bob - drop + ry * cp - rz * sp2, wz = ry * sp2 + rz * cp;   // hip in the yaw frame (body pitched about its centre)
     float a1, a2;
     if (f.alive) {
@@ -72,6 +72,6 @@ int emitAnimal(xr::Dyn* out, int k, int cap, const Fauna& f, bool saddle, float 
     } else { a1 = (l & 1) ? 0.55f : -0.35f; a2 = (l & 1) ? 0.3f : -0.5f; wy = A.bodyY; }
     float ux = std::sin(a1) * 0.f; (void)ux; float kz = wz - L1 * std::sin(a1), ky = wy - L1 * std::cos(a1);
     M4 um = mul(base, mul(translate(hx, wy, wz), mul(rotX(a1), scale4(wU, L1, wU)))); put(fore ? K_AN_UPF : K_AN_UPH, um, tr * 0.97f, tg * 0.97f, tb * 0.97f);
-    M4 lm = mul(base, mul(translate(hx, ky, kz), mul(rotX(a2), scale4(A.wL, L2, A.wL)))); put(A.paw ? K_AN_LOP : K_AN_LOH, lm, tr, tg, tb); }
+    M4 lm = mul(base, mul(translate(hx, ky, kz), mul(rotX(a2), scale4(A.wL * 1.22f, L2, A.wL * 1.22f)))); put(A.paw ? K_AN_LOP : K_AN_LOH, lm, tr, tg, tb); }
   return k;
 }
