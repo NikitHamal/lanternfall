@@ -101,3 +101,13 @@ Vision: a proper fantasy immersive third-person game (Athran-style kingdom defen
 1. [ ] Ravenfall-style casc falls: dedicated plunge water mode instead of the clipmap surface; foam ring + flow-map normals on river banks
 2. [ ] Hh int16 on the CPU, BC-compress infoA/infoB (or 1024^2 + detail noise), terrain chunk streaming
 3. [ ] Sunset/night sweep with R11F (banding check), GPU frame-time on a real card
+
+## v2.9.0 (Clear Horizon) - shipped
+- [x] App-heap accounting (`LF_MEM=1`), peak app heap 179 -> 104 MB, steady 44.6 MB; ground textures baked straight to the GPU in strips
+- [x] Per-pixel roads (R8 distance texture), forest floor on wooded slopes, no snow under woods
+## Next session candidates
+1. [ ] **Find the pale ramp** at probe (-784.3, 461.3) (see status, OPEN DEFECT) - add a render-pass bisect (`LF_SKIP=props,grass,figs,terrain`) and fix
+2. [ ] True far/near parity test: camera orbit command with a real distance parameter; compare tree LOD swap (125/560 m) and terrain rock band-limit
+3. [ ] Collision audit with a scripted walk-into test (NPCs, animals, houses, walls)
+4. [ ] Hh as int16 on CPU, mesh CPU copies freed after upload, BC-compress infoA/infoB
+5. [ ] Chunk streaming for a bigger map

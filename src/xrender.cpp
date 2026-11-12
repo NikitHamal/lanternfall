@@ -79,8 +79,8 @@ void main(){
   vec3 N = normalize(vec3(-hx, 2.*e, -hz)); vec3 col = A.rgb*A.rgb; float d = length(vWp - uCam); float fp = length(fwidth(vWp))*.8;
   float n1 = vn2(vWp.xz*.35), n2 = vn2(vWp.xz*1.7), n3 = vn2(vWp.xz*7.); float det = (.8 + .4*n1) * (.9 + .2*n2) * (.93 + .14*n3); det = mix(det, 1., smoothstep(90., 420., d)); col *= det;
   float slope = 1. - N.y; float lum = dot(col, vec3(.3,.55,.15));
-  float snowK = smoothstep(.62, .86, lum + .06*(n1-.5));
-  float rockK = smoothstep(.16, .42, slope) * (1. - snowK);
+  float snowK = smoothstep(.62, .86, lum + .06*(n1-.5)) * (1. - .85*smoothstep(.3, .7, B.g));
+  float rockK = smoothstep(.16 + .16*B.g, .42 + .14*B.g, slope) * (1. - snowK);   // wooded flanks keep their forest floor longer (no bare pale ramps under trees)
   float near = 1. - smoothstep(70., 380., d);
   // macro colour life on grass: warm/cool patches, slightly calmer saturation
   float gk = clamp(A.a*1.4, 0., 1.) * (1. - rockK) * (1. - snowK);
@@ -104,7 +104,7 @@ void main(){
   // cliff faces: warm/cool strata, vertical cracks, lichen & moss
   float wob = vn2(vWp.xz*.05)*3.;
   float band = .5 + .5*sin(vWp.y*1.55 + wob*2. + n2*1.4), band2 = mix(.5, .5 + .5*sin(vWp.y*5.3 + wob*3.), 1. - smoothstep(.2, .55, .85*fp));
-  vec3 tint = mix(vec3(.84,.9,1.02), vec3(1.14,1.0,.8), band);
+  vec3 tint = mix(vec3(.82,.87,.96), vec3(1.1,.98,.8), band) * .92;
   float cr = abs(vn2(vec2(vWp.x + vWp.z, vWp.y*1.35)*1.7 + 4.) - .5)*2.; cr = mix(1., smoothstep(0., .16, cr), 1. - smoothstep(.2, .55, 1.7*fp));
   float rk3 = mix(.5, vn(vWp*vec3(2.4,3.2,2.4)), 1. - smoothstep(.2, .55, 3.2*fp)), rk4 = mix(.5, vn(vWp*vec3(9.,11.,9.)), 1. - smoothstep(.2, .55, 11.*fp));
   vec3 rcol = col * tint * (.62 + .5*rk3) * mix(.62, 1., cr) * (.9 + .2*band2);
@@ -477,10 +477,10 @@ void render(const Frame& f, const FigDraw* figs, int nfig) {
     int G1 = (int)(128 * std::sqrt(q.grass)); G1 &= ~1; s1(pGrass, "uCell", 0.7f); s1(pGrass, "uMaxD", 0.7f * G1 * 0.5f); si(pGrass, "uG", G1); si(pGrass, "uMode", 0); glBindVertexArray(grassVao); glDrawElementsInstanced(GL_TRIANGLES, grassNI, GL_UNSIGNED_SHORT, nullptr, G1 * G1); drawCalls++;
     int G2 = (int)(96 * std::sqrt(q.grass)); G2 &= ~1; s1(pGrass, "uCell", 0.75f); s1(pGrass, "uMaxD", 0.75f * G2 * 0.5f); si(pGrass, "uG", G2); si(pGrass, "uMode", 1); glBindVertexArray(flowerVao); glDrawElementsInstanced(GL_TRIANGLES, flowerNI, GL_UNSIGNED_SHORT, nullptr, G2 * G2); drawCalls++; }
   // water
-  glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); glUseProgram(pWater); sm(pWater, "uVP", vpM); si(pWater, "uHeight", 0); si(pWater, "uInfoA", 1); si(pWater, "uWater", 3); s1(pWater, "uWorld", WORLD); s1(pWater, "uTime", f.time); s1(pWater, "uAmb", 0.22f + 0.7f * E.day + 0.1f * E.tw); s3(pWater, "uCam", f.eye);
+  static const bool noWater = getenv("LF_NOWATER") != nullptr; glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); glUseProgram(pWater); sm(pWater, "uVP", vpM); si(pWater, "uHeight", 0); si(pWater, "uInfoA", 1); si(pWater, "uWater", 3); s1(pWater, "uWorld", WORLD); s1(pWater, "uTime", f.time); s1(pWater, "uAmb", 0.22f + 0.7f * E.day + 0.1f * E.tw); s3(pWater, "uCam", f.eye);
   s3(pWater, "uSunDir", E.keyDir); s3(pWater, "uSunCol", E.keyCol * 0.5f); s3(pWater, "uZen", E.zen); s3(pWater, "uHor", E.hor); s1(pWater, "uSunVis", std::max(E.sunVis, E.night * 0.35f)); si(pWater, "uN", TN);
   { float fl[32] = {0}; bool used[32] = {false}; int nf = (int)falls.size() < 32 ? (int)falls.size() : 32; for (int k = 0; k < 8 && k < nf; k++) { int bi = -1; float bd = 1e30f; for (int i = 0; i < nf; i++) { if (used[i]) continue; float dd = (falls[i].x - f.eye.x) * (falls[i].x - f.eye.x) + (falls[i].z - f.eye.z) * (falls[i].z - f.eye.z); if (dd < bd) { bd = dd; bi = i; } } if (bi < 0) break; used[bi] = true; fl[k * 4] = falls[bi].x + falls[bi].dx * 3.5f; fl[k * 4 + 1] = falls[bi].z + falls[bi].dz * 3.5f; fl[k * 4 + 2] = 7.f; fl[k * 4 + 3] = 1.f; } glUniform4fv(U(pWater, "uFalls"), 8, fl); }
-  glBindVertexArray(terrVao); for (int L = 0; L < NL; L++) { float sp = CS * (float)(1 << L), sn = sp * 2.f; float cx = CS * 0.5f + std::floor((f.eye.x - CS * 0.5f) / sn + 0.5f) * sn, cz = CS * 0.5f + std::floor((f.eye.z - CS * 0.5f) / sn + 0.5f) * sn; s2(pWater, "uCenter", cx, cz); s1(pWater, "uSp", sp); int r = L == 0 ? 0 : 1; glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrIbo[r]); glDrawElements(GL_TRIANGLES, terrNI[r], GL_UNSIGNED_SHORT, nullptr); drawCalls++; }
+  glBindVertexArray(terrVao); for (int L = 0; L < NL; L++) { float sp = CS * (float)(1 << L), sn = sp * 2.f; float cx = CS * 0.5f + std::floor((f.eye.x - CS * 0.5f) / sn + 0.5f) * sn, cz = CS * 0.5f + std::floor((f.eye.z - CS * 0.5f) / sn + 0.5f) * sn; s2(pWater, "uCenter", cx, cz); s1(pWater, "uSp", sp); int r = L == 0 ? 0 : 1; glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrIbo[r]); if (!noWater) glDrawElements(GL_TRIANGLES, terrNI[r], GL_UNSIGNED_SHORT, nullptr); drawCalls++; }
   // waterfalls + mist
   { glUseProgram(pFall); sm(pFall, "uVP", vpM); s1(pFall, "uTime", f.time); s1(pFall, "uAmb", 0.22f + 0.8f * E.day + 0.1f * E.tw); s3(pFall, "uSunCol", E.keyCol * 0.3f); V3 right{camW.m[0], camW.m[1], camW.m[2]}, up{camW.m[4], camW.m[5], camW.m[6]}; s3(pFall, "uRight", right); s3(pFall, "uUp", up);
     for (size_t i = 0; i < falls.size(); i++) { const Fall& fa = falls[i]; float dd = (fa.x - f.eye.x) * (fa.x - f.eye.x) + (fa.z - f.eye.z) * (fa.z - f.eye.z); if (dd > 1100.f * 1100.f) continue; glUniform4f(U(pFall, "uPos"), fa.x, fa.yTop, fa.z, fa.w); glUniform4f(U(pFall, "uDir"), fa.dx, fa.dz, fa.yBot, fa.yTop - fa.yBot);
