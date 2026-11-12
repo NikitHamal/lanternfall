@@ -137,3 +137,11 @@ void cellUpdate(float dt) {
   if (CI.stage == 1) { CI.fade = std::min(1.f, CI.fade + dt * 4.5f); if (CI.fade >= 1.f) { if (CI.want > 0) doEnter(CI.want - 1); else doExit(); CI.stage = 2; } }
   else if (CI.stage == 2) { CI.fade -= dt * 3.f; if (CI.fade <= 0) { CI.fade = 0; CI.stage = 0; } }
 }
+// ------------------------------------------------------------------ nightly invasion (Athran-style defence loop seed)
+float prevHour = 9.5f; int hordeAlive = 0;
+void horde(bool force) {
+  int si = settleNear(P.x, P.z, force ? 400.f : 150.f); if (si < 0 || settles[si].type > ST_VILLAGE) return; const Settle& s = settles[si]; int want = 8 + s.size * 4 + (s.type == ST_CAPITAL ? 10 : 0); static const int T[6] = {THORNLING, PEATWIGHT, GLOAMHOUND, RUSTBOUND, THORNLING, GLOAMWISP}; int made = 0;
+  for (int t = 0; t < 200 && made < want; t++) { float a = rng() * 6.28f, d = (s.type == ST_CAPITAL ? 110.f : 70.f) + rng() * 40.f; float x = s.x + std::cos(a) * d, z = s.z + std::sin(a) * d; if (!validSpot(x, z, 0.8f)) continue; int type = T[(int)(rng() * 6.f) % 6]; if (made == 0 && s.size >= 2) type = CAIRNBACK;
+    Npc* n = spawnMon(type, x, z, false, false); if (!n) break; n->homeX = s.x + (rng() - 0.5f) * 14.f; n->homeZ = s.z + (rng() - 0.5f) * 14.f; n->wander = 12.f; n->aggro *= 1.5f; n->state = S_RETURN; made++; }
+  if (made) { char sub[40]; snprintf(sub, sizeof sub, "THE HORDE MARCHES ON %s", s.name); banner("NIGHT FALLS", sub, 5.f); audio::play(S_DIEBIG, 0, 0.5f); }
+}

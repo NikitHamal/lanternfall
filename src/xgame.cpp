@@ -8,6 +8,7 @@
 #include "game.h"
 #include "xinterior.h"
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <cmath>
 #include <algorithm>
@@ -195,7 +196,7 @@ void debugPlace(float x, float z, float yawDeg, float pitchDeg) { P.x = x; P.z =
 void debugPoi(int i) { if (pois.empty()) return; const Poi& p = pois[((i % (int)pois.size()) + (int)pois.size()) % (int)pois.size()]; float back = p.kind == 3 ? 24.f : p.kind == 0 ? 120.f : p.kind == 4 ? 60.f : 38.f; float a = p.kind == 3 ? 0.f : 0.9f; float x = p.x + std::sin(a) * back, z = p.z + std::cos(a) * back; if (p.kind == 3 && !falls.empty()) { for (const Fall& f : falls) if (std::fabs(f.x - p.x) < 1 && std::fabs(f.z - p.z) < 1) { x = f.x + f.dx * 22.f + f.dz * 6.f; z = f.z + f.dz * 22.f - f.dx * 6.f; } } P.x = x; P.z = z; P.y = height(x, z); P.yaw = std::atan2(p.x - x, p.z - z); P.face = P.yaw; P.pitch = p.kind == 4 ? 0.05f : 0.12f; P.camInit = false; }
 void debugCmd(const char* c) {
   if (strstr(c, "bow")) B.weapon = 1; if (strstr(c, "melee")) B.weapon = 0; if (strstr(c, "hold")) dbgDrawHold = true; if (strstr(c, "run")) dbgWalk = 2; else if (strstr(c, "walk")) dbgWalk = 1; if (const char* p = strstr(c, "shoot")) dbgShoot = atoi(p + 5) > 0 ? atoi(p + 5) : 30;
-  if (strstr(c, "hostile")) { for (int k = 0; k < 3; k++) bounty[k] = 120; } if (strstr(c, "noai")) for (Npc& n : npcs) if (n.used && n.role >= R_MON && n.role == R_MON) n.used = false;
+  if (strstr(c, "horde")) horde(true); if (strstr(c, "hostile")) { for (int k = 0; k < 3; k++) bounty[k] = 120; } if (strstr(c, "noai")) for (Npc& n : npcs) if (n.used && n.role >= R_MON && n.role == R_MON) n.used = false;
   if (const char* p = strstr(c, "enter")) { int want = atoi(p + 5), best = -1; float bd = 1e30f; for (size_t i = 0; i < enters.size(); i++) if (enters[i].idx == want) { float d = dist2(enters[i].x, enters[i].z, P.x, P.z); if (d < bd) { bd = d; best = (int)i; } } if (best >= 0) { CI.ox = enters[best].x + enters[best].R; CI.oz = enters[best].z; doEnter(best); } }
 }
 void debugKillDay() { for (Npc& n : npcs) if (n.used && n.role >= R_MON && n.role == R_MON && n.alive) n.used = false; }
@@ -228,7 +229,7 @@ void update(float dtReal, const pl::Input& in) {
     if (P.atkT >= 0) { P.atkT += dt; if (!P.hitDone && P.atkT >= P.atkWind) { P.hitDone = true; playerHit(); } if (P.atkT >= P.atkWind + P.atkRec) P.atkT = -1; }
     P.hurtT = std::max(0.f, P.hurtT - dt); P.stagT = std::max(0.f, P.stagT - dt); if (P.regenWait > 0) P.regenWait -= dt; else P.hp = std::min(P.maxHp, P.hp + dt * 2.5f);
   }
-  arrowsUpdate(dt); cellUpdate(dt); for (int k = 0; k < 3; k++) bounty[k] = std::max(0.f, bounty[k] - dt * (huntCount > 0 ? 0.04f : 0.6f)); { float mb = std::max(bounty[0], std::max(bounty[1], bounty[2])); H.wanted = mb > 12.f ? 1 + (int)(mb / 55.f) : 0; if (H.wanted > 4) H.wanted = 4; } H.weapon = B.weapon; H.draw = B.draw; H.arrows = B.arrows; H.gold = gold; H.inside = CI.in; H.zoom = B.zoom; H.hitT = std::max(0.f, H.hitT - dt);
+  if (!CI.in && prevHour < 20.f && clockH >= 20.f && clockH < 21.f) horde(false); prevHour = clockH; arrowsUpdate(dt); cellUpdate(dt); for (int k = 0; k < 3; k++) bounty[k] = std::max(0.f, bounty[k] - dt * (huntCount > 0 ? 0.04f : 0.6f)); { float mb = std::max(bounty[0], std::max(bounty[1], bounty[2])); H.wanted = mb > 12.f ? 1 + (int)(mb / 55.f) : 0; if (H.wanted > 4) H.wanted = 4; } H.weapon = B.weapon; H.draw = B.draw; H.arrows = B.arrows; H.gold = gold; H.inside = CI.in; H.zoom = B.zoom; H.hitT = std::max(0.f, H.hitT - dt);
   H.hp = P.hp; H.maxHp = P.maxHp; H.st = P.st; H.yaw = P.yaw; H.fade = P.deadT > 0 ? std::min(1.f, P.deadT / 1.5f) : 0.f;
   // ---- npcs
   huntCount = 0; nMonL = 0; for (int i = 0; i < MAXN; i++) if (npcs[i].used && npcs[i].role >= R_MON) monList[nMonL++] = i; int nCount = 0, mCount = 0;

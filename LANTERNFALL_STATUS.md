@@ -127,4 +127,6 @@ Shipped so far (built + captured on molab before it died; x_start, x_run, x_walk
 - Crime: hurting people makes victims fight (brave) or flee, witnesses panic, guards/knights/soldiers hunt you; per-nation bounty with WANTED stars, decays when unseen.
 - Interiors: E at any house/hall/chapel/barn/keep -> fade into a furnished cell (cottage, great hall, chapel) with residents, chest (gold + arrows), bed (rest), hearth lights; E at the door to leave.
 - HUD: weapon/arrows/gold, bow draw bar, bow reticle, hit marker.
+- Nightly horde (20:00) marches on the nearest settlement; guards fight it; kills pay gold. Debug: `--xcmd horde|hostile|bow|hold|walk|run|enter0..2|shoot`.
+Unverified visually (notebook died): FPV bow offsets after retune, interiors 1 (hall) and 2 (chapel), horde, hostile guards. CI compile is the only check for these.
 Deferred: Blender rebuild of Polyfork assets, new citizens/pets/trees from Polyfork, kingdom building loop (see docs/ROADMAP.md).
