@@ -1,14 +1,17 @@
 #include "xmesh.h"
 #include "xworld.h"
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 namespace {
 struct MB { std::vector<LV>* v; std::vector<uint16_t>* i; };
 float ao(float y, float base, float h) { return base + (1.f - base) * smooth(-1.f, h, y); }
 inline int8_t sn8(float x) { return (int8_t)std::lround(clampf(x, -1.f, 1.f) * 127.f); }
+float gDim = 1.f;
 void vert(MB& b, V3 p, V3 n, V3 col, float a, float u, float vv, int surf, float rough, float metal, float glow) {
   LV o; o.p[0] = p.x; o.p[1] = p.y; o.p[2] = p.z; o.n[0] = sn8(n.x); o.n[1] = sn8(n.y); o.n[2] = sn8(n.z); o.pad = 0;
-  o.c[0] = (uint8_t)(std::sqrt(clampf(col.x, 0, 1)) * 255.f); o.c[1] = (uint8_t)(std::sqrt(clampf(col.y, 0, 1)) * 255.f); o.c[2] = (uint8_t)(std::sqrt(clampf(col.z, 0, 1)) * 255.f); o.c[3] = (uint8_t)(clampf(a, 0, 1) * 255.f);
+  col = col * gDim; o.c[0] = (uint8_t)(std::sqrt(clampf(col.x, 0, 1)) * 255.f); o.c[1] = (uint8_t)(std::sqrt(clampf(col.y, 0, 1)) * 255.f); o.c[2] = (uint8_t)(std::sqrt(clampf(col.z, 0, 1)) * 255.f); o.c[3] = (uint8_t)(clampf(a, 0, 1) * 255.f);
   o.uv[0] = u; o.uv[1] = vv; o.m[0] = (uint8_t)(rough * 255.f); o.m[1] = (uint8_t)(metal * 255.f); o.m[2] = (uint8_t)surf; o.m[3] = (uint8_t)(clampf(glow, 0, 2) * 127.5f); o.b[0] = 0; o.b[1] = 0; o.b[2] = 0; o.b[3] = 128; b.v->push_back(o);
 }
 void tri(MB& b, int a, int c, int d) { b.i->push_back((uint16_t)a); b.i->push_back((uint16_t)c); b.i->push_back((uint16_t)d); }
@@ -55,7 +58,7 @@ void merlonsLine(MB& b, float x0, float x1, float z, float y, int n, float hw, f
 void arrowMesh(MB& b) { Sty sh = wood(0x8a6a3c, 0.9f), hd = metal(0x9aa0a6), fl = cloth(0xe8e0cc), fl2 = cloth(0xa83030); box(b, 0, 0, 0, 0.011f, 0.011f, 0.46f, sh); box(b, 0, 0, 0.5f, 0.016f, 0.016f, 0.06f, hd); box(b, 0, 0, 0.56f, 0.008f, 0.008f, 0.03f, hd); for (int k = 0; k < 3; k++) { float a = k * 2.0944f; boxR(b, 0.f, 0.f, -0.38f, 0.002f + 0.0f, 0.03f, 0.1f, 0, k == 0 ? fl2 : fl); (void)a; } box(b, 0, 0, -0.38f, 0.03f, 0.002f, 0.1f, fl); }
 void build(int kind, MB& b) {
   if (kind == xw::K_INHOME || kind == xw::K_INHALL || kind == xw::K_INCHAPEL) { buildInterior(kind, b); return; } if (kind == xw::K_ARROW) { arrowMesh(b); return; }
-  if (kind == xw::K_OAK) { buildOak(b, 0); return; } if (kind == xw::K_PINE) { buildPine(b, 0); return; } if (kind == xw::K_PINEY) { buildPine(b, 1); return; } if (kind == xw::K_BIRCH) { buildBirchN(b); return; } if (kind == xw::K_CHERRY) { buildCherryN(b); return; }
+  if (kind == xw::K_OAK) { buildOak(b, 0); return; } if (kind == xw::K_PINE) { buildPine(b, 0); return; } if (kind == xw::K_PINEY) { buildPine(b, 1); return; } if (kind == xw::K_BIRCH) { buildBirchN(b); return; } if (kind == xw::K_CHERRY) { buildCherryN(b); return; } if (kind == xw::K_JUNGLE) { buildJungleN(b); return; } if (kind == xw::K_PALM) { buildPalmN(b); return; } if (kind == xw::K_WILLOW) { buildWillowN(b); return; }
   if (kind >= xw::K_BIRCH && kind <= xw::K_FBUSH) { buildFlora(kind, b); return; } if (kind >= xw::K_FA_DOG && kind <= xw::K_PETAL) { buildFauna(kind, b); return; }
   switch (kind) {
     case xw::K_STAIR: { Sty s = stone(0x78746b), s2 = stone(0x6a665e, 0.7f), wd = wood(0x6b4a2b, 0.8f); const int N = 13; const float tr = 0.92f, rs = 5.9f / N;
@@ -100,10 +103,10 @@ void build(int kind, MB& b) {
     case xw::K_BIGROCK: { Sty s = {C(0x7a7266), 8, 0.95f, 0, 0, 0.5f, 1.2f}; const int seg = 9; for (int ring = 0; ring < 3; ring++) { float h0 = ring == 0 ? 0.f : ring == 1 ? 0.55f : 0.9f, h1 = ring == 0 ? 0.55f : ring == 1 ? 0.9f : 1.0f; float r0 = ring == 0 ? 1.0f : ring == 1 ? 0.85f : 0.45f, r1 = ring == 0 ? 0.85f : ring == 1 ? 0.45f : 0.0f;
       for (int k = 0; k < seg; k++) { auto J = [&](int rr, int kk) { uint32_t h = (uint32_t)(rr * 92821 + kk * 68917 + 5); h = (h ^ (h >> 13)) * 1274126177u; return 0.78f + 0.44f * (((h >> 8) & 0xff) / 255.f); }; float a0 = TAU * k / seg, a1 = TAU * (k + 1) / seg; float j00 = J(ring, k), j01 = J(ring, k + 1), j10 = J(ring + 1, k), j11 = J(ring + 1, k + 1);
         V3 p0{std::cos(a0) * r0 * j00, h0 - 0.2f, std::sin(a0) * r0 * j00}, p1{std::cos(a1) * r0 * j01, h0 - 0.2f, std::sin(a1) * r0 * j01}, p2{std::cos(a1) * r1 * j11, h1, std::sin(a1) * r1 * j11}, p3{std::cos(a0) * r1 * j10, h1, std::sin(a0) * r1 * j10}; Sty ss = s; ss.col = s.col * (0.8f + 0.4f * ((k * 37 + ring * 11) % 7) / 7.f); quad(b, p1, p0, p3, p2, ss, 0.5f); } } break; }
-    case XM_LOBIRCH: buildFlora(xw::K_BIRCH, b); break; case XM_LOCHERRY: buildFlora(xw::K_CHERRY, b); break;
-    case XM_LOCONI: { Sty tr = {C(0x3a2a1c), 9, 0.9f, 0, 0, 0.6f, 3.f}; cyl(b, 0, 0, 0, 0.32f, 0.2f, 3.0f, 5, tr, nullptr, false); Sty g1 = {C(0x264a2c), 0, 0.9f, 0, 0, 0.55f, 9.f}; V3 top = C(0x2f5a34);
+    case XM_LOJUNGLE: gDim = 0.6f; buildFlora(xw::K_JUNGLE, b); gDim = 1.f; break; case XM_LOWILLOW: gDim = 0.7f; buildFlora(xw::K_WILLOW, b); gDim = 1.f; break; case XM_LOBIRCH: gDim = 0.8f; buildFlora(xw::K_BIRCH, b); gDim = 1.f; break; case XM_LOCHERRY: gDim = 0.85f; buildFlora(xw::K_CHERRY, b); gDim = 1.f; break;
+    case XM_LOCONI: { Sty tr = {C(0x3a2a1c), 9, 0.9f, 0, 0, 0.6f, 3.f}; cyl(b, 0, 0, 0, 0.32f, 0.2f, 3.0f, 5, tr, nullptr, false); Sty g1 = {C(0x1f3f24), 0, 0.9f, 0, 0, 0.55f, 9.f}; V3 top = C(0x28502c);
       cyl(b, 0, 1.6f, 0, 2.5f, 0.9f, 3.0f, 9, g1, &top, false); cyl(b, 0, 3.8f, 0, 2.0f, 0.7f, 2.9f, 9, g1, &top, false); cyl(b, 0, 6.0f, 0, 1.45f, 0.0f, 3.1f, 9, g1, &top, false); break; }
-    case XM_LOBROAD: { Sty tr = {C(0x4a3626), 9, 0.9f, 0, 0, 0.6f, 3.f}; cyl(b, 0, 0, 0, 0.42f, 0.28f, 3.6f, 5, tr, nullptr, false); Sty lf = {C(0x3d6a2a), 0, 0.9f, 0, 0, 0.6f, 8.f}; blob(b, 0, 5.2f, 0, 3.1f, 2.4f, 3.1f, 8, 4, lf, 3, 0.25f); blob(b, 2.2f, 4.2f, 0.7f, 2.1f, 1.7f, 2.1f, 7, 3, lf, 5, 0.25f); blob(b, -1.9f, 4.4f, -1.0f, 2.2f, 1.7f, 2.2f, 7, 3, lf, 9, 0.25f); break; }
+    case XM_LOBROAD: { Sty tr = {C(0x4a3626), 9, 0.9f, 0, 0, 0.6f, 3.f}; cyl(b, 0, 0, 0, 0.42f, 0.28f, 3.6f, 5, tr, nullptr, false); Sty lf = {C(0x2f5527), 0, 0.9f, 0, 0, 0.6f, 8.f}; blob(b, 0, 5.2f, 0, 3.1f, 2.4f, 3.1f, 8, 4, lf, 3, 0.25f); blob(b, 2.2f, 4.2f, 0.7f, 2.1f, 1.7f, 2.1f, 7, 3, lf, 5, 0.25f); blob(b, -1.9f, 4.4f, -1.0f, 2.2f, 1.7f, 2.2f, 7, 3, lf, 9, 0.25f); break; }
     case xw::K_ORE: { Sty rk = stone(0x524e48, 0.5f), gd = {C(0xd8a63c), 5, 0.28f, 0.92f, 0, 0.9f, 2.f}, ir = {C(0x8896a8), 5, 0.34f, 0.88f, 0, 0.85f, 2.f}, gl = glowS(0xffc858, 1.2f);
       blob(b, 0, 0.45f, 0, 1.25f, 0.75f, 1.15f, 8, 4, rk, 17, 0.32f); blob(b, 0.55f, 0.35f, -0.35f, 0.75f, 0.55f, 0.7f, 7, 3, rk, 29, 0.3f);
       for (int k = 0; k < 5; k++) { float a = k * 1.256f + 0.3f, r = 0.38f + (k % 2) * 0.24f; cyl(b, std::cos(a) * r, 0.45f, std::sin(a) * r, 0.16f, 0.02f, 0.72f + (k % 3) * 0.18f, 5, k % 2 ? gd : ir, nullptr, false); }
@@ -123,5 +126,5 @@ void build(int kind, MB& b) {
 }
 }  // namespace
 bool xmBuild(int kind, std::vector<LV>& v, std::vector<uint16_t>& idx) {
-  v.clear(); idx.clear(); MB b{&v, &idx}; build(kind, b); return !v.empty();
+  v.clear(); idx.clear(); MB b{&v, &idx}; build(kind, b); if (!v.empty() && std::getenv("LF_MESHSTAT")) fprintf(stderr, "mesh kind %d: %zu verts %zu tris\n", kind, v.size(), idx.size() / 3); return !v.empty();
 }

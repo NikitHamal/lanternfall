@@ -17,7 +17,7 @@ constexpr int NL = 7, TN = 128, NC = 32; constexpr float CELL = 64.f;
 struct IData { float m[16]; float tint[4]; };
 struct PMesh { GLuint vao = 0, vbo = 0, ibo = 0, inst = 0; int ni = 0, cap = 0; bool ok = false; };
 struct KindDef { const char* key; int lo; float rHi, rLo; bool shadow; };
-constexpr int SLOT_CONI = NK, SLOT_BROAD = NK + 1, SLOT_BIRCH = NK + 2, SLOT_CHERRY = NK + 3, NSLOT = NK + 4;
+constexpr int SLOT_CONI = NK, SLOT_BROAD = NK + 1, SLOT_BIRCH = NK + 2, SLOT_CHERRY = NK + 3, SLOT_JUNGLE = NK + 4, SLOT_WILLOW = NK + 5, NSLOT = NK + 6;
 const KindDef KD[NK] = {
   {nullptr, SLOT_CONI, 125, 560, true}, {nullptr, SLOT_CONI, 100, 420, true}, {nullptr, SLOT_BROAD, 110, 520, true}, {"polyfork/p_dead_tree", -1, 150, 0, true},
   {"polyfork/p_boulder", -1, 170, 0, true}, {"polyfork/p_cairn", -1, 120, 0, true}, {"polyfork/p_round_bush", -1, 80, 0, false}, {"polyfork/p_thorn_bush", -1, 80, 0, false}, {"polyfork/p_fallen_log", -1, 100, 0, false},
@@ -31,7 +31,7 @@ const KindDef KD[NK] = {
   {nullptr, -1, 320, 0, true}, {nullptr, -1, 260, 0, false}, {nullptr, -1, 700, 0, true}, {nullptr, -1, 480, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 1000, 0, true}, {nullptr, -1, 700, 0, true}, {nullptr, -1, 300, 0, false}, {nullptr, -1, 260, 0, true}, {nullptr, -1, 260, 0, true}, {nullptr, -1, 260, 0, true},
   {nullptr, -1, 340, 0, true}, {nullptr, -1, 560, 0, true}, {nullptr, -1, 560, 0, true}, {nullptr, -1, 260, 0, false}, {nullptr, -1, 260, 0, false},
   // v1.9 flora: birch, cherry, jungle, willow, palm, fern, mushroom, reeds, lily, spire, flowering bush
-  {nullptr, SLOT_BIRCH, 100, 520, true}, {nullptr, SLOT_CHERRY, 110, 560, true}, {nullptr, -1, 600, 0, true}, {nullptr, -1, 520, 0, true}, {nullptr, -1, 480, 0, true}, {nullptr, -1, 90, 0, false}, {nullptr, -1, 80, 0, false}, {nullptr, -1, 150, 0, false}, {nullptr, -1, 130, 0, false}, {nullptr, -1, 900, 0, true}, {nullptr, -1, 160, 0, false},
+  {nullptr, SLOT_BIRCH, 100, 520, true}, {nullptr, SLOT_CHERRY, 110, 560, true}, {nullptr, SLOT_JUNGLE, 120, 600, true}, {nullptr, SLOT_WILLOW, 100, 520, true}, {nullptr, -1, 480, 0, true}, {nullptr, -1, 90, 0, false}, {nullptr, -1, 80, 0, false}, {nullptr, -1, 150, 0, false}, {nullptr, -1, 130, 0, false}, {nullptr, -1, 900, 0, true}, {nullptr, -1, 160, 0, false},
   // fauna: dog, cat, hen, sheep, cow, horse, bird, leg, wing, petal
   {nullptr, -1, 260, 0, true}, {nullptr, -1, 200, 0, true}, {nullptr, -1, 160, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 340, 0, true}, {nullptr, -1, 360, 0, true}, {nullptr, -1, 420, 0, false}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 420, 0, false}, {nullptr, -1, 60, 0, false}, {nullptr, -1, 300, 0, true}};
 static_assert(sizeof(KD) / sizeof(KD[0]) == NK, "kind table size");
@@ -143,10 +143,10 @@ void main(){
   g2 = vec2(vn2(q2+vec2(e,0.))-vn2(q2-vec2(e,0.)), vn2(q2+vec2(0.,e))-vn2(q2-vec2(0.,e)));
   vec2 g3 = vec2(vn2(q3+vec2(e,0.))-vn2(q3-vec2(e,0.)), vn2(q3+vec2(0.,e))-vn2(q3-vec2(0.,e)));
   vec3 N = normalize(vec3(-(g1*a1 + g2*.5*a1 + g3*.25*a1).x*1.6, 1., -(g1*a1 + g2*.5*a1 + g3*.25*a1).y*1.6));
-  vec3 V = normalize(uCam - vWp); float fres = .02 + .98*pow(1. - clamp(dot(N,V),0.,1.), 5.); fres = clamp(fres, .03, .92);
+  vec3 V = normalize(uCam - vWp); float fres = .02 + .98*pow(1. - clamp(dot(N,V),0.,1.), 5.); fres = clamp(fres, .03, .6);
   vec3 bed = texture(uInfoA, uv).rgb; bed *= bed;
-  vec3 shallow = vec3(.10,.30,.27), deep = vec3(.015,.09,.15); vec3 body = mix(shallow, deep, 1. - exp(-depth*.55)); body = mix(bed*.55, body, 1. - exp(-depth*1.4)) * uAmb;
-  vec3 R = reflect(-V, N); vec3 refl = skyR(R); vec3 col = mix(body, refl, fres);
+  vec3 shallow = vec3(.07,.27,.24), deep = vec3(.01,.07,.11); vec3 body = mix(shallow, deep, 1. - exp(-depth*.55)); body = mix(bed*.55, body, 1. - exp(-depth*1.4)) * uAmb;
+  vec3 R = reflect(-V, N); vec3 refl = skyR(R)*vec3(.78,.88,.98)*.82; vec3 col = mix(body, refl, fres);
   vec3 Hh = normalize(uSunDir + V); float spec = pow(max(dot(N,Hh),0.), 220.) * 2.4 + pow(max(dot(N,Hh),0.), 28.)*.06; col += uSunCol*spec*uSunVis;
   float n3 = vn2(p*2.6 + vec2(t*.2, -t*.1)), n4 = vn2(p*7.1 - fd*t*1.5);
   float foam = smoothstep(.5, .0, depth) * (.35 + .65*smoothstep(.35,.7,n3));
@@ -348,7 +348,7 @@ bool init() {
   // props
   for (int k = 0; k < NK; k++) { std::vector<LV> v; std::vector<uint16_t> ix; if (KD[k].key) { FigAsset& a = propAsset[k]; if (!figLoad(a, KD[k].key)) { fprintf(stderr, "missing prop %s\n", KD[k].key); continue; } pm[k].vao = 0; pm[k].vbo = a.vbo; pm[k].ibo = a.ibo; pm[k].ni = a.ni; glGenVertexArrays(1, &pm[k].vao); glBindVertexArray(pm[k].vao); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, a.ibo); glBindVertexArray(0); pm[k].ok = true; }
     else if (xmBuild(k, v, ix)) { buildMeshSlot(k, v, ix); pm[k].ok = true; } }
-  { std::vector<LV> v; std::vector<uint16_t> ix; if (xmBuild(XM_LOCONI, v, ix)) { buildMeshSlot(SLOT_CONI, v, ix); pm[SLOT_CONI].ok = true; } if (xmBuild(XM_LOBROAD, v, ix)) { buildMeshSlot(SLOT_BROAD, v, ix); pm[SLOT_BROAD].ok = true; } if (xmBuild(XM_LOBIRCH, v, ix)) { buildMeshSlot(SLOT_BIRCH, v, ix); pm[SLOT_BIRCH].ok = true; } if (xmBuild(XM_LOCHERRY, v, ix)) { buildMeshSlot(SLOT_CHERRY, v, ix); pm[SLOT_CHERRY].ok = true; } }
+  { std::vector<LV> v; std::vector<uint16_t> ix; if (xmBuild(XM_LOCONI, v, ix)) { buildMeshSlot(SLOT_CONI, v, ix); pm[SLOT_CONI].ok = true; } if (xmBuild(XM_LOBROAD, v, ix)) { buildMeshSlot(SLOT_BROAD, v, ix); pm[SLOT_BROAD].ok = true; } if (xmBuild(XM_LOBIRCH, v, ix)) { buildMeshSlot(SLOT_BIRCH, v, ix); pm[SLOT_BIRCH].ok = true; } if (xmBuild(XM_LOCHERRY, v, ix)) { buildMeshSlot(SLOT_CHERRY, v, ix); pm[SLOT_CHERRY].ok = true; } if (xmBuild(XM_LOJUNGLE, v, ix)) { buildMeshSlot(SLOT_JUNGLE, v, ix); pm[SLOT_JUNGLE].ok = true; } if (xmBuild(XM_LOWILLOW, v, ix)) { buildMeshSlot(SLOT_WILLOW, v, ix); pm[SLOT_WILLOW].ok = true; } }
   // bucket instances per kind per 64 m cell
   std::vector<std::vector<int>> per(NK); for (size_t i = 0; i < objs.size(); i++) per[objs[i].kind].push_back((int)i);
   for (int k = 0; k < NK; k++) { cellStart[k].assign(NC * NC + 1, 0); std::vector<int>& L = per[k]; auto cellId = [&](const Obj& o) { int cx = std::min(NC - 1, std::max(0, (int)((o.x + HALF) / CELL))), cz = std::min(NC - 1, std::max(0, (int)((o.z + HALF) / CELL))); return cz * NC + cx; };

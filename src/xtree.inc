@@ -12,16 +12,16 @@ V3 rotAxis(V3 v, V3 k, float a) { float c = std::cos(a), s = std::sin(a); return
 V3 anyPerp(V3 d) { V3 r = std::fabs(d.y) < 0.9f ? V3{0, 1, 0} : V3{1, 0, 0}; return norm(cross(d, r)); }
 
 // one double-sided leaf card: origin o, across axis u, along axis v (unit), size w x l; normal/ao given
-void leafCard(MB& b, V3 o, V3 u, V3 v, float w, float l, V3 nrm, V3 col, float aoV, bool needle) {
+void leafCard(MB& b, V3 o, V3 u, V3 v, float w, float l, V3 nrm, V3 col, float aoV, bool needle, float aspect = 1.f) {
   int base = (int)b.v->size(); V3 q[4] = {o - u * (w * 0.5f), o + u * (w * 0.5f), o + u * (w * 0.5f) + v * l, o - u * (w * 0.5f) + v * l}; float uu[4] = {0, 1, 1, 0}, vv[4] = {0, 0, 1, 1};
-  for (int k = 0; k < 4; k++) vert(b, q[k], nrm, col, aoV, uu[k], vv[k], 12, 0.82f, needle ? 1.f : 0.f, 0.f);
+  for (int k = 0; k < 4; k++) vert(b, q[k], nrm, col, aoV, uu[k], vv[k] * aspect, 12, 0.82f, needle ? 1.f : 0.f, 0.f);
   tri(b, base, base + 1, base + 2); tri(b, base, base + 2, base + 3); tri(b, base, base + 2, base + 1); tri(b, base, base + 3, base + 2);
 }
 
 struct TreeGen {
   MB& b; TRng g; Sty bark; int maxDepth = 2; float up = 0.1f, curl = 0.4f, kidAng = 0.8f, lenDecay = 0.62f, radDecay = 0.6f, droop = 0.f;
   int kidsMid[4] = {1, 1, 0, 0}, kidsEnd[4] = {2, 2, 0, 0}, nseg[4] = {3, 3, 2, 2}, sides[4] = {5, 4, 3, 3};
-  struct Tip { V3 p, d; float r; } tips[1200]; int nt = 0;
+  struct Tip { V3 p, d; float r; } tips[1200]; int nt = 0; V3 topP{0, 0, 0};
   TreeGen(MB& bb, uint32_t seed, const Sty& bk) : b(bb), g(seed), bark(bk) {}
   void limb(V3 p, V3 d, float L, float r0, int depth) {
     int NS = nseg[depth]; float r1 = r0 * 0.5f; V3 pp = p;
@@ -44,7 +44,7 @@ struct TreeGen {
     tube(b, p, {0, 0.55f, 0}, r0 * flare, r0 * 1.02f, sd + 2, bark);
     p = {0, 0.5f, 0};
     for (int i = 1; i <= seg; i++) { float t = (float)i / seg; V3 q{bd.x * t * t, 0.5f + (h - 0.5f) * t, bd.z * t * t}; q.x += g.r(-0.05f, 0.05f); q.z += g.r(-0.05f, 0.05f);
-      tube(b, p, q, lerpf(r0, r1, (float)(i - 1) / seg), lerpf(r0, r1, t), sd, bark); p = q; }
+      tube(b, p, q, lerpf(r0, r1, (float)(i - 1) / seg), lerpf(r0, r1, t), sd, bark); p = q; } topP = p;
     for (int k = 0; k < 6; k++) { float a = k * 1.047f + g.r(-0.3f, 0.3f); V3 dir{std::cos(a), 0, std::sin(a)}; float rl = r0 * g.r(1.6f, 2.6f);
       V3 s0 = dir * (r0 * 0.7f) + V3{0, 0.9f, 0}, s1 = dir * (rl * 0.8f) + V3{0, 0.12f, 0}, s2 = dir * rl + V3{0, -0.35f, 0}; tube(b, s0, s1, r0 * 0.34f, r0 * 0.2f, 4, bark); tube(b, s1, s2, r0 * 0.2f, r0 * 0.06f, 4, bark); }
   }
@@ -101,6 +101,31 @@ void buildCherryN(MB& b) {
   Sty bk = sty(0x2f2620, 9, 0.55f, 4.f); TreeGen T(b, 313, bk); T.maxDepth = 2; T.up = 0.05f; T.curl = 0.5f; T.droop = 0.3f; T.kidAng = 0.9f;
   T.trunk(2.3f, 0.34f, 0.22f, 0.5f, 4, 7, 1.7f);
   for (int k = 0; k < 6; k++) { float a = k * 2.399f, hy = 1.5f + 0.8f * (k / 5.f), el = T.g.r(0.4f, 0.9f); V3 d{std::cos(a) * std::cos(el), std::sin(el), std::sin(a) * std::cos(el)}; T.limb({0, hy, 0}, d, T.g.r(2.6f, 3.4f), 0.17f, 0); }
-  canopyCards(T, b, 340, 1.3f, C(0xe8a6bd), C(0xf6cfdb), 13, 0.7f);
-  canopyCards(T, b, 90, 1.0f, C(0xd0809f), C(0xe99ab5), 21, 0.7f);
+  canopyCards(T, b, 420, 0.95f, C(0xc7708f), C(0xe093ae), 13, 0.7f);
+  canopyCards(T, b, 120, 0.8f, C(0xb85d80), C(0xd57f9f), 21, 0.7f);
+}
+
+void buildJungleN(MB& b) {
+  Sty bk = sty(0x5c4c3c, 9, 0.5f, 6.f), vn = sty(0x3a5e2a, 0); TreeGen T(b, 401, bk); T.maxDepth = 2; T.up = 0.22f; T.curl = 0.5f; T.droop = 0.35f; T.kidAng = 0.8f;
+  T.trunk(11.5f, 0.7f, 0.4f, 0.8f, 6, 8, 1.9f);
+  for (int k = 0; k < 7; k++) { float a = k * 2.399f, el = T.g.r(0.35f, 0.7f); V3 d{std::cos(a) * std::cos(el), std::sin(el), std::sin(a) * std::cos(el)}; T.limb({0, 10.0f + 0.9f * (k / 6.f), 0}, d, T.g.r(4.5f, 6.f), 0.3f, 0); }
+  canopyCards(T, b, 460, 2.2f, C(0x1f5a22), C(0x3a8a2c), 17, 0.6f);
+  for (int i = 0; i < std::min(T.nt, 10); i++) { V3 p = T.tips[i * 3 % T.nt].p; float dl = 3.f + (i % 4) * 1.2f; tube(b, p, p + V3{0.2f, -dl, 0.1f}, 0.035f, 0.015f, 4, vn); }
+}
+void buildWillowN(MB& b) {
+  Sty bk = sty(0x4a3d2e, 9, 0.55f, 4.f); TreeGen T(b, 503, bk); T.maxDepth = 1; T.up = 0.2f; T.curl = 0.45f; T.droop = 0.9f; T.kidAng = 0.7f; T.kidsMid[0] = 1; T.kidsEnd[0] = 2; T.nseg[1] = 2; T.sides[1] = 4;
+  T.trunk(2.6f, 0.5f, 0.34f, 0.5f, 4, 8, 1.6f);
+  for (int k = 0; k < 6; k++) { float a = k * 2.399f, el = T.g.r(0.7f, 1.1f); V3 d{std::cos(a) * std::cos(el), std::sin(el), std::sin(a) * std::cos(el)}; T.limb({0, 2.2f + 0.6f * (k / 5.f), 0}, d, T.g.r(2.8f, 3.6f), 0.2f, 0); }
+  canopyCards(T, b, 70, 1.4f, C(0x6f9a38), C(0x8dba46), 31, 0.8f);
+  TRng g(77); V3 c{0, 3.f, 0}; for (int i = 0; i < T.nt; i++) for (int k = 0; k < 4; k++) {
+    V3 pos = T.tips[i].p + V3{g.r(-0.5f, 0.5f), g.r(-0.2f, 0.3f), g.r(-0.5f, 0.5f)}; float ang = g.r(0, TAU); V3 u{std::cos(ang), 0, std::sin(ang)}; float w = g.r(0.55f, 0.8f), l = g.r(2.2f, 3.4f);
+    V3 out = norm(V3{pos.x - c.x, 0.f, pos.z - c.z}); V3 nr = norm(out * 0.9f + V3{0, 0.35f, 0}); float aoV = clampf(0.5f + 0.5f * g.f(), 0.f, 1.f); leafCard(b, pos, u, norm(V3{out.x * 0.12f, -1.f, out.z * 0.12f}), w, l, nr, mix3(C(0x7ba342), C(0x9cc44f), g.f()), aoV, false, l / w * 0.8f); }
+}
+
+void buildPalmN(MB& b) {
+  Sty bk = sty(0x8a6c48, 9, 0.6f, 5.f); TreeGen T(b, 601, bk); T.trunk(7.4f, 0.27f, 0.16f, 1.5f, 7, 7, 1.5f); V3 top = T.topP; TRng g(9);
+  Sty rg = sty(0x5c4630, 9, 0.7f, 5.f); for (int k = 1; k < 7; k++) { float y = 0.5f + (7.4f - 0.5f) * k / 7.f; float t = k / 7.f; V3 c{top.x * t * t, y, top.z * t * t}; cyl(b, c.x, c.y - 0.03f, c.z, 0.27f - 0.11f * t + 0.03f, 0.27f - 0.11f * t + 0.03f, 0.07f, 7, rg, nullptr, false); }
+  for (int k = 0; k < 13; k++) { float a = k * TAU / 13 + g.r(-0.15f, 0.15f); V3 dir{std::cos(a), 0, std::sin(a)}; float up = (k % 3 == 0) ? 0.75f : (k % 3 == 1 ? 0.3f : -0.05f); V3 v = norm(dir + V3{0, up, 0}); V3 u = norm(cross(v, V3{0, 1, 0}));
+    V3 nr = norm(V3{dir.x * 0.4f, 1.f, dir.z * 0.4f}); float aoV = (k % 3 == 0) ? 1.f : 0.78f; leafCard(b, top + V3{0, 0.1f, 0}, u, v, 1.6f, g.r(3.2f, 4.0f), nr, mix3(C(0x3c8429), C(0x5fa73c), g.f()), aoV, true);
+    V3 v2 = norm(dir + V3{0, up - 0.5f, 0}); leafCard(b, top + dir * 1.6f + V3{0, 0.25f, 0}, u, v2, 1.2f, 1.9f, nr, mix3(C(0x3c8429), C(0x5fa73c), g.f()), aoV * 0.9f, true); }
 }
