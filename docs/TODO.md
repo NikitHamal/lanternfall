@@ -75,3 +75,20 @@ Vision: a proper fantasy immersive third-person game (Athran-style kingdom defen
 4. [ ] **Animals II**: deer / wolves / rabbits / fish, mount + dismount animation, Blender-quality bodies
 5. [ ] **Biomes**: desert, swamp, tundra with unique flora + ground; weather; caves
 6. [ ] Triplanar rock + cliff scree, boulders at slope feet
+
+## v2.6.0 (Living Fauna) - shipped
+- [x] Loft-based anatomy meshes for horse / cow / sheep / dog / cat / deer / rabbit / hen (+ saddle) with fur shader, countershading, patches
+- [x] Gait rig: walk / trot / gallop with planted feet, 2-bone leg IK, graze / lie / look / alert animation layers
+- [x] Calm approach, wild deer + rabbits, milk cows, mount hop + dismount hop, saddled ridden horse
+## Next session candidates (Realm Polish V - pick ONE)
+1. [ ] **Ground cover**: grass blade LOD + clumps, flower meadows per biome, ferns / bracken cards, fallen leaves, undergrowth (user: "grasses and flowers poor")
+2. [ ] **Rivers II / water**: bank mud strip, rocks + foam, flow-map normals, depth fade, fall-lip slivers
+3. [ ] **Settlement audit**: guards on deck height, NPC stair pathing, 2 gates + 2 stairs per wall, patrols using stairs
+4. [ ] **Animals II**: wolves / foxes / bears (hostile + hunting), animal sounds, herd flocking, first-person horse neck, reins, dismount at gallop, rider pose retarget (thigh/shin)
+5. [ ] **Terrain**: chunk streaming, biomes (desert / swamp / tundra), triplanar rock + scree
+6. [ ] **People**: citizen variety, children, Blender rebuild of characters (needs a Blender notebook)
+## Stats
+| version | assets | binary | notes |
+|---|---|---|---|
+| v2.5.0 | 26 MB | 2.06 MB | 4 km continent, water fixes |
+| v2.6.0 | 26 MB | ~2.5 MB (unstripped local build) | 23 procedural animal part meshes, gait rig, fur shader; 1310 animals |

@@ -16,7 +16,7 @@ struct Fauna { bool used = false, alive = true, pet = false; int sp = 0, state =
   float spdS = 0, cyc = 0, gDuty = 0.66f, gH = 0, gLift = 0, gOff[4] = {0.25f, 0.75f, 0.f, 0.5f}, bob = 0, pit = 0, look = 0, headP = 0, graze = 0, lie = 0, wag = 0, alert = 0; int act = 0; };
 constexpr int MAXF = 1800; Fauna FA[MAXF]; int nFA = 0;
 // riding: the mounted horse is a full Fauna (same rig as the herds) that follows the player; mountT / dmT drive the mount and dismount hop
-bool rideH = false; Fauna rideF; float rideX = 0, rideZ = 0, rideFace = 0, mountT = 1.f, dmT = 0.f, mountFx = 0, mountFz = 0; constexpr float RIDE_OFF = 0.66f; bool dbgClean = false; int dbgTrack = -1; float dbgAng = 1.1f, dbgDist = 4.f, dbgHF = 0.9f;
+bool rideH = false; Fauna rideF; float rideX = 0, rideZ = 0, rideFace = 0, mountT = 1.f, dmT = 0.f, mountFx = 0, mountFz = 0; constexpr float RIDE_OFF = 0.66f; bool dbgClean = false; float dbgSpd = -1.f; int dbgTrack = -1; float dbgAng = 1.1f, dbgDist = 4.f, dbgHF = 0.9f;
 #include "xfauna_rig.inc"
 float riderLift() { if (K.mounted && rideH) { float e = smooth(0.f, 1.f, mountT); return RIDE_OFF * e + (mountT < 1.f ? 0.3f * std::sin(PI * mountT) : 0.f) + (mountT >= 1.f ? rideF.bob * 0.9f : 0.f); } if (!K.mounted && dmT > 0.f) return RIDE_OFF * smooth(0.f, 1.f, dmT / 0.45f); return 0.f; }
 float riderPose() { if (K.mounted && rideH) return smooth(0.f, 1.f, mountT * 1.5f); if (!K.mounted && dmT > 0.f) return smooth(0.f, 1.f, dmT / 0.45f); return 1.f; }
@@ -62,6 +62,7 @@ void faunaInit() {
     static const uint32_t BC[5] = {0x6a8ac8, 0xc8442a, 0x8a6a4a, 0xe8c040, 0x9a9a8e}; tintHex(b.tint, BC[i % 5]); b.gh = std::max(0.f, height(b.cx, b.cz)); }
   for (size_t i = 0, c = 0; i < settles.size() && c < 14; i++) { const Settle& s = settles[i]; if (s.type != ST_GRAVE && s.type != ST_RUINS && s.type != ST_CAMP) continue; for (int k = 0; k < 4 && nBD < 56; k++, c++) { Bird& b = BD[nBD++]; b.cx = s.x; b.cz = s.z; b.r = 14.f + fr01() * 14.f; b.alt = 11.f + fr01() * 10.f; b.ph = fr01() * TAU; b.spd = 7.f + fr01() * 2.f; b.dir = k % 2 ? 1.f : -1.f; b.sc = 2.2f; b.crow = true; tintHex(b.tint, 0x26262c); b.gh = std::max(0.f, height(b.cx, b.cz)); } }
   for (Bfly& b : BF) b.on = false; for (Petal& p : PT) p.on = false;
+  { int cn[SP_N] = {0}; for (int i = 0; i < nFA; i++) cn[FA[i].sp]++; fprintf(stderr, "fauna: %d (dog %d cat %d hen %d sheep %d cow %d horse %d deer %d rabbit %d) birds %d\n", nFA, cn[0], cn[1], cn[2], cn[3], cn[4], cn[5], cn[6], cn[7], nBD); }
 }
 // ------------------------------------------------------------------ simulation
 bool faunaStep(Fauna& f, float dt, float speed, float tx, float tz, float turn) {
@@ -122,7 +123,7 @@ void faunaUpdate(float dt) {
   if (dmT > 0.f) dmT = std::max(0.f, dmT - dt);
   if (rideH) { if (!K.mounted) faunaDismount(); else if (!CI.in) {
       if (mountT < 1.f) { mountT = std::min(1.f, mountT + dt / 0.95f); float e = smooth(0.f, 1.f, mountT); P.x = mountFx + (rideF.x - mountFx) * e; P.z = mountFz + (rideF.z - mountFz) * e; P.face += angDiff(P.face, rideF.face) * std::min(1.f, dt * 5.f); P.speed = 0; rideF.y = height(rideF.x, rideF.z); gaitUpdate(rideF, dt, 0.f); }
-      else { rideF.x = P.x; rideF.z = P.z; rideF.y = P.y; rideF.face = P.face; gaitUpdate(rideF, dt, P.speed); rideF.headP += (-0.05f - rideF.headP) * std::min(1.f, dt * 3.f); rideF.look += (0.f - rideF.look) * std::min(1.f, dt * 3.f); }
+      else { rideF.x = P.x; rideF.z = P.z; rideF.y = P.y; rideF.face = P.face; gaitUpdate(rideF, dt, dbgSpd >= 0.f ? dbgSpd : P.speed); rideF.headP += (-0.05f - rideF.headP) * std::min(1.f, dt * 3.f); rideF.look += (0.f - rideF.look) * std::min(1.f, dt * 3.f); }
       rideX = rideF.x; rideZ = rideF.z; rideFace = rideF.face; } }
   if (CI.in) return; bool night = clockH > 20.5f || clockH < 5.2f;
   Npc* mon = nullptr;
