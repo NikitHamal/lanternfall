@@ -56,6 +56,10 @@ void build(int kind, MB& b) {
   if (kind == xw::K_INHOME || kind == xw::K_INHALL || kind == xw::K_INCHAPEL) { buildInterior(kind, b); return; } if (kind == xw::K_ARROW) { arrowMesh(b); return; }
   if (kind >= xw::K_BIRCH && kind <= xw::K_FBUSH) { buildFlora(kind, b); return; } if (kind >= xw::K_FA_DOG && kind <= xw::K_PETAL) { buildFauna(kind, b); return; }
   switch (kind) {
+    case xw::K_STAIR: { Sty s = stone(0x78746b), s2 = stone(0x6a665e, 0.7f), wd = wood(0x6b4a2b, 0.8f); const int N = 13; const float tr = 0.92f, rs = 5.9f / N;
+      for (int i = 0; i < N; i++) { float top = rs * (i + 1); box(b, (i + 0.5f) * tr, (top - 2.5f) * 0.5f, 0, tr * 0.5f, (top + 2.5f) * 0.5f, 1.1f, (i & 1) ? s : s2); box(b, (i + 0.5f) * tr, top + 0.01f, 0, tr * 0.5f + 0.01f, 0.04f, 1.14f, s); }
+      float lx0 = N * tr - 0.04f; box(b, lx0 + 1.2f, 1.7f, 0, 1.2f, 4.2f, 1.1f, s); box(b, lx0 + 1.2f, 5.92f, 0, 1.26f, 0.05f, 1.16f, s2);
+      box(b, lx0 + 1.2f, 6.25f, 1.06f, 1.2f, 0.28f, 0.06f, s); for (int i = 0; i < 5; i++) { float x = 1.2f + i * 2.5f; float top = rs * (std::floor(x / tr) + 1.f); box(b, x, top + 0.5f, 1.06f, 0.05f, 0.5f, 0.05f, wd); } break; }
     case xw::K_WALL: { Sty s = stone(0x76726a), s2 = stone(0x6a665e, 0.7f); box(b, 0, 1.75f, 0, 2.55f, 4.25f, 1.2f, s); box(b, 0, 5.55f, 0.1f, 2.55f, 0.35f, 1.35f, s2); merlonsLine(b, -2.55f, 2.55f, 1.0f, 6.0f, 3, 0.55f, 0.55f, 0.28f, s); box(b, 0, 6.12f, -1.0f, 2.55f, 0.12f, 0.16f, s2);
       Sty slit = {C(0x15110e), 8, 1, 0, 0, 1, 3}; box(b, 0, 3.4f, 1.22f, 0.12f, 0.6f, 0.05f, slit); box(b, -1.7f, 1.1f, 1.21f, 0.5f, 0.12f, 0.06f, stone(0x5a564f, 0.6f)); box(b, 1.7f, 2.5f, 1.21f, 0.6f, 0.1f, 0.06f, stone(0x8a857a, 0.8f)); break; }
     case xw::K_WTOWER: { Sty s = stone(0x7a766d); cyl(b, 0, -2.5f, 0, 3.7f, 3.5f, 13.4f, 12, s); cyl(b, 0, 10.f, 0, 3.5f, 4.05f, 1.2f, 12, stone(0x6a665e, 0.8f)); Sty cr = stone(0x77736a, 0.8f);

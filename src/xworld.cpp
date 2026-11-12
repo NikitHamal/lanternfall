@@ -9,7 +9,7 @@ std::vector<float> Hh, Wl, waterTex; std::vector<uint8_t> infoA, infoB, mapRGBA;
 std::vector<Obj> objs; std::vector<Settle> settles; Nation nations[3]; std::vector<Fall> falls; std::vector<Poi> pois; std::vector<Light> lights; std::vector<Post> posts; std::vector<Road> roads; std::vector<Lair> lairs;
 static std::vector<float> flowX, flowZ, roadD, gradeW, gradeY; static std::vector<uint8_t> fieldK; static std::vector<float> fieldA;
 static Rng rng(1); static uint32_t SEED = 1; static bool done = false;
-struct Col_ { float x, z, r; }; static std::vector<Col_> cols; static std::vector<int> colStart, colList; constexpr int CGN = 128; constexpr float CGS = 16.f;
+struct Col_ { float x, z, r, top; }; static float curTop = 1e9f; struct Deck { float x, z, c, s, hx, hz, y0, y1; }; static std::vector<Deck> decks; static std::vector<int> deckStart, deckList; int nDecks = 0; static std::vector<Col_> cols; static std::vector<int> colStart, colList; constexpr int CGN = 128; constexpr float CGS = 16.f;
 
 // ------------------------------------------------------------------ noise
 static uint32_t ih(int x, int y, uint32_t s) { uint32_t h = (uint32_t)x * 374761393u + (uint32_t)y * 668265263u + s * 2246822519u; h = (h ^ (h >> 13)) * 1274126177u; return h ^ (h >> 16); }
@@ -56,10 +56,15 @@ const char* regionName(float x, float z) {
 }
 
 // ------------------------------------------------------------------ colliders
-static void addCircle(float x, float z, float r) { cols.push_back({x, z, r}); }
+static void addCircle(float x, float z, float r) { cols.push_back({x, z, r, curTop}); }
 static void addLocal(float cx, float cz, float ry, float lx, float lz, float r, float s = 1) { float c = std::cos(ry), sn = std::sin(ry); addCircle(cx + (lx * c + lz * sn) * s, cz + (-lx * sn + lz * c) * s, r * s); }
-static void addCollider(int k, float x, float z, float ry, float sx) {
+static void addDeck(float cx, float cz, float ry, float lx, float lz, float hx, float hz, float y0, float y1) {   // local frame like addLocal; centre offset (lx,lz)
+  float c = std::cos(ry), sn = std::sin(ry); decks.push_back({cx + lx * c + lz * sn, cz - lx * sn + lz * c, c, sn, hx, hz, y0, y1}); }
+static void addCollider(int k, float x, float z, float ry, float sx, float oy) {
+  curTop = 1e9f;
   switch (k) {
+    case K_WALL: curTop = oy + 5.2f * sx; for (int i = -1; i <= 1; i++) addLocal(x, z, ry, i * 2.2f, 0, 1.45f, sx); curTop = 1e9f; return;
+    case K_STAIR: { for (int i = 0; i < 6; i++) { float lx = 4.f + i * 2.f; float top = 0.227f + 0.474f * lx; curTop = oy + std::min(5.9f, top) - 1.3f; addLocal(x, z, ry, lx, 0, 1.2f); } curTop = oy + 4.6f; addLocal(x, z, ry, 13.1f, 0, 1.4f); curTop = 1e9f; return; }
     case K_BIRCH: addCircle(x, z, 0.3f * sx); break; case K_CHERRY: addCircle(x, z, 0.4f * sx); break; case K_JUNGLE: addCircle(x, z, 0.9f * sx); break; case K_WILLOW: addCircle(x, z, 0.55f * sx); break; case K_PALM: addCircle(x, z, 0.25f * sx); break; case K_SPIRE: addCircle(x, z, 1.1f * sx); break;
     case K_PINE: addCircle(x, z, 0.5f * sx); break; case K_PINEY: addCircle(x, z, 0.3f * sx); break; case K_OAK: addCircle(x, z, 0.55f * sx); break; case K_DEAD: addCircle(x, z, 0.4f * sx); break;
     case K_BOULDER: addCircle(x, z, 1.0f * sx); break; case K_BIGROCK: addCircle(x, z, 0.85f * sx); break; case K_CAIRN: addCircle(x, z, 0.6f * sx); break; case K_WELL: addCircle(x, z, 1.0f * sx); break;
@@ -72,7 +77,7 @@ static void addCollider(int k, float x, float z, float ry, float sx) {
     case K_CHAPEL: for (int i = -1; i <= 1; i++) addLocal(x, z, ry, 0, i * 2.2f, 2.3f, sx); break;
     case K_WATCH: addLocal(x, z, ry, 0, 0, 2.4f, sx); break; case K_STOWER: case K_BEACON: case K_RGABLE: addLocal(x, z, ry, 0, 0, 2.5f, sx); break;
     case K_RWALL: addLocal(x, z, ry, -1.2f, 0, 1.0f, sx); addLocal(x, z, ry, 1.2f, 0, 1.0f, sx); break;
-    case K_WALL: for (int i = -1; i <= 1; i++) addLocal(x, z, ry, i * 2.2f, 0, 1.45f, sx); break; case K_WTOWER: addCircle(x, z, 3.9f * sx); break;
+    case K_WTOWER: addCircle(x, z, 3.9f * sx); break;
     case K_GATE: addLocal(x, z, ry, -4.6f, 0, 2.7f, sx); addLocal(x, z, ry, 4.6f, 0, 2.7f, sx); addLocal(x, z, ry, -3.6f, 0, 1.4f, sx); addLocal(x, z, ry, 3.6f, 0, 1.4f, sx); break;
     case K_KEEP: addCircle(x, z, 8.6f * sx); break; case K_HOUSE: for (int i = -1; i <= 1; i++) addLocal(x, z, ry, i * 2.4f, 0, 2.5f, sx); break; case K_LONG: for (int i = -1; i <= 1; i++) addLocal(x, z, ry, i * 4.f, 0, 3.4f, sx); break;
     case K_PALI: addLocal(x, z, ry, -1.f, 0, 0.7f, sx); addLocal(x, z, ry, 1.f, 0, 0.7f, sx); break; case K_TENT: addCircle(x, z, 2.1f * sx); break; case K_HAY: addCircle(x, z, 1.3f * sx); break; case K_MILL: addCircle(x, z, 3.2f * sx); break;
@@ -83,12 +88,22 @@ static void buildColGrid() {
   colStart.assign(CGN * CGN + 1, 0); std::vector<int> cnt(CGN * CGN, 0); auto cell = [](float v) { return ci((int)std::floor((v + HALF) / CGS), 0, CGN - 1); };
   for (const Col_& c : cols) { int x0 = cell(c.x - c.r), x1 = cell(c.x + c.r), z0 = cell(c.z - c.r), z1 = cell(c.z + c.r); for (int z = z0; z <= z1; z++) for (int x = x0; x <= x1; x++) cnt[z * CGN + x]++; }
   for (int i = 0; i < CGN * CGN; i++) colStart[i + 1] = colStart[i] + cnt[i]; colList.assign(colStart[CGN * CGN], 0); std::vector<int> fill(colStart.begin(), colStart.end() - 1);
+  { deckStart.assign(CGN * CGN + 1, 0); std::vector<int> dc(CGN * CGN, 0); auto bb = [&](const Deck& d, int& x0, int& x1, int& z0, int& z1) { float R = std::sqrt(d.hx * d.hx + d.hz * d.hz); x0 = cell(d.x - R); x1 = cell(d.x + R); z0 = cell(d.z - R); z1 = cell(d.z + R); };
+    for (const Deck& d : decks) { int x0, x1, z0, z1; bb(d, x0, x1, z0, z1); for (int z = z0; z <= z1; z++) for (int x = x0; x <= x1; x++) dc[z * CGN + x]++; }
+    for (int i = 0; i < CGN * CGN; i++) deckStart[i + 1] = deckStart[i] + dc[i]; deckList.assign(deckStart[CGN * CGN], 0); std::vector<int> df(deckStart.begin(), deckStart.end() - 1);
+    for (size_t k = 0; k < decks.size(); k++) { int x0, x1, z0, z1; bb(decks[k], x0, x1, z0, z1); for (int z = z0; z <= z1; z++) for (int x = x0; x <= x1; x++) deckList[df[z * CGN + x]++] = (int)k; } nDecks = (int)decks.size(); }
   for (size_t k = 0; k < cols.size(); k++) { const Col_& c = cols[k]; int x0 = cell(c.x - c.r), x1 = cell(c.x + c.r), z0 = cell(c.z - c.r), z1 = cell(c.z + c.r); for (int z = z0; z <= z1; z++) for (int x = x0; x <= x1; x++) colList[fill[z * CGN + x]++] = (int)k; }
 }
-bool collide(float& x, float& z, float r) {
+static inline float deckY(const Deck& d, float x, float z) { float dx = x - d.x, dz = z - d.z; float lx = dx * d.c - dz * d.s, lz = dx * d.s + dz * d.c; if (std::fabs(lx) > d.hx || std::fabs(lz) > d.hz) return -1e9f; return d.y0 + (d.y1 - d.y0) * (lx + d.hx) / (2.f * d.hx); }
+float surfaceY(float x, float z, float fromY) {
+  float best = height(x, z); if (deckStart.empty()) return best; int cx = ci((int)std::floor((x + HALF) / CGS), 0, CGN - 1), cz = ci((int)std::floor((z + HALF) / CGS), 0, CGN - 1);
+  for (int q = deckStart[cz * CGN + cx]; q < deckStart[cz * CGN + cx + 1]; q++) { float t = deckY(decks[deckList[q]], x, z); if (t > best && t <= fromY + 0.75f) best = t; } return best; }
+float deckTop(float x, float z) { float best = -1e9f; if (deckStart.empty()) return best; int cx = ci((int)std::floor((x + HALF) / CGS), 0, CGN - 1), cz = ci((int)std::floor((z + HALF) / CGS), 0, CGN - 1);
+  for (int q = deckStart[cz * CGN + cx]; q < deckStart[cz * CGN + cx + 1]; q++) best = std::max(best, deckY(decks[deckList[q]], x, z)); return best; }
+bool collide(float& x, float& z, float r, float ey) {
   if (colStart.empty()) return false; bool moved = false; int cx = ci((int)std::floor((x + HALF) / CGS), 0, CGN - 1), cz = ci((int)std::floor((z + HALF) / CGS), 0, CGN - 1);
   for (int it = 0; it < 2; it++) for (int j = std::max(0, cz - 1); j <= std::min(CGN - 1, cz + 1); j++) for (int i = std::max(0, cx - 1); i <= std::min(CGN - 1, cx + 1); i++)
-    for (int q = colStart[j * CGN + i]; q < colStart[j * CGN + i + 1]; q++) { const Col_& c = cols[colList[q]]; float dx = x - c.x, dz = z - c.z, rr = c.r + r, d2 = dx * dx + dz * dz; if (d2 < rr * rr) { float d = std::sqrt(d2); if (d < 1e-4f) { dx = 1; dz = 0; d = 1; } x = c.x + dx / d * rr; z = c.z + dz / d * rr; moved = true; } }
+    for (int q = colStart[j * CGN + i]; q < colStart[j * CGN + i + 1]; q++) { const Col_& c = cols[colList[q]]; if (ey > c.top - 0.4f) continue; float dx = x - c.x, dz = z - c.z, rr = c.r + r, d2 = dx * dx + dz * dz; if (d2 < rr * rr) { float d = std::sqrt(d2); if (d < 1e-4f) { dx = 1; dz = 0; d = 1; } x = c.x + dx / d * rr; z = c.z + dz / d * rr; moved = true; } }
   return moved;
 }
 
@@ -148,9 +163,10 @@ static void carveRivers() {
 // ------------------------------------------------------------------ objects
 static struct Circ { float x, z, r; } dummyC; static std::vector<Circ> placed;
 static void addLight(float x, float y, float z, float r, float g, float b, float range) { lights.push_back({x, y, z, r, g, b, range}); }
+static float gPutY = -1e9f; static float lastBase = 0;
 static Obj* put(int kind, float x, float z, float ry, float s, float tr = 1, float tg = 1, float tb = 1, float yOff = 0, bool sink = false, float sy = 0) {
-  Obj o; o.kind = (uint8_t)kind; o.x = x; o.z = z; o.y = height(x, z) + yOff - (sink ? 0.25f : 0.f); o.ry = ry; o.sx = s; o.sz = s; o.sy = sy > 0 ? sy : s; o.r = (uint8_t)clampf(tr * 128.f, 0, 255); o.g = (uint8_t)clampf(tg * 128.f, 0, 255); o.b = (uint8_t)clampf(tb * 128.f, 0, 255); o.sway = 0;
-  if (kind == K_PINE || kind == K_PINEY || kind == K_OAK || kind == K_BUSH || (kind >= K_BIRCH && kind <= K_REEDS) || kind == K_FBUSH) o.sway = 1; objs.push_back(o); addCollider(kind, x, z, ry, s);
+  Obj o; o.kind = (uint8_t)kind; o.x = x; o.z = z; o.y = gPutY > -1e8f ? gPutY : height(x, z) + yOff - (sink ? 0.25f : 0.f); o.ry = ry; o.sx = s; o.sz = s; o.sy = sy > 0 ? sy : s; o.r = (uint8_t)clampf(tr * 128.f, 0, 255); o.g = (uint8_t)clampf(tg * 128.f, 0, 255); o.b = (uint8_t)clampf(tb * 128.f, 0, 255); o.sway = 0;
+  if (kind == K_PINE || kind == K_PINEY || kind == K_OAK || kind == K_BUSH || (kind >= K_BIRCH && kind <= K_REEDS) || kind == K_FBUSH) o.sway = 1; objs.push_back(o); addCollider(kind, x, z, ry, s, o.y);
   if (kind == K_LAMP) addLight(x, o.y + 2.3f, z, 1.0f, 0.62f, 0.30f, 20.f); else if (kind == K_BRAZIER) addLight(x, o.y + 1.2f, z, 1.4f, 0.65f, 0.25f, 24.f); else if (kind == K_CAMP) addLight(x, o.y + 0.9f, z, 1.3f, 0.6f, 0.25f, 22.f); else if (kind == K_TORCH) addLight(x, o.y + 0.8f, z, 0.9f, 0.5f, 0.2f, 12.f);
   return &objs.back();
 }
@@ -169,9 +185,18 @@ static float nationTint[3][3] = {{0.35f, 0.5f, 1.0f}, {1.0f, 0.28f, 0.22f}, {0.3
 static void addPoi(const char* name, float x, float z, float r, int kind) { Poi p; memset(&p, 0, sizeof p); p.x = x; p.z = z; p.y = height(x, z); p.r = r; snprintf(p.name, 32, "%s", name); p.kind = kind; pois.push_back(p); }
 static void gatePoint(const Settle& s, float& gx, float& gz) { float d = s.type == ST_CAPITAL ? 52.f : s.type == ST_VILLAGE ? (s.size >= 3 ? 46.f : 10.f) : s.type == ST_FORT ? 22.f : s.type == ST_HAMLET ? 8.f : 6.f; gx = s.x + s.gateX * d; gz = s.z + s.gateZ * d; }
 static Obj* lastWall = nullptr;
-static void wallRun(float ax, float az, float bx, float bz, float outNx, float outNz, float seg, int kind, float skipCx, float skipCz, float skipR, float sc = 1.f) {
+static void putStair(float sx0, float sz0, float ex, float ez, float baseY) { float ry = std::atan2(-ez, ex); gPutY = baseY; Obj* o = put(K_STAIR, sx0, sz0, ry, 1.f); (void)o; gPutY = -1e9f;
+  addDeck(sx0, sz0, ry, 5.98f, 0, 5.98f, 1.1f, baseY + 0.227f, baseY + 5.9f); addDeck(sx0, sz0, ry, 13.15f, 0, 1.3f, 1.1f, baseY + 5.9f, baseY + 5.9f); }
+static void wallRun(float ax, float az, float bx, float bz, float outNx, float outNz, float seg, int kind, float skipCx, float skipCz, float skipR, float sc = 1.f, bool stairs = false) {
   float dx = bx - ax, dz = bz - az, L = std::sqrt(dx * dx + dz * dz); int n = std::max(1, (int)(L / seg + 0.5f)); float dirx = outNz, dirz = -outNx; float ry = std::atan2(-dirz, dirx);
-  for (int i = 0; i < n; i++) { float t = (i + 0.5f) / n, x = ax + dx * t, z = az + dz * t; if (skipR > 0 && std::sqrt((x - skipCx) * (x - skipCx) + (z - skipCz) * (z - skipCz)) < skipR) continue; lastWall = put(kind, x, z, ry, sc, 1, 1, 1, -0.2f); }
+  float base = 0; for (int i = 0; i < n; i++) { float t = (i + 0.5f) / n; base += height(ax + dx * t, az + dz * t); } base = base / n - 0.2f; lastBase = base; float c = std::cos(ry), sn = std::sin(ry);
+  for (int i = 0; i < n; i++) { float t = (i + 0.5f) / n, x = ax + dx * t, z = az + dz * t; if (skipR > 0 && std::sqrt((x - skipCx) * (x - skipCx) + (z - skipCz) * (z - skipCz)) < skipR) continue;
+    gPutY = base; lastWall = put(kind, x, z, ry, sc, 1, 1, 1, -0.2f); gPutY = -1e9f;
+    if (kind == K_WALL) addDeck(x, z, ry, 0, -0.275f * sc, L / n * 0.5f + 0.06f, 0.975f * sc, base + 5.9f * sc, base + 5.9f * sc); }
+  (void)c; (void)sn;
+  if (stairs && kind == K_WALL && L >= 24.f) { float ux = dx / L, uz = dz / L, inx = -outNx, inz = -outNz; float t1 = 0.07f; float p1x = ax + dx * t1 + inx * 2.35f, p1z = az + dz * t1 + inz * 2.35f;
+    if (!(skipR > 0 && std::sqrt((p1x - skipCx) * (p1x - skipCx) + (p1z - skipCz) * (p1z - skipCz)) < skipR + 2.f)) putStair(p1x, p1z, ux, uz, base);
+    if (L >= 40.f) { float t2 = 0.93f; float p2x = ax + dx * t2 + inx * 2.35f, p2z = az + dz * t2 + inz * 2.35f; if (!(skipR > 0 && std::sqrt((p2x - skipCx) * (p2x - skipCx) + (p2z - skipCz) * (p2z - skipCz)) < skipR + 2.f)) putStair(p2x, p2z, -ux, -uz, base); } }
 }
 static void flagAt(int nation, float x, float z, float yAdd, float s = 1.f) { Obj* o = put(K_FLAGPOLE, x, z, rng() * 0.6f, s, nationTint[nation][0], nationTint[nation][1], nationTint[nation][2], yAdd); (void)o; }
 static void buildCapital(int si) {
@@ -181,7 +206,7 @@ static void buildCapital(int si) {
   // curtain wall (outer face = outward normal), gate on the +v side
   for (int side = 0; side < 4; side++) { float ax, az, bx, bz, nx, nz; float u0, v0, u1, v1, nu, nv;
     if (side == 0) { u0 = -HS; v0 = HS; u1 = HS; v1 = HS; nu = 0; nv = 1; } else if (side == 1) { u0 = -HS; v0 = -HS; u1 = HS; v1 = -HS; nu = 0; nv = -1; } else if (side == 2) { u0 = HS; v0 = -HS; u1 = HS; v1 = HS; nu = 1; nv = 0; } else { u0 = -HS; v0 = -HS; u1 = -HS; v1 = HS; nu = -1; nv = 0; }
-    P(u0, v0, ax, az); P(u1, v1, bx, bz); nx = rx * nu + gx * nv; nz = rz * nu + gz * nv; float gcx, gcz; P(0, HS, gcx, gcz); wallRun(ax, az, bx, bz, nx, nz, 5.0f, K_WALL, gcx, gcz, side == 0 ? 7.2f : 0.f); }
+    P(u0, v0, ax, az); P(u1, v1, bx, bz); nx = rx * nu + gx * nv; nz = rz * nu + gz * nv; float gcx, gcz; P(0, HS, gcx, gcz); wallRun(ax, az, bx, bz, nx, nz, 5.0f, K_WALL, gcx, gcz, side == 0 ? 7.2f : 0.f, 1.f, true); }
   for (int cu = -1; cu <= 1; cu += 2) for (int cv = -1; cv <= 1; cv += 2) { P(cu * HS, cv * HS, x, z); put(K_WTOWER, x, z, rng() * 6, 1, 1, 1, 1, -0.3f); flagAt(nat, x, z, 11.2f); }
   { P(0, -HS, x, z); put(K_WTOWER, x, z, 0, 1, 1, 1, 1, -0.3f); P(HS, 0, x, z); put(K_WTOWER, x, z, 0, 1, 1, 1, 1, -0.3f); P(-HS, 0, x, z); put(K_WTOWER, x, z, 0, 1, 1, 1, 1, -0.3f); }
   P(0, HS, x, z); put(K_GATE, x, z, std::atan2(gx, gz), 1, 1, 1, 1, -0.3f); { float bx, bz; P(-8.5f, HS - 2, bx, bz); put(K_BANNER, bx, bz, std::atan2(gx, gz), 1, tr, tg, tb); P(8.5f, HS - 2, bx, bz); put(K_BANNER, bx, bz, std::atan2(gx, gz), 1, tr, tg, tb); P(-7.5f, HS + 3.5f, bx, bz); put(K_BRAZIER, bx, bz, 0, 1.2f); P(7.5f, HS + 3.5f, bx, bz); put(K_BRAZIER, bx, bz, 0, 1.2f); }
@@ -196,7 +221,7 @@ static void buildCapital(int si) {
   // keep guards, gate guards, wall patrols
   for (int sd = -1; sd <= 1; sd += 2) { Post p; memset(&p, 0, sizeof p); P(sd * 3.3f, HS - 1.5f, p.x, p.z); p.y = height(p.x, p.z); p.face = std::atan2(gx, gz); p.settle = si; p.type = 0; posts.push_back(p); Post q; memset(&q, 0, sizeof q); P(sd * 3.2f, -12 + 10.f, q.x, q.z); q.y = height(q.x, q.z); q.face = std::atan2(gx, gz); q.settle = si; q.type = 2; posts.push_back(q); }
   { float wy = s.y + 5.9f; for (int side = 0; side < 4; side++) { Post p; memset(&p, 0, sizeof p); float in = HS - 0.9f; float u0, v0, u1, v1; if (side == 0) { u0 = -HS + 5; v0 = in; u1 = -9; v1 = in; } else if (side == 1) { u0 = -HS + 4; v0 = -in; u1 = HS - 4; v1 = -in; } else if (side == 2) { u0 = in; v0 = -HS + 4; u1 = in; v1 = HS - 4; } else { u0 = -in; v0 = -HS + 4; u1 = -in; v1 = HS - 4; }
-      P(u0, v0, p.ax, p.az); P(u1, v1, p.bx, p.bz); p.x = p.ax; p.z = p.az; p.y = wy; p.settle = si; p.type = 1; posts.push_back(p); } }
+      P(u0, v0, p.ax, p.az); P(u1, v1, p.bx, p.bz); p.x = p.ax; p.z = p.az; { float dt1 = deckTop(p.ax, p.az); p.y = dt1 > -1e8f ? dt1 : wy; } p.settle = si; p.type = 1; posts.push_back(p); } }
   // outskirts: farmhouses, windmill, hay, fences
   for (int k = 0; k < 60 && k < 200; k++) { float a = rng() * TAU, d = 72.f + rng() * 80.f; x = s.x + std::cos(a) * d; z = s.z + std::sin(a) * d; int kind = rng() < 0.5f ? K_COTTAGE : (rng() < 0.4f ? K_BARN : K_HOUSE); float sc = kind == K_HOUSE ? 1.f : 1.3f; putHouse(si, kind, x, z, s.x, s.z, sc, kind == K_BARN ? 5.2f : (kind == K_HOUSE ? 4.4f : 3.6f), kind != K_BARN); if (objs.size() > 400000) break; }
   for (int k = 0; k < 40; k++) { float a = rng() * TAU, d = 66.f + rng() * 70.f; x = s.x + std::cos(a) * d; z = s.z + std::sin(a) * d; if (spotOK(x, z, 3.5f)) { put(K_MILL, x, z, rng() * TAU, 1.2f); regPlaced(x, z, 4.f); break; } }
@@ -226,7 +251,7 @@ static void buildHamlet(int si) {
 static void buildFort(int si) {
   Settle& s = settles[si]; placed.clear(); float HS = 15.f; float gx = s.gateX, gz = s.gateZ, rx = -gz, rz = gx; auto P = [&](float u, float v, float& x, float& z) { x = s.x + rx * u + gx * v; z = s.z + rz * u + gz * v; }; float x, z; int nat = s.nation;
   for (int side = 0; side < 4; side++) { float u0, v0, u1, v1, nu, nv; if (side == 0) { u0 = -HS; v0 = HS; u1 = HS; v1 = HS; nu = 0; nv = 1; } else if (side == 1) { u0 = -HS; v0 = -HS; u1 = HS; v1 = -HS; nu = 0; nv = -1; } else if (side == 2) { u0 = HS; v0 = -HS; u1 = HS; v1 = HS; nu = 1; nv = 0; } else { u0 = -HS; v0 = -HS; u1 = -HS; v1 = HS; nu = -1; nv = 0; }
-    float ax, az, bx, bz; P(u0, v0, ax, az); P(u1, v1, bx, bz); float gcx, gcz; P(0, HS, gcx, gcz); wallRun(ax, az, bx, bz, rx * nu + gx * nv, rz * nu + gz * nv, 5.f, K_WALL, gcx, gcz, side == 0 ? 6.f : 0.f); }
+    float ax, az, bx, bz; P(u0, v0, ax, az); P(u1, v1, bx, bz); float gcx, gcz; P(0, HS, gcx, gcz); wallRun(ax, az, bx, bz, rx * nu + gx * nv, rz * nu + gz * nv, 5.f, K_WALL, gcx, gcz, side == 0 ? 6.f : 0.f, 1.f, true); }
   for (int cu = -1; cu <= 1; cu += 2) for (int cv = -1; cv <= 1; cv += 2) { P(cu * HS, cv * HS, x, z); put(K_WTOWER, x, z, 0, 0.9f, 1, 1, 1, -0.3f); flagAt(nat, x, z, 10.2f, 0.9f); }
   P(0, HS, x, z); put(K_GATE, x, z, std::atan2(gx, gz), 0.85f, 1, 1, 1, -0.3f); P(0, -6, x, z); put(K_WATCH, x, z, std::atan2(gx, gz), 1.4f); P(-7, 4, x, z); put(K_TENT, x, z, 0.5f, 1.f, 1, 1, 1); P(7, 4, x, z); put(K_TENT, x, z, -0.5f, 1.f); P(0, 4, x, z); put(K_CAMP, x, z, 0, 1.2f); P(-8, -8, x, z); put(K_CRATE, x, z, 0.3f, 1.1f); P(8, -8, x, z); put(K_BARREL, x, z, 0.3f, 1.2f); P(6, HS - 3, x, z); put(K_BRAZIER, x, z, 0, 1.1f);
   for (int k = 0; k < 4; k++) { Post p; memset(&p, 0, sizeof p); float a = k * TAU / 4; P(std::cos(a) * 7, std::sin(a) * 7 - 2, p.x, p.z); p.y = height(p.x, p.z); p.face = a; p.settle = si; p.type = k < 2 ? 0 : 2; if (k < 2) P(k == 0 ? -3.f : 3.f, HS - 2, p.x, p.z); posts.push_back(p); }
@@ -251,7 +276,7 @@ static void buildGrave(int si) {
 }
 static void buildBorder(int si, float dirx, float dirz) {   // gate across the road, walls to both sides
   Settle& s = settles[si]; float rx = -dirz, rz = dirx; Obj* g = put(K_GATE, s.x, s.z, std::atan2(dirx, dirz), 1.0f, 1, 1, 1, -0.3f); (void)g;
-  for (int sd = -1; sd <= 1; sd += 2) { float ax = s.x + rx * sd * 8.f, az = s.z + rz * sd * 8.f, bx = s.x + rx * sd * 34.f, bz = s.z + rz * sd * 34.f; wallRun(ax, az, bx, bz, dirx, dirz, 5.f, K_WALL, 0, 0, 0); put(K_WTOWER, bx, bz, 0, 0.9f, 1, 1, 1, -0.3f);
+  for (int sd = -1; sd <= 1; sd += 2) { float ax = s.x + rx * sd * 8.f, az = s.z + rz * sd * 8.f, bx = s.x + rx * sd * 34.f, bz = s.z + rz * sd * 34.f; wallRun(ax, az, bx, bz, dirx, dirz, 5.f, K_WALL, 0, 0, 0, 1.f, true); put(K_WTOWER, bx, bz, 0, 0.9f, 1, 1, 1, -0.3f);
     float fx = s.x + rx * sd * 12.f + dirx * 3.5f, fz = s.z + rz * sd * 12.f + dirz * 3.5f; int nn = sd < 0 ? s.nation : (s.nation + 1) % 3; (void)nn; put(K_BANNER, fx, fz, std::atan2(dirx, dirz), 1.0f, nationTint[sd < 0 ? s.nation : s.poi][0], nationTint[sd < 0 ? s.nation : s.poi][1], nationTint[sd < 0 ? s.nation : s.poi][2]);
     put(K_BRAZIER, s.x + rx * sd * 5.f + dirx * 4.f, s.z + rz * sd * 5.f + dirz * 4.f, 0, 1.1f);
     for (int f = -1; f <= 1; f += 2) { Post p; memset(&p, 0, sizeof p); p.x = s.x + rx * sd * 3.2f + dirx * f * 4.f; p.z = s.z + rz * sd * 3.2f + dirz * f * 4.f; p.y = height(p.x, p.z); p.face = std::atan2(dirx * f, dirz * f); p.settle = si; p.type = 0; posts.push_back(p); } }
@@ -397,7 +422,7 @@ void generate(uint32_t seed) {
   for (size_t i = 0; i < settles.size(); i++) { const Settle& s = settles[i]; if (s.type > ST_FORT) continue; float gx, gz; gatePoint(s, gx, gz); put(K_SIGN, gx + s.gateZ * 4.f, gz - s.gateX * 4.f, std::atan2(s.gateX, s.gateZ), 1.2f); }
   // monster hot spots in the wilds
   for (int t = 0, c = 0; t < 400 && c < 10; t++) { float x = urand(-0.85f, 0.85f) * HALF, z = urand(-0.85f, 0.7f) * HALF; float h = height(x, z); if (h < 6 || wetNear(x, z, 10) || settleNear(x, z, 120) >= 0 || roadDist(x, z) < 30) continue; lairs.push_back({x, z, 40.f, h > 60 ? 5 : 0}); c++; }
-  buildColGrid();
+  buildColGrid(); if (getenv("LF_DUMP")) { for (size_t k = 0; k < settles.size() && k < 12; k++) fprintf(stderr, "SETTLE %zu type %d nat %d at %.1f %.1f y %.1f gate %.2f %.2f %s\n", k, settles[k].type, settles[k].nation, settles[k].x, settles[k].z, settles[k].y, settles[k].gateX, settles[k].gateZ, settles[k].name); fprintf(stderr, "DECKS %d\n", nDecks); }
   // ---------------- textures
   waterTex.assign((size_t)GS * GS * 4, 0.f); { std::vector<float> wb(GS * GS, -1e9f); for (int pass = 0; pass < 3; pass++) { std::vector<float> nb = pass == 0 ? Wl : wb; if (pass == 0) { wb = Wl; continue; } nb = wb; for (int j = 1; j < GS - 1; j++) for (int i = 1; i < GS - 1; i++) { float m = wb[j * GS + i]; for (int dj = -1; dj <= 1; dj++) for (int di = -1; di <= 1; di++) m = std::max(m, wb[(j + dj) * GS + i + di]); nb[j * GS + i] = m; } wb = nb; }
     for (int i = 0; i < GS * GS; i++) { float h = Hh[i]; float lvl = Wl[i]; float f = 0; if (lvl > -1e8f) f = 1; float outv = lvl > -1e8f ? lvl : h - 1.5f; waterTex[i * 4] = outv; waterTex[i * 4 + 1] = flowX[i]; waterTex[i * 4 + 2] = flowZ[i]; waterTex[i * 4 + 3] = f; } 

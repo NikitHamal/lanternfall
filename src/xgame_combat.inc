@@ -9,7 +9,7 @@ struct Arr { bool on = false, stuck = false; V3 p, v, dir, off; float life = 0, 
 bool faunaArrow(Arr& a, V3 p0, V3 p1); bool faunaMelee(float dmg, float reach, float ox, float oy, float oz, float fx, float fz);
 struct Cell { bool in = false; int idx = 0, stage = 0, want = 0, house = -1; float ox = 0, oz = 0, fade = 0; } CI;
 struct Enter { float x, y, z, ry, R; int kind, idx; }; std::vector<Enter> enters; std::vector<uint8_t> looted;
-inline float gH(float x, float z) { return CI.in ? xi::BASEY : height(x, z); }
+inline float gH(float x, float z) { return CI.in ? xi::BASEY : surfaceY(x, z, P.y); }
 bool roomCollide(float& x, float& z, float r) {
   const xi::Def& d = xi::DEFS[CI.idx]; float lx = x - d.cx, lz = z - d.cz; bool m = false; float bx = d.hx - 0.4f - r * 0.5f, bz = d.hz - 0.35f - r * 0.5f;
   if (lx < -bx) { lx = -bx; m = true; } if (lx > bx) { lx = bx; m = true; } if (lz < -bz) { lz = -bz; m = true; } if (lz > bz) { lz = bz; m = true; }
@@ -19,9 +19,9 @@ bool roomCollide(float& x, float& z, float r) {
 bool collideBuilds(float& x, float& z, float r, bool friendly, int* hitBuild = nullptr);
 struct GNode; GNode* nearestGNode(float px, float pz, float maxR); bool harvestNode(GNode* g, bool swingAnim);
 int nearestRift(float maxR, bool onlyCorrupt); bool tryPurifyRift(int ri);
-bool collideAny(float& x, float& z, float r) {
+bool collideAny(float& x, float& z, float r, float ey = -1e9f) {
   if (CI.in) return roomCollide(x, z, r);
-  bool a = collide(x, z, r), b = collideBuilds(x, z, r, true, nullptr);
+  bool a = collide(x, z, r, ey), b = collideBuilds(x, z, r, true, nullptr);
   return a || b;
 }
 int natOf(const Npc& n) { int k = n.settle >= 0 ? settles[n.settle].nation : (CI.in ? 0 : nationAt(n.x, n.z)); return k < 0 ? 0 : k > 2 ? 2 : k; }
@@ -66,7 +66,7 @@ void crime(const Npc& v, bool kill) {
 }
 void hurtNpc(Npc& t, float d, float fx, float fz, bool byPlayer, int zone = Z_TORSO) {
   if (!t.alive) return; d *= ZMUL[zone]; t.hp -= d; t.hitT = 0.28f; float dx = t.x - fx, dz = t.z - fz, l = std::sqrt(dx * dx + dz * dz) + 1e-4f; float kb = t.boss ? 0.15f : (zone == Z_HEAD ? 0.7f : 0.5f); float nx = t.x + dx / l * kb, nz = t.z + dz / l * kb;
-  if (t.interior) roomCollide(nx, nz, 0.4f); else { collide(nx, nz, 0.4f); if (badStep(nx, nz, t.y)) { nx = t.x; nz = t.z; } } t.x = nx; t.z = nz;
+  if (t.interior) roomCollide(nx, nz, 0.4f); else { collide(nx, nz, 0.4f, t.y); if (badStep(nx, nz, t.y)) { nx = t.x; nz = t.z; } } t.x = nx; t.z = nz;
   if (zone == Z_LEG) t.limp = 4.5f; if (zone == Z_HEAD) t.stun = t.boss ? 0.12f : 0.7f;
   if (byPlayer && t.role >= R_MON) { t.tgtKind = 1; if (t.role != R_MON && t.state != S_CHASE) t.state = S_CHASE; }
   bool kill = t.hp <= 0;

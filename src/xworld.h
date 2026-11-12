@@ -14,7 +14,7 @@ enum Kind : uint8_t {
   K_ORE, K_RIFT, K_PURIFIED, K_SPELL_FIRE, K_SPELL_FROST,
   // v1.9 living world: flora + articulated fauna parts (procedural, see xmesh_new.inc)
   K_BIRCH, K_CHERRY, K_JUNGLE, K_WILLOW, K_PALM, K_FERN, K_MUSHROOM, K_REEDS, K_LILY, K_SPIRE, K_FBUSH,
-  K_FA_DOG, K_FA_CAT, K_FA_HEN, K_FA_SHEEP, K_FA_COW, K_FA_HORSE, K_FA_BIRD, K_FA_LEG, K_FA_WING, K_PETAL, NK
+  K_FA_DOG, K_FA_CAT, K_FA_HEN, K_FA_SHEEP, K_FA_COW, K_FA_HORSE, K_FA_BIRD, K_FA_LEG, K_FA_WING, K_PETAL, K_STAIR, NK
 };
 struct Obj { float x, y, z, ry, sx, sy, sz; uint8_t kind, r, g, b, sway; };      // tint bytes: 128 == 1.0
 struct Settle { int type = 0, nation = 0, size = 1; float x = 0, z = 0, y = 0, r = 30, gateX = 0, gateZ = 1; char name[28] = {0}; int poi = -1; };   // type: 0 capital 1 village 2 hamlet 3 fort 4 camp 5 ruins 6 graveyard 7 border gate
@@ -34,7 +34,9 @@ extern std::vector<Light> lights; extern std::vector<Post> posts; extern std::ve
 void generate(uint32_t seed);
 float height(float x, float z); float slopeAt(float x, float z); float waterAt(float x, float z);   // waterAt: level or -1e9
 bool inWater(float x, float z, float* depth = nullptr); float roadDist(float x, float z); int nationAt(float x, float z); int settleNear(float x, float z, float margin = 0);
-const char* regionName(float x, float z); bool collide(float& x, float& z, float r);   // push out of colliders (returns true if moved)
+const char* regionName(float x, float z); bool collide(float& x, float& z, float r, float y = -1e9f);   // y: entity feet height; colliders with top below y-0.4 are stepped over (wall walks)
+float surfaceY(float x, float z, float fromY); float deckTop(float x, float z); extern int nDecks;   // walkable decks: wall walks, stairs, landings
+//   // push out of colliders (returns true if moved)
 float highestPoint(float* hx, float* hz);
 void zones(float x, float z, float h, float& cherry, float& jungle, float& birch, float& autumn);   // biome weights 0..1 (flora zones)
 float forestAt(float x, float z);
