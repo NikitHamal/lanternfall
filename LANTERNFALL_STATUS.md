@@ -190,3 +190,9 @@ Unverified in-engine: NPC activity poses on real NPCs (the capture spots lost th
 Doc: see docs/TODO.md.
 
 CI: tag run 43243078141 (commit e7fbb4e) - Windows/Linux/macOS + release all success; release v2.2.0 published with 3 assets (linux 10.1 MB, macOS 10.7 MB, windows 10.3 MB). Main run 43243073274 green; earlier main runs 43242131032 (4121f6e) and 43240734933 (eba93dd) green.
+
+## v2.3.0 - Realm Polish I (this session) - IN PROGRESS
+Env: molab notebook ALIVE (20 cores, Debian trixie, cmake/Xvfb present, no Blender binary on PATH). Workflow: edit locally -> push -> `git pull` + `cmake --build -j20` on molab (/tmp/agentA_run/lf) -> Xvfb llvmpipe capture -> JPEG pulled back as base64 (scripts /tmp/agentA_r.sh, _cap.sh, _pull.sh).
+Baseline QA (shots Read): a_default (capital gate, neon lime grass), a_poi0 (lake), a_map (continent map is already big/relieved), a_mtn (bad camera: inside pine), b_fall (cherry trees: faceted flat pink + red-orange branches), b_village, b_forest (jungle village).
+Findings: grass is saturated lime and flat-coloured, blades too wide; cherry bark reads red-orange; map layout fine but ground reads uniformly green.
+Pass 1 (this commit): grass palette (desaturated, olive / straw / tall-tuft patches, dark roots, dry blades), narrower blades, cherry colours.
