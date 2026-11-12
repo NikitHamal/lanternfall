@@ -122,6 +122,7 @@ void tickAttack(Npc& n, float dt, bool vsPlayer, Npc* tn) {
 #include "xkingdom.inc"
 #include "xfauna.inc"
 #include "xtown.inc"
+#include "xanim.inc"
 void onNewNpcSlot(int i) { KEX[i] = NpcK(); SCH[i] = Sch(); }
 void aiHuman(Npc& n, float dt, float pd) {
   int nIdx = (int)(&n - npcs);
@@ -249,7 +250,7 @@ void debugCmd(const char* c) { if (strstr(c, "rain")) { wxForce = 1; wxW = 1.f; 
     if (bi >= 0) { Npc& n = npcs[bi]; P.x = n.x + std::sin(n.face) * 2.6f; P.z = n.z + std::cos(n.face) * 2.6f; P.y = height(P.x, P.z); P.yaw = std::atan2(n.x - P.x, n.z - P.z); P.face = P.yaw; P.pitch = 0.05f; P.camDist = 3.4f; P.camInit = false; n.state = S_IDLE; n.stT = 99; char who[40]; snprintf(who, sizeof who, "%s - %s", n.name, rigs[n.rig].title); townOpen(n, bi, who, L_VILL[0]);
       if (strstr(c, "quest")) for (int k = 0; k < TM.n; k++) if (TM.id[k] == O_WORK) townChoose(k); if (strstr(c, "close")) townClose(); } }
   if (strstr(c, "savenow")) townSave();
-  if (strstr(c, "bow")) B.weapon = 1; if (strstr(c, "melee")) B.weapon = 0; if (strstr(c, "hold")) dbgDrawHold = true; if (strstr(c, "run")) dbgWalk = 2; else if (strstr(c, "walk")) dbgWalk = 1; if (const char* p = strstr(c, "shoot")) dbgShoot = atoi(p + 5) > 0 ? atoi(p + 5) : 30;
+  if (strstr(c, "side")) dbgSide = 1.5708f; if (strstr(c, "bow")) B.weapon = 1; if (strstr(c, "melee")) B.weapon = 0; if (strstr(c, "hold")) dbgDrawHold = true; if (strstr(c, "run")) dbgWalk = 2; else if (strstr(c, "walk")) dbgWalk = 1; if (const char* p = strstr(c, "shoot")) dbgShoot = atoi(p + 5) > 0 ? atoi(p + 5) : 30;
   if (strstr(c, "horde")) startKingdomSiege(true); if (strstr(c, "hostile")) { for (int k = 0; k < 3; k++) bounty[k] = 120; } if (strstr(c, "noai")) for (Npc& n : npcs) if (n.used && n.role >= R_MON && n.role == R_MON) n.used = false;
   if (const char* p = strstr(c, "enter")) { int want = atoi(p + 5), best = -1; float bd = 1e30f; for (size_t i = 0; i < enters.size(); i++) if (enters[i].idx == want) { float d = dist2(enters[i].x, enters[i].z, P.x, P.z); if (d < bd) { bd = d; best = (int)i; } } if (best >= 0) { CI.ox = enters[best].x + enters[best].R; CI.oz = enters[best].z; doEnter(best); } }
   if (strstr(c, "mount")) {
@@ -405,7 +406,7 @@ void update(float dtReal, const pl::Input& inRaw) {
   // boss bar
   H.bossHp = -1; for (int k = 0; k < nMonL; k++) { const Npc& m = npcs[monList[k]]; if (m.boss && m.alive && m.lastPlayerD < 60.f) { H.bossHp = m.hp / m.maxHp; snprintf(H.bossName, sizeof H.bossName, "%s", m.name); } }
   // ---- camera
-  { float cp = std::cos(P.pitch), sp = std::sin(P.pitch); V3 look{std::sin(P.yaw) * cp, sp, std::cos(P.yaw) * cp}; float head = (pa ? pa->scale : 1.f) * 1.58f + (K.mounted ? (rideH ? 0.85f : 1.18f) : 0.f); V3 pv{P.x, P.y + head, P.z}; V3 eye, tg; float fov = 1.14f + (P.speed > 5.5f ? 0.07f : 0.f);
+  { float cp = std::cos(P.pitch), sp = std::sin(P.pitch); float cyw = P.yaw + (P.view == 0 ? 0.f : dbgSide); V3 look{std::sin(cyw) * cp, sp, std::cos(cyw) * cp}; float head = (pa ? pa->scale : 1.f) * 1.58f + (K.mounted ? (rideH ? 0.85f : 1.18f) : 0.f); V3 pv{P.x, P.y + head, P.z}; V3 eye, tg; float fov = 1.14f + (P.speed > 5.5f ? 0.07f : 0.f);
     if (P.view == 0 && !P.fly) { eye = pv + look * 0.12f; tg = eye + look * 6.f; fov = 1.22f; }
     else { float dist = (CI.in ? std::min(P.camDist, 3.4f) : P.camDist * (K.mounted ? 1.22f : 1.f) * (K.buildMode ? 1.35f : 1.f)) * (P.fly ? 1.8f : 1.f); V3 right{-std::cos(P.yaw), 0, std::sin(P.yaw)}; V3 piv = pv + right * (P.fly ? 0.f : 0.55f) + V3{0, K.buildMode ? 0.65f : 0.1f, 0}; float use = dist; for (float s = 0.5f; s <= dist; s += 0.35f) { V3 p = piv - look * s; float g = gH(p.x, p.z) + 0.45f; float wl = waterAt(p.x, p.z); if (wl > -1e8f) g = std::max(g, wl + 0.25f); float cx = p.x, cz = p.z; bool hit = p.y < g; if (!hit && p.y < gH(p.x, p.z) + 7.f && collideAny(cx, cz, 0.3f) && dist2(cx, cz, p.x, p.z) > 0.25f) hit = true; if (hit) { use = std::max(0.9f, s - 0.45f); break; } }
       eye = piv - look * use; float g = gH(eye.x, eye.z) + 0.5f; if (eye.y < g) eye.y = g; tg = piv + look * 10.f; if (CI.in) { const xi::Def& d = xi::DEFS[CI.idx]; eye.x = clampf(eye.x, d.cx - d.hx + 0.3f, d.cx + d.hx - 0.3f); eye.z = clampf(eye.z, d.cz - d.hz + 0.3f, d.cz + d.hz - 0.3f); eye.y = std::min(eye.y, xi::BASEY + d.h - 0.25f); } }
@@ -422,7 +423,7 @@ void draw() {
     if (P.atkT >= 0) { static const int K3[3] = {A_BASIC, A_BASH, A_CLEAVE}; ac = figActClip(a, K3[P.combo % 3]); if (ac < 0) ac = figActClip(a, A_BASIC); float hit = ac >= 0 && a.clips[ac].hit > 0.01f ? a.clips[ac].hit : 0.5f; if (ac >= 0) au = P.atkT < P.atkWind ? P.atkT / std::max(0.01f, P.atkWind) * hit : std::min(1.f, hit + (P.atkT - P.atkWind) / std::max(0.01f, P.atkRec) * (1 - hit)); }
     else if (bowAct) { ac = figActClip(a, A_AIMED); if (ac >= 0) { float hit = a.clips[ac].hit > 0.01f ? a.clips[ac].hit : 0.5f; au = B.draw > 0 ? B.draw * hit : std::min(1.f, hit + B.rel / 0.4f * (1 - hit)); } }
     bool combat = P.atkT >= 0 || P.block || P.hurtT > 0 || bowAct || (bowEq && B.zoom > 0.3f); float spd = K.mounted ? 0.f : (P.swim ? P.speed * 0.8f : P.speed); figAnimUpdate(an, a, dtv, spd / a.scale, combat, ac, au, P.stagT > 0.1f ? 1.f : 0.f, P.deadT > 0, P.block ? 1.f : 0.f, -1.f, 0.f);
-    if (P.swim) figAddMove(an, a, 0, 0, -0.5f, 0);
+    if (P.swim) figAddMove(an, a, 0, 0, -0.5f, 0); if (!K.mounted) fxPlayerAir(an, a, P.ground, P.vy, P.swim || P.fly || CI.in, dtv);
     if (K.mounted && !CI.in) {
       int lt = figBone(a, "lThigh", -1), ls = figBone(a, "lShin", -1), rt = figBone(a, "rThigh", -1), rs2 = figBone(a, "rShin", -1);
       auto rotB = [&](int bi, float ax, float ay, float az, float ang) { if (bi < 0) return; float pp[3] = {an.pose[bi * 7 + 4], an.pose[bi * 7 + 5], an.pose[bi * 7 + 6]}; figAddRot(an, a, bi, ax, ay, az, ang, pp); };
@@ -464,7 +465,9 @@ void draw() {
     const FigAsset* a; int wR = -1, wL = -1; if (n.role >= R_MON) a = &gFM[n.mon]; else { const RigDef& rd = rigs[n.rig]; a = rd.a; wR = rd.wR; wL = rd.wL; } if (!a || !a->ok) continue; FigAnim& an = n.an; int ac = -1; float au = -1;
     if (n.atkT >= 0 && n.alive) { ac = figActClip(*a, n.role >= R_MON ? A_MONATK : A_BASIC); if (ac >= 0) { float hit = a->clips[ac].hit > 0.01f ? a->clips[ac].hit : 0.5f; au = n.atkT < n.atkWind ? n.atkT / std::max(0.01f, n.atkWind) * hit : std::min(1.f, hit + (n.atkT - n.atkWind) / std::max(0.01f, n.atkRec) * (1 - hit)); } }
     bool combat = n.role >= R_MON ? (n.tgtKind != 0 && n.alive) : (n.state == S_CHASE || n.state == S_ATK); float spd = n.alive ? n.moving : 0.f; if (n.role == R_VILL && n.state == S_FLEE) combat = false;
-    figAnimUpdate(an, *a, dtv, spd / std::max(0.3f, n.sc / std::max(0.01f, a->scale) * a->scale), combat, ac, au, n.hitT > 0.05f ? 1.f : 0.f, !n.alive, 0.f, -1.f, 0.f); figAnimPose(an, *a);
+    figAnimUpdate(an, *a, dtv, spd / std::max(0.3f, n.sc / std::max(0.01f, a->scale) * a->scale), combat, ac, au, n.hitT > 0.05f ? 1.f : 0.f, !n.alive, 0.f, -1.f, 0.f);
+    if (n.alive && n.role < R_MON && n.hitT < 0.05f && n.state != S_FLEE && n.atkT < 0 && !combat) { int fm = fxPick(n, i, n.settle >= 0 ? SCH[i].phase : -1, tAbs); float iw = (1.f - an.moveW) * (1.f - an.readyW); if (fm != an.fxMode) { an.fxW -= dtv * 3.f; if (an.fxW <= 0.f) { an.fxW = 0.f; an.fxMode = fm; } } else an.fxW = std::min(1.f, an.fxW + dtv * 3.f); fxApply(an, *a, an.fxMode, tAbs, an.fxW * iw, (float)(i % 17) * 0.9f); }
+    figAnimPose(an, *a);
     FigDraw& fdd = fd[nfd++]; fdd.a = a; fdd.mat = an.mat; fdd.dissolve = n.alive ? 0.f : clampf((n.deadT - 4.5f) / 2.f, 0, 1); fdd.disH = std::max(1.f, a->height); fdd.glow = n.role >= R_MON ? (n.boss ? 3.f : 2.2f) : 1.f; fdd.shadow = d < 70.f; fdd.dim = 1.f; fdd.lantern = a->lant && lampOn && ((i & 1) == 0); fdd.vm = false; for (int k = 0; k < 3; k++) fdd.disCol[k] = a->disCol[k];
     float fl = n.hitT * n.hitT * 4.f; fdd.flash[0] = fl * 1.2f; fdd.flash[1] = fl * 0.7f; fdd.flash[2] = fl * 0.4f; float sc = n.sc; fdd.model = mul(translate(n.x, n.y, n.z), mul(rotY(n.face), scale4(sc, sc, sc)));
     if (n.role < R_MON) { weapon(*a, an, false, wR, fdd.model, fdd.flash, 1.f); weapon(*a, an, true, wL, fdd.model, fdd.flash, 1.f); } }

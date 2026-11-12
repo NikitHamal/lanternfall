@@ -43,7 +43,10 @@ static void drawExploreHud() {
   // ---- reticle (first person)
   if (H.view == 0 || H.weapon == 1) {
     float cx = W_ / 2, cy = H_ / 2; float spread = H.weapon == 1 ? (1.f - H.draw) * 14.f * S * (H.zoom > 0.5f ? 0.6f : 1.f) + 3.f * S : 0.f; bool full = H.weapon == 1 && H.draw > 0.92f; Col rc = full ? Col{1.f, 0.82f, 0.3f, 0.95f} : Col{1, 1, 1, 0.8f};
-    rect(cx - 1, cy - 1, 2, 2, rc); if (H.weapon == 1) { float t = std::max(1.f, S * 0.7f); rect(cx - spread - 5 * S, cy - 0.5f * t, 5 * S, t, rc); rect(cx + spread, cy - 0.5f * t, 5 * S, t, rc); rect(cx - 0.5f * t, cy - spread - 5 * S, t, 5 * S, rc); rect(cx - 0.5f * t, cy + spread, t, 5 * S, rc); }
+    auto rr = [&](float x, float y, float w, float h) { rect(x - 1.5f, y - 1.5f, w + 3.f, h + 3.f, Col{0.f, 0.f, 0.f, 0.6f}); rect(x, y, w, h, rc); };
+    float dd = std::max(2.f, S * 1.4f); rr(cx - dd * 0.5f, cy - dd * 0.5f, dd, dd);
+    if (H.weapon == 1) { float t = std::max(1.5f, S * 0.9f), L = 7.f * S; rr(cx - spread - L, cy - 0.5f * t, L, t); rr(cx + spread, cy - 0.5f * t, L, t); rr(cx - 0.5f * t, cy - spread - L, t, L); rr(cx - 0.5f * t, cy + spread, t, L); }
+    else { float t = std::max(1.5f, S * 0.8f), L = 4.f * S, o = 8.f * S; rr(cx - o - L, cy - 0.5f * t, L, t); rr(cx + o, cy - 0.5f * t, L, t); }
   }
   if (H.hitT > 0.01f && !H.map) { float cx = W_ / 2, cy = H_ / 2, a = std::min(1.f, H.hitT * 5.f); Col hc = H.hitKill ? Col{1.f, 0.25f, 0.2f, a} : H.hitZone == 1 ? Col{1.f, 0.82f, 0.25f, a} : Col{1, 1, 1, a}; float o = (H.hitZone == 1 ? 9.f : 6.f) * S, l = 4.f * S, t = std::max(1.f, S * 0.8f);
     for (int sx = -1; sx <= 1; sx += 2) for (int sy = -1; sy <= 1; sy += 2) for (int k = 0; k < 4; k++) rect(cx + sx * (o + k * 0.7f * S) - t * 0.5f, cy + sy * (o + k * 0.7f * S) - t * 0.5f, t, t, hc); (void)l; }
