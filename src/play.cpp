@@ -179,13 +179,13 @@ Arrow* spawnProj(int kind, V3 from, V3 dir, float speed, float dmg, float grav, 
 void spellImpact(Arrow& a, V3 hp, Foe* f) {
   V3 d = norm(V3{a.vx, 0, a.vz}); int ps = roster::at(roster::sel()).pass;
   switch (a.kind) {
-    case 10: if (f) { applyStatus(*f, 1); hurtFoe(*f, a.dmg, 0.2f, d.x, d.z, 2.f, false, 0xffa050); } fx.sparks(hp.x, hp.y, hp.z, 10, {3.f, 1.4f, 0.4f}, 3.f); fx.flash(hp.x, hp.y, hp.z, {1.f, 0.55f, 0.2f}, 40, 0.15f); audio::play(S_HITSOFT, 0, 0.6f); a.on = false; break;
-    case 11: splash(hp.x, hp.z, a.rad, a.dmg, 0.6f, 7.f, 1, 0xffa050); fx.ring(hp.x, hp.z, 0.3f, a.rad, 0.5f, {3.f, 1.3f, 0.3f}); fx.flash(hp.x, hp.y, hp.z, {1.f, 0.6f, 0.2f}, 100, 0.3f); fx.embers(hp.x, hp.y, hp.z, 26, nullptr, 1.2f, 2.5f); fx.glow(hp.x, hp.y, hp.z, a.rad * 0.8f, {2.4f, 1.2f, 0.4f}, 0.3f); audio::play(S_BOSSSLAM, 0, 0.45f); H.shake = std::max(H.shake, 0.4f); a.on = false; break;
+    case 10: if (f) { applyStatus(*f, 1); hurtFoe(*f, a.dmg, 0.2f, d.x, d.z, 2.f, false, 0xffa050); } fx.sparks(hp.x, hp.y, hp.z, 10, {3.f, 1.4f, 0.4f}, 3.f); fx.flash(hp.x, hp.y, hp.z, {1.f, 0.55f, 0.2f}, 24, 0.12f); audio::play(S_HITSOFT, 0, 0.6f); a.on = false; break;
+    case 11: splash(hp.x, hp.z, a.rad, a.dmg, 0.6f, 7.f, 1, 0xffa050); fx.ring(hp.x, hp.z, 0.3f, a.rad, 0.5f, {3.f, 1.3f, 0.3f}); fx.flash(hp.x, hp.y, hp.z, {1.f, 0.6f, 0.2f}, 55, 0.25f); fx.embers(hp.x, hp.y, hp.z, 26, nullptr, 1.2f, 2.5f); fx.glow(hp.x, hp.y, hp.z, a.rad * 0.6f, {1.8f, 0.9f, 0.3f}, 0.25f); audio::play(S_BOSSSLAM, 0, 0.45f); H.shake = std::max(H.shake, 0.4f); a.on = false; break;
     case 12: case 13: { int n = splash(hp.x, hp.z, a.rad, a.dmg, 0.3f, 3.f, 3, 0x9aff7a); fx.ring(hp.x, hp.z, 0.3f, a.rad, 0.5f, {0.6f, 2.2f, 0.7f}); fx.glow(hp.x, hp.y, hp.z, a.rad * 0.7f, {0.6f, 2.4f, 0.8f}, 0.4f); V3 g{0.5f, 2.2f, 0.7f}; fx.embers(hp.x, hp.y, hp.z, 18, &g, 1.f, 2.f); audio::play(S_HITSOFT, 0, 0.7f);
       if (a.kind == 13) addZone(hp.x, hp.z, a.rad * 0.85f, 4.5f, 11.f * P.dmgMul, 1); if (n > 0 && ps == roster::PS_MEDIC) { P.hp = std::min(P.maxHp, P.hp + 5.f); fx.floatText(P.x, P.y + 2.2f, P.z, "+5", 0x9aff7a, 11, 0.7f); } a.on = false; break; }
     case 14: if (f) { applyStatus(*f, 2); hurtFoe(*f, a.dmg, 0.15f, d.x, d.z, 2.f, false, 0xbfe8ff); } fx.sparks(hp.x, hp.y, hp.z, 8, {0.8f, 1.6f, 2.4f}, 3.f); audio::play(S_HITSOFT, 0, 0.5f); if (!f || --a.pierce < 0) a.on = false; break;
     case 15: { if (f) { bool shat = f->u.chillT > 0 || ps == roster::PS_RIME; applyStatus(*f, 2); hurtFoe(*f, a.dmg * (shat ? 1.5f : 1.f), 0.7f, d.x, d.z, 5.f, false, 0xbfe8ff); if (shat) { fx.chips(hp.x, hp.y, hp.z, 12, {0.6f, 0.85f, 1.f}, 4.f); fx.floatText(hp.x, hp.y + 1.f, hp.z, "SHATTER", 0x9fdcff, 11, 0.8f); } }
-      fx.sparks(hp.x, hp.y, hp.z, 14, {0.8f, 1.8f, 2.6f}, 4.f); fx.flash(hp.x, hp.y, hp.z, {0.5f, 0.8f, 1.f}, 50, 0.2f); audio::play(S_ARROWHIT, 0, 0.6f); H.shake = std::max(H.shake, 0.2f); if (!f || --a.pierce < 0) a.on = false; break; }
+      fx.sparks(hp.x, hp.y, hp.z, 14, {0.8f, 1.8f, 2.6f}, 4.f); fx.flash(hp.x, hp.y, hp.z, {0.5f, 0.8f, 1.f}, 28, 0.15f); audio::play(S_ARROWHIT, 0, 0.6f); H.shake = std::max(H.shake, 0.2f); if (!f || --a.pierce < 0) a.on = false; break; }
   }
 }
 void spellFoe(Arrow& a, int idx, float t) { Foe& f = foes[idx]; a.hm |= 1u << idx; V3 hp{a.px + (a.x - a.px) * t, a.py + (a.y - a.py) * t, a.pz + (a.z - a.pz) * t}; spellImpact(a, hp, &f); }
@@ -207,7 +207,7 @@ void actEffect() {
       fx.ring(cx, cz, 0.3f, r, 0.55f, {2.6f, 1.6f, 0.6f}); fx.ring(cx, cz, 0.2f, r * 0.6f, 0.4f, {2.f, 1.2f, 0.5f}); V3 c{0.3f, 0.26f, 0.2f}; fx.dust(cx, P.y + 0.2f, cz, 14, &c, 0.6f, 1.2f); fx.chips(cx, P.y + 0.2f, cz, 14, {0.45f, 0.4f, 0.32f}, 5.f); fx.flash(cx, P.y + 0.6f, cz, {1.f, 0.7f, 0.3f}, 45, 0.2f);
       H.shake = std::max(H.shake, 0.7f); hitStop = std::max(hitStop, 0.07f); audio::play(S_BOSSSLAM, 0, 0.55f); }
   } else {
-    V3 from; V3 dir = shotDirBase(from); P.kickP += 0.012f; fx.glow(from.x, from.y, from.z, 1.4f, st == roster::ST_FROST ? V3{0.8f, 1.8f, 2.6f} : st == roster::ST_ALCH ? V3{0.6f, 2.2f, 0.8f} : V3{2.6f, 1.3f, 0.4f}, 0.2f);
+    V3 from; V3 dir = shotDirBase(from); P.kickP += 0.012f; fx.glow(from.x, from.y, from.z, H.view == VW_FIRST ? 0.35f : 1.4f, st == roster::ST_FROST ? V3{0.8f, 1.8f, 2.6f} : st == roster::ST_ALCH ? V3{0.6f, 2.2f, 0.8f} : V3{2.6f, 1.3f, 0.4f}, 0.2f);
     if (st == roster::ST_FIRE) { if (!ch) { spawnProj(10, from, dir, 40.f, 20 * dm, 1.5f, 3.f, 0, 0); audio::play(S_GLOAMCAST, 0, 0.5f); } else { spawnProj(11, from, dir, 22.f, (36 + 48 * cf) * dm, 0.8f, 4.f, 0, 3.2f + 1.8f * cf); audio::play(S_BOWHEAVY, 0, 0.6f); } }
     else if (st == roster::ST_ALCH) {
       V3 eye = camEye(); V3 ap = aimPoint(eye, camDirRaw()); float want = ch ? 10.f + 18.f * cf : 9.f + 8.f * cf; V3 to = ap - from; float dist = std::max(3.f, std::min(len(to), want)); V3 tg = from + norm(to) * dist; float T = std::max(0.4f, dist / 20.f); V3 v = (tg - from) * (1.f / T); v.y += 0.5f * 9.f * T;
@@ -533,7 +533,7 @@ void fpvOther() {
   if (P.charging) wind = clampf(P.chargeT / cfull, 0, 1); else if (P.atkOn) { if (!P.atkDone) wind = smooth(0, 1, P.atkT / std::max(0.05f, P.atkWind)); else { wind = 1; strike = smooth(0, 0.14f, P.atkT - P.atkWind); rec = smooth(0.16f, 0.16f + std::max(0.1f, P.atkRec - 0.16f), P.atkT - P.atkWind); } }
   auto ang = [&](float idle, float wp, float sp) { return lerpf(lerpf(lerpf(idle, wp, wind), sp, strike), idle, rec); };
   float mv = std::min(1.f, P.speed / 4.f), bob = std::sin(P.bob) * 0.012f * mv * mo, sway = std::sin(tm * 1.3f) * 0.006f * mo, blk = P.blocking;
-  V3 G, D; float sc = 0.9f;
+  V3 G, D; float sc = (wR == 5) ? 0.6f : 0.85f;
   if (st == roster::ST_SWORD) { float sg = (P.atkIdx & 1) ? -1.f : 1.f, ph = ang(0.5f, 1.15f * sg, -1.0f * sg); G = W(0.26f + 0.09f * std::sin(ph), -0.30f + bob + sway, -0.58f - 0.10f * strike * (1 - rec)); D = norm(fw * 0.5f + (rt * std::sin(ph) + up * std::cos(ph)) * 0.85f); }
   else if (st == roster::ST_HEAVY) { float th = ang(0.95f, 2.3f, -0.5f); G = W(0.12f, -0.42f + 0.1f * std::sin(th) + bob, -0.62f); D = norm(fw * std::cos(th) + up * std::sin(th) + rt * 0.12f); }
   else { float th = ang(1.2f, 1.5f, 0.55f); G = W(0.28f, -0.34f + bob + sway, -0.55f - 0.18f * strike * (1 - rec) + 0.08f * wind); D = norm(fw * std::cos(th) + up * std::sin(th) + rt * 0.05f); }
