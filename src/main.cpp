@@ -79,13 +79,13 @@ static int lastRuns = -1;
 namespace gfx { extern const char* gArgv0; }
 int main(int argc, char** argv) {
   gfx::gArgv0 = argv[0];
-  const char* scene = nullptr; int heroArg = -1, biomeArg = -1; int quality = 2, shotFrames = 0, simSpeed = 1, W0 = 1280, H0 = 720; const char* shot = nullptr; bool demo = false, noAudio = false; int startMode = 0, startView = 0; bool bot = false; float dbgDraw = -1, dbgYaw = 99, dbgPitch = 0; int ff = 0;
+  const char* scene = nullptr; int heroArg = -1, biomeArg = -1; int quality = 2, shotFrames = 0, simSpeed = 1, W0 = 1280, H0 = 720; const char* shot = nullptr; bool demo = false, noAudio = false; int startMode = 0, startView = 0; bool bestiary = false; bool bot = false; float dbgDraw = -1, dbgYaw = 99, dbgPitch = 0; int ff = 0;
   for (int i = 1; i < argc; i++) { if (!strcmp(argv[i], "--shot") && i + 1 < argc) shot = argv[++i]; else if (!strcmp(argv[i], "--out") && i + 1 < argc) shot = argv[++i]; else if (!strcmp(argv[i], "--scene") && i + 1 < argc) scene = argv[++i]; else if (!strcmp(argv[i], "--hero") && i + 1 < argc) heroArg = atoi(argv[++i]); else if (!strcmp(argv[i], "--biome") && i + 1 < argc) biomeArg = atoi(argv[++i]);
     else if (!strcmp(argv[i], "--frames") && i + 1 < argc) shotFrames = atoi(argv[++i]); else if (!strcmp(argv[i], "--quality") && i + 1 < argc) quality = atoi(argv[++i]);
     else if (!strcmp(argv[i], "--speed") && i + 1 < argc) simSpeed = atoi(argv[++i]); else if (!strcmp(argv[i], "--size") && i + 2 < argc) { W0 = atoi(argv[++i]); H0 = atoi(argv[++i]); } else if (!strcmp(argv[i], "--demo")) demo = true; else if (!strcmp(argv[i], "--mode") && i + 1 < argc) { const char* mm = argv[++i]; startMode = !strcmp(mm, "waves") ? pl::M_WAVES : !strcmp(mm, "select") ? pl::M_SELECT : pl::M_RANGE; } else if (!strcmp(argv[i], "--view") && i + 1 < argc) startView = atoi(argv[++i]); else if (!strcmp(argv[i], "--bot")) bot = true; else if (!strcmp(argv[i], "--ff") && i + 1 < argc) ff = atoi(argv[++i]); else if (!strcmp(argv[i], "--draw") && i + 1 < argc) dbgDraw = (float)atof(argv[++i]); else if (!strcmp(argv[i], "--yaw") && i + 2 < argc) { dbgYaw = (float)atof(argv[++i]); dbgPitch = (float)atof(argv[++i]); } else if (!strcmp(argv[i], "--novsync")) vsync = false; else if (!strcmp(argv[i], "--mute")) noAudio = true;
     else if (!strcmp(argv[i], "--help")) { printf("lanternfall [--quality 0-3] [--size W H] [--novsync] [--mute]\n"); return 0; } }
   cfg::load(); if (heroArg >= 0) cfg::S.hero = heroArg;
-  if (scene) { if (!strcmp(scene, "hero")) { startMode = pl::M_SELECT; startView = 1; if (!ff) ff = 190; } else if (!strcmp(scene, "aim")) { startMode = pl::M_RANGE; startView = 1; dbgDraw = 0.92f; if (!ff) ff = 40; } else if (!strcmp(scene, "fpv")) { startMode = pl::M_RANGE; startView = 0; dbgDraw = 0.8f; if (!ff) ff = 40; }
+  if (scene) { if (!strcmp(scene, "hero")) { startMode = pl::M_SELECT; startView = 1; if (!ff) ff = 190; } else if (!strcmp(scene, "aim")) { startMode = pl::M_RANGE; startView = 1; dbgDraw = 0.92f; if (!ff) ff = 40; } else if (!strcmp(scene, "bestiary")) { startMode = pl::M_RANGE; startView = 1; if (!ff) ff = 50; bestiary = true; } else if (!strcmp(scene, "fpv")) { startMode = pl::M_RANGE; startView = 0; dbgDraw = 0.8f; if (!ff) ff = 40; }
     else if (!strcmp(scene, "moor") || !strcmp(scene, "highlands") || !strcmp(scene, "fen")) { biomeArg = !strcmp(scene, "moor") ? 0 : !strcmp(scene, "highlands") ? 1 : 2; startMode = pl::M_RANGE; startView = 1; if (!ff) ff = 30; } }
   if (biomeArg >= 0) pl::setBiome(biomeArg);
   if (!glfwInit()) { fprintf(stderr, "glfwInit failed\n"); return 1; }
@@ -98,6 +98,7 @@ int main(int argc, char** argv) {
   G.newRun(); G.state = S_TITLE; gfx::addWaylight(G.anchorX + 2.2f, true); lastRuns = G.P.runs;
   glfwSetKeyCallback(win, onKey); glfwSetMouseButtonCallback(win, onMouse); glfwSetCursorPosCallback(win, onCursor); glfwSetScrollCallback(win, onScroll);
   if (startMode) { pl::start(startMode); pl::setView(startView); pl::H.view = startView; pl::H.bot = bot; if (dbgDraw >= 0) pl::debugDraw(dbgDraw); if (dbgYaw < 90) pl::debugAim(dbgYaw, dbgPitch); if (!shot) lockCursor(true); }
+  if (bestiary) pl::debugBestiary();
   if (startMode && ff > 0) { pl::Input in0; for (int i = 0; i < ff; i++) pl::update(1.f / 60.f, in0); }
   if (demo) { G.beginRun(false); G.P.speed = 1; }
   double last = glfwGetTime(), accum = 0; float acc = 0; const float DT = 1.f / 60.f; int frame = 0; float fpsT = 0; int fpsN = 0; char title[128];

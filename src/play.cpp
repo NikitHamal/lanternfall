@@ -204,7 +204,7 @@ void actEffect() {
   } else if (st == roster::ST_HEAVY) {
     if (!ch) { meleeArc(3.6f, 1.5f, 34 * dm, 0.55f, 7.f, yaw, 0xfff0d0); audio::play(S_SWING, 0, 0.7f); fx.ring(P.x + f.x * 1.4f, P.z + f.z * 1.4f, 0.3f, 3.5f, 0.35f, {2.2f, 1.5f, 0.8f}); }
     else { float cx = P.x + f.x * 2.3f, cz = P.z + f.z * 2.3f, r = 3.3f + 1.7f * cf; splash(cx, cz, r, (40 + 64 * cf) * dm * (P.ripT > 0 ? 1.5f : 1.f), 0.9f, 9.f, 0, 0xffc070); P.ripT = 0;
-      fx.ring(cx, cz, 0.3f, r, 0.55f, {2.6f, 1.6f, 0.6f}); fx.ring(cx, cz, 0.2f, r * 0.6f, 0.4f, {2.f, 1.2f, 0.5f}); V3 c{0.3f, 0.26f, 0.2f}; fx.dust(cx, P.y + 0.2f, cz, 14, &c, 0.6f, 1.2f); fx.chips(cx, P.y + 0.2f, cz, 14, {0.45f, 0.4f, 0.32f}, 5.f); fx.flash(cx, P.y + 0.6f, cz, {1.f, 0.7f, 0.3f}, 80, 0.25f);
+      fx.ring(cx, cz, 0.3f, r, 0.55f, {2.6f, 1.6f, 0.6f}); fx.ring(cx, cz, 0.2f, r * 0.6f, 0.4f, {2.f, 1.2f, 0.5f}); V3 c{0.3f, 0.26f, 0.2f}; fx.dust(cx, P.y + 0.2f, cz, 14, &c, 0.6f, 1.2f); fx.chips(cx, P.y + 0.2f, cz, 14, {0.45f, 0.4f, 0.32f}, 5.f); fx.flash(cx, P.y + 0.6f, cz, {1.f, 0.7f, 0.3f}, 45, 0.2f);
       H.shake = std::max(H.shake, 0.7f); hitStop = std::max(hitStop, 0.07f); audio::play(S_BOSSSLAM, 0, 0.55f); }
   } else {
     V3 from; V3 dir = shotDirBase(from); P.kickP += 0.012f; fx.glow(from.x, from.y, from.z, 1.4f, st == roster::ST_FROST ? V3{0.8f, 1.8f, 2.6f} : st == roster::ST_ALCH ? V3{0.6f, 2.2f, 0.8f} : V3{2.6f, 1.3f, 0.4f}, 0.2f);
@@ -228,7 +228,7 @@ void combatStep(float h, const Input& in) {
   } else {
     if (!P.atkOn) {
       if (in.lmb && canAct && P.blocking < 0.3f) { if (!P.charging) { P.charging = true; P.chargeT = 0; audio::play(S_CLICK, 0, 0.25f); } float before = P.chargeT; P.chargeT = std::min(CFULL[st], P.chargeT + h * std::max(0.6f, P.dMul));
-        if (before < CMIN[st] && P.chargeT >= CMIN[st]) { fx.ring(P.x, P.z, 0.2f, 1.8f, 0.3f, {2.f, 1.6f, 0.8f}); audio::play(S_COIN, 0, 0.25f); } if (P.chargeT >= CFULL[st] && before < CFULL[st]) fx.flash(P.x, P.y + 1.4f, P.z, {1.4f, 1.2f, 0.8f}, 40, 0.15f); }
+        if (before < CMIN[st] && P.chargeT >= CMIN[st]) { fx.ring(P.x, P.z, 0.2f, 1.6f, 0.3f, {1.0f, 0.8f, 0.4f}); audio::play(S_COIN, 0, 0.25f); } if (P.chargeT >= CFULL[st] && before < CFULL[st]) fx.flash(P.x, P.y + 1.4f, P.z, {1.4f, 1.2f, 0.8f}, 40, 0.15f); }
       else if (P.charging) { float ct = P.chargeT; bool charged = ct >= CMIN[st]; float cf = clampf((ct - CMIN[st]) / std::max(0.05f, CFULL[st] - CMIN[st]), 0, 1); P.charging = false; P.chargeT = 0;
         switch (st) { case roster::ST_HEAVY: if (!charged) startAct(A_CLEAVE, 0.3f, 0.45f, false, 0); else startAct(A_SUNDER, 0.2f, 0.65f, true, cf); break;
           case roster::ST_FIRE: if (!charged) startAct(A_KINDLE, 0.18f, 0.26f, false, 0); else startAct(A_CINDER, 0.26f, 0.4f, true, cf); break;
@@ -423,6 +423,10 @@ V3 lanternPos() { V3 f = fwdOf(P.face, 0); return {P.x - f.x * 0.25f, P.y + 2.0f
 void debugAim(float yaw, float pitch) { P.yaw = yaw; P.pitch = pitch; }
 void debugDraw(float d) { dbgDraw = d; }
 void debugBot(bool on) { H.bot = on; }
+void debugBestiary() {
+  for (auto& f : foes) f = Foe(); for (int i = 0; i < NMON; i++) { float row = i < 6 ? 8.5f : 14.5f, a = P.yaw + ((i % 6) - 2.5f) * 0.33f; float x = P.x + std::sin(a) * row, z = P.z + std::cos(a) * row; Foe* f = freeFoe(); if (!f) break; spawnFoe(i, x, z); f->ai = 1; f->u.speed = 0; f->hx = x; f->hz = z; f->u.maxHp = f->u.hp = 9999; f->cd = 99; }
+  H.bannerT = 0;
+}
 void setView(int v) { v = ((v % NVIEW) + NVIEW) % NVIEW; if (cam.init) { cam.oldEye = cam.eye; cam.oldTgt = cam.tgt; cam.oldFov = cam.fov; cam.blend = 0; } H.view = v; cam.sm = cam.eye; if (v == VW_FREE) { cam.orbitYaw = P.yaw + 2.6f; cam.orbitPitch = 0.22f; cam.orbitD = 5.5f; cam.pivot = {P.x, P.y + 1.2f, P.z}; cam.idle = 0; } char b[40]; snprintf(b, 40, "VIEW: %s", v == VW_FIRST ? "FIRST PERSON" : v == VW_THIRD ? "THIRD PERSON" : "FREE LOOK - SHOWCASE"); feed(b, 0xb3a88e); }
 void start(int m) {
   mode = m; tm = 0; hitStop = slowMo = 0; slowK = 1; dbgDraw = -1; waveState = 0; waveT = 2.f; H = Hud(); H.mode = m; H.view = roster::at(roster::sel()).style == roster::ST_BOW ? VW_FIRST : VW_THIRD; H.assist = cfg::S.assist; snprintf(H.scoreS, 16, "0"); setAcc(); setCombo(); H.combo = 0; setCombo(); P = Player(); cam = CamState(); roster::init();

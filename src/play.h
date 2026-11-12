@@ -35,5 +35,5 @@ extern int pendingMode;
 bool active(); void start(int mode); void stop(); void update(float dtReal, const Input& in); void look(float dx, float dy); void scroll(float dy); void keyPress(int key);
 float timeScale(); void camera(float dt); void buildShapes(); float curve(float p); V3 aimDir(); V3 lanternPos(); bool freeDrag(); void setView(int v);
 void heroStep(int d); void useAbility(); extern float selT; void setBiome(int b); int biome();
-void debugAim(float yaw, float pitch); void debugDraw(float d); void debugBot(bool on);
+void debugAim(float yaw, float pitch); void debugDraw(float d); void debugBot(bool on); void debugBestiary();
 }
