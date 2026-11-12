@@ -92,3 +92,12 @@ Vision: a proper fantasy immersive third-person game (Athran-style kingdom defen
 |---|---|---|---|
 | v2.5.0 | 26 MB | 2.06 MB | 4 km continent, water fixes |
 | v2.6.0 | 26 MB | ~2.5 MB (unstripped local build) | 23 procedural animal part meshes, gait rig, fur shader; 1310 animals |
+
+## v2.7.0 (Lean Realm) - shipped
+- [x] GPU: R16 height, RGBA16 water, R11F HDR targets, legacy targets suspended in Explorer (~-265 MB @1080p q2)
+- [x] CPU: worldgen scratch freed, Wq/roadQ/ecoF runtime, instance ids + lazy staging (~-215 MB steady, -100 MB peak)
+- [x] Water slab artefacts at waterfalls removed, fall curtain edge fade
+## Next (memory + graphics round 2)
+1. [ ] Ravenfall-style casc falls: dedicated plunge water mode instead of the clipmap surface; foam ring + flow-map normals on river banks
+2. [ ] Hh int16 on the CPU, BC-compress infoA/infoB (or 1024^2 + detail noise), terrain chunk streaming
+3. [ ] Sunset/night sweep with R11F (banding check), GPU frame-time on a real card
