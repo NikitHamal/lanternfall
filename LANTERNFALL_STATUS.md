@@ -94,3 +94,6 @@ Done:
 - CLI: `--bot` plays every style (approach, swing/charge pattern); `--scene bestiary`.
 QA shots read (1280x720 llvmpipe via molab Xvfb, JPEG): k_hero7/k_tpv9 (invisible-figure regression), h_hero7/h_tpv9/h_tpv12, c_h7 (knight sword+shield + Peatwight dummy), c_h8 (Varka greatsword), c_h9 (cultist staff+lantern), c_h10 (witch acid), c_h11/c_h5 (frost), c_sel8, c_w1 (wave combo, CRIT), b_best (all 12 monsters), b_fpv7/b_fpv8 -> d_fpv7/d_fpv8 (FPV sword+kite, greatsword), d_fpv9/d_fpv11/f_fpv9 (staff + orb), d_w16/f_w9/f_w4 (waves), d_hero16/f_hero16 (Root Colossus select, camera too close - addressed by TITAN view scale).
 Deferred: Polyfork monster alt-skins in waves, chunked terrain / biome prop placement, authored dodge clip for non-archers, foot IK, caster flash intensities in FPV are still hot, camera can clip into standing stones (rayWorld guard only covers the boom).
+
+## v1.5.0 - monster-mode overhaul (in progress)
+Plan: spear style + Spearman heroes, FPV viewmodels rewritten (low-profile casters that never cover the reticle, real melee swing arcs + trails), new FX library (slashes, impacts, casts), combat controls (lock-on, input buffer, dodge, sprint-attack), rival duel mode, HUD rewrite. See git log for what landed.
