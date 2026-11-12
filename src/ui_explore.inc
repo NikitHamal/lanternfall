@@ -34,7 +34,7 @@ static void drawExploreHud() {
     for (int sx = -1; sx <= 1; sx += 2) for (int sy = -1; sy <= 1; sy += 2) for (int k = 0; k < 4; k++) rect(cx + sx * (o + k * 0.7f * S) - t * 0.5f, cy + sy * (o + k * 0.7f * S) - t * 0.5f, t, t, hc); (void)l; }
   if (H.weapon == 1 && H.draw > 0.01f) { float w = 70 * S, x = W_ / 2 - w / 2, y = H_ * 0.62f; rect(x - 2, y - 2, w + 4, 5 * S + 4, {0, 0, 0, 0.4f}); bar(x, y, w, 5 * S, H.draw, H.draw > 0.92f ? hexc(0xffd25a) : hexc(0xd8c090)); }
   // ---- weapon / gold / wanted (bottom-left, above vitals)
-  { float x = M, y = H_ - 62 * S; static char wl[40]; static int lw = -1, la = -1, lg = -1; if (lw != H.weapon || la != H.arrows || lg != H.gold) { lw = H.weapon; la = H.arrows; lg = H.gold; if (H.weapon) snprintf(wl, 40, "BOW  %d ARROWS   %d GOLD", H.arrows, H.gold); else snprintf(wl, 40, "BLADE   %d GOLD", H.gold); } text(wl, x, y, S * 0.8f, hexc(H.weapon ? 0xe8d49a : 0xd0c8b8));
+  { float x = M, y = H_ - 76 * S; static char wl[40]; static int lw = -1, la = -1, lg = -1; if (lw != H.weapon || la != H.arrows || lg != H.gold) { lw = H.weapon; la = H.arrows; lg = H.gold; if (H.weapon) snprintf(wl, 40, "BOW  %d ARROWS   %d GOLD", H.arrows, H.gold); else snprintf(wl, 40, "BLADE   %d GOLD", H.gold); } text(wl, x, y, S * 0.8f, hexc(H.weapon ? 0xe8d49a : 0xd0c8b8));
     if (H.wanted > 0) { float p = 0.6f + 0.4f * std::sin(gfx::time_ * 8.f); for (int i = 0; i < H.wanted; i++) text("*", x + i * 9 * S, y - 12 * S, S * 1.8f, hexc(0xff4a3a, p)); text("WANTED", x + (H.wanted * 9 + 4) * S, y - 8 * S, S * 0.8f, hexc(0xff7a5a, p)); } }
   if (H.inside) { text("INSIDE", H.mapPx + H.mapSize / 2, H.mapPy + H.mapSize + 3 * S, S * 0.9f, hexc(0xe9c98a), 1); }
   // ---- boss bar
