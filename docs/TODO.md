@@ -26,3 +26,8 @@ Vision: a proper fantasy immersive third-person game (Athran-style kingdom defen
 |---|---|---|---|---|
 | v2.1.0 | ~7.2 k | 26 MB | ~1.7 MB | schedules, talk, merchants, quests, save |
 | v2.2.0 | ~7.3 k + xanim.inc | 26 MB | ~1.7 MB | double-bow fix, reticle, NPC activity anims, air layer |
+
+## v2.3.0 session (Realm Polish I) - env notes
+- molab notebook ALIVE this session (20 cores, root, Debian trixie). Workflow: edit locally -> push -> molab `git pull` + `cmake --build -j20` -> Xvfb capture (JPEG pulled back as base64). Scripts recreated at /tmp/agentA_*.sh.
+- User feedback (issue #1 + screenshots): trees/leaves/grass/flowers poor; animals unrealistic + flee (cannot approach / mount); water/rivers/ponds/waterfalls poor; terrain too small & flat; guards float, wall walkways unreachable (no stairs / gates).
+- Plan: (1) calm animals + mount, (2) wall walkways + stairs + guards on real wall-top height, (3) terrain scale/relief, (4) flora + water art.
