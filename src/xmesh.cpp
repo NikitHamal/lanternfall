@@ -95,6 +95,20 @@ void build(int kind, MB& b) {
     case XM_LOCONI: { Sty tr = {C(0x3a2a1c), 9, 0.9f, 0, 0, 0.6f, 3.f}; cyl(b, 0, 0, 0, 0.32f, 0.2f, 3.0f, 5, tr, nullptr, false); Sty g1 = {C(0x264a2c), 0, 0.9f, 0, 0, 0.55f, 9.f}; V3 top = C(0x2f5a34);
       cyl(b, 0, 1.6f, 0, 2.5f, 0.9f, 3.0f, 9, g1, &top, false); cyl(b, 0, 3.8f, 0, 2.0f, 0.7f, 2.9f, 9, g1, &top, false); cyl(b, 0, 6.0f, 0, 1.45f, 0.0f, 3.1f, 9, g1, &top, false); break; }
     case XM_LOBROAD: { Sty tr = {C(0x4a3626), 9, 0.9f, 0, 0, 0.6f, 3.f}; cyl(b, 0, 0, 0, 0.42f, 0.28f, 3.6f, 5, tr, nullptr, false); Sty lf = {C(0x3d6a2a), 0, 0.9f, 0, 0, 0.6f, 8.f}; blob(b, 0, 5.2f, 0, 3.1f, 2.4f, 3.1f, 8, 4, lf, 3, 0.25f); blob(b, 2.2f, 4.2f, 0.7f, 2.1f, 1.7f, 2.1f, 7, 3, lf, 5, 0.25f); blob(b, -1.9f, 4.4f, -1.0f, 2.2f, 1.7f, 2.2f, 7, 3, lf, 9, 0.25f); break; }
+    case xw::K_ORE: { Sty rk = stone(0x524e48, 0.5f), gd = {C(0xd8a63c), 5, 0.28f, 0.92f, 0, 0.9f, 2.f}, ir = {C(0x8896a8), 5, 0.34f, 0.88f, 0, 0.85f, 2.f}, gl = glowS(0xffc858, 1.2f);
+      blob(b, 0, 0.45f, 0, 1.25f, 0.75f, 1.15f, 8, 4, rk, 17, 0.32f); blob(b, 0.55f, 0.35f, -0.35f, 0.75f, 0.55f, 0.7f, 7, 3, rk, 29, 0.3f);
+      for (int k = 0; k < 5; k++) { float a = k * 1.256f + 0.3f, r = 0.38f + (k % 2) * 0.24f; cyl(b, std::cos(a) * r, 0.45f, std::sin(a) * r, 0.16f, 0.02f, 0.72f + (k % 3) * 0.18f, 5, k % 2 ? gd : ir, nullptr, false); }
+      boxR(b, -0.15f, 0.85f, 0.15f, 0.12f, 0.28f, 0.12f, 0.5f, gl); break; }
+    case xw::K_RIFT:
+    case xw::K_PURIFIED: { bool pure = (kind == xw::K_PURIFIED); Sty base = stone(pure ? 0x9c9688 : 0x26202a, 0.6f), ob = stone(pure ? 0xbab2a0 : 0x1c1722, 0.75f);
+      Sty core = glowS(pure ? 0x6ce6ff : 0xff2e68, 2.0f), sh2 = {C(pure ? 0xffe28a : 0xb02458), 5, 0.25f, 0.8f, 0, 0.95f, 4.f};
+      cyl(b, 0, -0.4f, 0, 2.6f, 2.2f, 0.85f, 8, base); cyl(b, 0, 0.45f, 0, 1.7f, 1.45f, 0.55f, 8, base);
+      cyl(b, 0, 0.95f, 0, 0.85f, 0.42f, 4.6f, 6, ob, nullptr, false); cyl(b, 0, 5.55f, 0, 0.42f, 0.02f, 1.1f, 6, sh2, nullptr, false);
+      for (int k = 0; k < 4; k++) { float a = k * PI * 0.5f; boxR(b, std::cos(a) * 0.66f, 3.1f, std::sin(a) * 0.66f, 0.09f, 1.65f, 0.09f, a, core);
+        cyl(b, std::cos(a + 0.78f) * 1.65f, 0.4f, std::sin(a + 0.78f) * 1.65f, 0.24f, 0.04f, 1.55f, 5, k % 2 ? sh2 : core, nullptr, false); }
+      blob(b, 0, 6.95f, 0, 0.42f, 0.62f, 0.42f, 6, 4, core, pure ? 11 : 43, 0.12f); break; }
+    case xw::K_SPELL_FIRE: { Sty c1 = glowS(0xffae38, 2.0f), c2 = {C(0xff4e18), 1, 0.3f, 0, 0, 1.f, 1.f}; blob(b, 0, 0, 0, 0.28f, 0.28f, 0.36f, 7, 4, c1, 7, 0.18f); blob(b, 0, 0, -0.22f, 0.18f, 0.18f, 0.38f, 6, 3, c2, 13, 0.25f); break; }
+    case xw::K_SPELL_FROST: { Sty c1 = glowS(0x8ee6ff, 2.0f), c2 = {C(0xb8f0ff), 5, 0.18f, 0.6f, 0, 1.f, 1.f}; cyl(b, 0, 0, -0.35f, 0.03f, 0.16f, 0.35f, 6, c2, nullptr, false); cyl(b, 0, 0, 0.0f, 0.16f, 0.01f, 0.55f, 6, c1, nullptr, false); boxR(b, 0, 0, 0, 0.09f, 0.09f, 0.42f, 0.78f, c1); break; }
     default: break;
   }
 }

@@ -28,7 +28,8 @@ const KindDef KD[NK] = {
   {"polyfork/b_watchtower", -1, 480, 0, true}, {"polyfork/b_stone_tower", -1, 420, 0, true}, {"polyfork/b_beacon_tower", -1, 800, 0, true}, {"polyfork/b_ruined_gable", -1, 480, 0, true}, {"polyfork/b_ruined_wall", -1, 380, 0, true},
   {"polyfork/p_cemetery_gate", -1, 260, 0, true},
   {nullptr, -1, 600, 0, true}, {nullptr, -1, 800, 0, true}, {nullptr, -1, 800, 0, true}, {nullptr, -1, 1400, 0, true}, {nullptr, -1, 420, 0, true}, {nullptr, -1, 460, 0, true}, {nullptr, -1, 360, 0, false}, {nullptr, -1, 600, 0, true},
-  {nullptr, -1, 320, 0, true}, {nullptr, -1, 260, 0, false}, {nullptr, -1, 700, 0, true}, {nullptr, -1, 480, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 1000, 0, true}, {nullptr, -1, 700, 0, true}, {nullptr, -1, 300, 0, false}, {nullptr, -1, 260, 0, true}, {nullptr, -1, 260, 0, true}, {nullptr, -1, 260, 0, true}};
+  {nullptr, -1, 320, 0, true}, {nullptr, -1, 260, 0, false}, {nullptr, -1, 700, 0, true}, {nullptr, -1, 480, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 1000, 0, true}, {nullptr, -1, 700, 0, true}, {nullptr, -1, 300, 0, false}, {nullptr, -1, 260, 0, true}, {nullptr, -1, 260, 0, true}, {nullptr, -1, 260, 0, true},
+  {nullptr, -1, 340, 0, true}, {nullptr, -1, 560, 0, true}, {nullptr, -1, 560, 0, true}, {nullptr, -1, 260, 0, false}, {nullptr, -1, 260, 0, false}};
 static_assert(sizeof(KD) / sizeof(KD[0]) == NK, "kind table size");
 PMesh pm[NSLOT]; FigAsset propAsset[NK]; std::vector<IData> data[NK]; std::vector<int> cellStart[NK]; std::vector<IData> stage[NSLOT]; int stageN[NSLOT];
 GLuint pTerr, pWater, pSky, pProp, pPropShadow, pGrass, pFall, pMist, pFogP, pDownP, pFinalP, pMapP, pFigX, vaoEmpty;
@@ -144,7 +145,9 @@ uniform mat4 uVP; uniform float uTime;
 out vec3 vWp; out vec3 vN; out vec3 vCol; out vec3 vRest; out vec4 vMat; out vec2 vUvS; out float vAO; out float vCav;
 void main(){ mat4 M = mat4(iM0,iM1,iM2,iM3); vec4 wp = M*vec4(aPos,1.);
   if (iT.a > .5) { float k = smoothstep(1.5, 9., aPos.y)*.07; wp.x += sin(uTime*1.25 + wp.x*.17 + wp.z*.11)*k*iM1.y*1.0; wp.z += cos(uTime*1.05 + wp.z*.15 + wp.x*.09)*k*iM1.y; }
-  vWp = wp.xyz; vN = normalize(mat3(M)*aNrm); vCol = aCol.rgb*aCol.rgb*iT.rgb; vAO = aCol.a; vCav = aBn.w/255.*2.-1.; vMat = vec4(aMat.xy, aMat.z*255., aMat.w*2.); vUvS = aUv; vRest = aPos; gl_Position = uVP*wp; }
+  vWp = wp.xyz; vN = normalize(mat3(M)*aNrm); vCol = aCol.rgb*aCol.rgb*iT.rgb; vAO = aCol.a; vCav = aBn.w/255.*2.-1.; vMat = vec4(aMat.xy, aMat.z*255., aMat.w*2.);
+  if (iT.a < -.5) { vCol = mix(aCol.rgb*aCol.rgb, vec3(.85), .65) * iT.rgb * (1.05 + .20*sin(uTime*6.)); vAO = 1.; vMat = vec4(.35, .05, 1., 0.); }
+  vUvS = aUv; vRest = aPos; gl_Position = uVP*wp; }
 )GLSL";
 const char* PROP_SHADOW_VS = R"GLSL(
 layout(location=0) in vec3 aPos; layout(location=6) in vec4 iM0; layout(location=7) in vec4 iM1; layout(location=8) in vec4 iM2; layout(location=9) in vec4 iM3; uniform mat4 uVP;
@@ -263,7 +266,7 @@ bool init() {
   for (int k = 0; k < NK; k++) { cellStart[k].assign(NC * NC + 1, 0); std::vector<int>& L = per[k]; auto cellId = [&](const Obj& o) { int cx = std::min(NC - 1, std::max(0, (int)((o.x + HALF) / CELL))), cz = std::min(NC - 1, std::max(0, (int)((o.z + HALF) / CELL))); return cz * NC + cx; };
     for (int id : L) cellStart[k][cellId(objs[id]) + 1]++; for (int c = 0; c < NC * NC; c++) cellStart[k][c + 1] += cellStart[k][c]; data[k].resize(L.size()); std::vector<int> fill(cellStart[k].begin(), cellStart[k].end() - 1);
     for (int id : L) { const Obj& o = objs[id]; M4 m = mul(translate(o.x, o.y, o.z), mul(rotY(o.ry), scale4(o.sx, o.sy, o.sz))); IData& d = data[k][fill[cellId(o)]++]; memcpy(d.m, m.m, 64); d.tint[0] = o.r / 128.f; d.tint[1] = o.g / 128.f; d.tint[2] = o.b / 128.f; d.tint[3] = o.sway ? 1.f : 0.f; } }
-  for (int s = 0; s < NSLOT; s++) { if (!pm[s].ok) continue; int cap = s < NK ? std::min<int>(7000, std::max<int>(16, (int)data[s].size())) : 12000; if (s == K_ARROW) cap = 96; if (s >= NK) cap = 14000; stage[s].resize(cap); setupInstVao(pm[s], cap); }
+  for (int s = 0; s < NSLOT; s++) { if (!pm[s].ok) continue; int cap = s < NK ? std::min<int>(7200, std::max<int>(160, (int)data[s].size() + 160)) : 14000; stage[s].resize(cap); setupInstVao(pm[s], cap); }
   // grass clump (5 blades x 7 verts) and flower meshes
   { std::vector<float> v; std::vector<uint16_t> ix; for (int b = 0; b < 5; b++) { int base = (int)v.size() / 4; for (int r = 0; r < 3; r++) { float y = r / 3.f; for (int sd = -1; sd <= 1; sd += 2) { v.push_back((float)sd); v.push_back(y); v.push_back(0); v.push_back((float)b); } } v.push_back(0); v.push_back(1); v.push_back(0); v.push_back((float)b);
       uint16_t t[15] = {0, 1, 2, 1, 3, 2, 2, 3, 4, 3, 5, 4, 4, 5, 6}; for (int k = 0; k < 15; k++) ix.push_back((uint16_t)(base + t[k])); }
@@ -305,7 +308,11 @@ void gather(const Frame& f, bool shadowOnly) {
     float hiR2 = (shadowOnly ? std::min(kd.rHi, 90.f) : kd.rHi) * (shadowOnly ? std::min(kd.rHi, 90.f) : kd.rHi), loR2 = kd.rLo * kd.rLo; bool hasLo = kd.lo >= 0 && !shadowOnly; int cap = (int)stage[k].size(), capLo = kd.lo >= 0 ? (int)stage[kd.lo].size() : 0;
     for (int cz2 = c0z; cz2 <= c1z; cz2++) for (int cx2 = c0x; cx2 <= c1x; cx2++) { int c = cz2 * NC + cx2; int a = cellStart[k][c], b = cellStart[k][c + 1]; if (a == b) continue; float mx = -HALF + (cx2 + 0.5f) * CELL, mz = -HALF + (cz2 + 0.5f) * CELL; float dc = std::sqrt((mx - cx) * (mx - cx) + (mz - cz) * (mz - cz)); if (dc - CELL * 0.75f > rMax) continue; if (!shadowOnly && !sphereVis(mx, f.eye.y > 400.f ? f.eye.y : 40.f, mz, CELL * 0.8f + 60.f)) continue;
       for (int i = a; i < b; i++) { const IData& d = data[k][i]; float dx = d.m[12] - cx, dz = d.m[14] - cz, d2 = dx * dx + dz * dz; if (d2 < hiR2) { if (stageN[k] < cap) stage[k][stageN[k]++] = d; } else if (hasLo && d2 < loR2) { if (stageN[kd.lo] < capLo) stage[kd.lo][stageN[kd.lo]++] = d; } } } }
-  if (!shadowOnly && f.dyn && pm[K_ARROW].ok) for (int i = 0; i < f.ndyn && stageN[K_ARROW] < (int)stage[K_ARROW].size(); i++) { IData& d = stage[K_ARROW][stageN[K_ARROW]++]; memcpy(d.m, f.dyn[i].m.m, 64); d.tint[0] = f.dyn[i].tint[0]; d.tint[1] = f.dyn[i].tint[1]; d.tint[2] = f.dyn[i].tint[2]; d.tint[3] = 0; }
+  if (f.dyn) for (int i = 0; i < f.ndyn; i++) {
+    int k = f.dyn[i].kind < 0 ? (int)K_ARROW : f.dyn[i].kind; if (k < 0 || k >= NK || !pm[k].ok) continue;
+    if (shadowOnly) { if (!KD[k].shadow || f.dyn[i].mode < -0.5f) continue; float dx = f.dyn[i].m.m[12] - cx, dz = f.dyn[i].m.m[14] - cz; if (dx * dx + dz * dz > 95.f * 95.f) continue; }
+    if (stageN[k] < (int)stage[k].size()) { IData& d = stage[k][stageN[k]++]; memcpy(d.m, f.dyn[i].m.m, 64); d.tint[0] = f.dyn[i].tint[0]; d.tint[1] = f.dyn[i].tint[1]; d.tint[2] = f.dyn[i].tint[2]; d.tint[3] = f.dyn[i].mode; }
+  }
 }
 void drawProps(GLuint prog, bool shadow) {
   for (int s = 0; s < NSLOT; s++) { if (!pm[s].ok || !stageN[s]) continue; glBindVertexArray(pm[s].vao); glBindBuffer(GL_ARRAY_BUFFER, pm[s].inst); glBufferSubData(GL_ARRAY_BUFFER, 0, (GLsizeiptr)stageN[s] * sizeof(IData), stage[s].data()); glDrawElementsInstanced(GL_TRIANGLES, pm[s].ni, GL_UNSIGNED_SHORT, nullptr, stageN[s]); drawCalls++; } (void)prog; (void)shadow;
@@ -317,8 +324,10 @@ void render(const Frame& f, const FigDraw* figs, int nfig) {
   drawCalls = 0; const Q& q = QS[gfx::quality]; E = env(f.hour); if (indoor > 0.01f) { float k = indoor; E.keyCol = E.keyCol * (1 - 0.9f * k); E.sunCol = E.sunCol * (1 - 0.9f * k); E.hemiSky = mix3(E.hemiSky, V3{0.16f, 0.12f, 0.085f}, k * 0.85f); E.hemiGnd = mix3(E.hemiGnd, V3{0.10f, 0.07f, 0.045f}, k * 0.85f); E.night = std::max(E.night, 0.5f * k); E.dens = lerpf(E.dens, 0.0001f, k); } camPos = f.eye; float aspect = (float)W / H;
   camW = camWorld(f.eye, f.tgt); viewM = rigidInverse(camW); projM = perspective(f.fov, aspect, 0.25f, 9000.f); vpM = mul(projM, viewM); invVP = inverse(vpM); invProj = inverse(projM); extractPlanes(vpM);
   // lights: nearest four lamps / fires / braziers
-  float pl[16] = {0}, plc[16] = {0}; { int bi[4] = {-1, -1, -1, -1}; float bd[4] = {1e30f, 1e30f, 1e30f, 1e30f}; for (size_t i = 0; i < lights.size(); i++) { const Light& L = lights[i]; float d = (L.x - f.eye.x) * (L.x - f.eye.x) + (L.y - f.eye.y) * (L.y - f.eye.y) + (L.z - f.eye.z) * (L.z - f.eye.z); for (int k = 0; k < 4; k++) if (d < bd[k]) { for (int m = 3; m > k; m--) { bd[m] = bd[m - 1]; bi[m] = bi[m - 1]; } bd[k] = d; bi[k] = (int)i; break; } }
-    float nk = E.night * 0.9f + 0.06f; for (int k = 0; k < 4; k++) if (bi[k] >= 0) { const Light& L = lights[bi[k]]; float fall = 1.f - smooth(L.range * 0.9f, L.range * 2.4f, std::sqrt(bd[k])); pl[k * 4] = L.x; pl[k * 4 + 1] = L.y; pl[k * 4 + 2] = L.z; pl[k * 4 + 3] = L.range * 2.2f; float in = 60.f * nk * fall * (0.9f + 0.1f * std::sin(f.time * 9.f + L.x)); plc[k * 4] = L.r * in; plc[k * 4 + 1] = L.g * in; plc[k * 4 + 2] = L.b * in; plc[k * 4 + 3] = 1.25f; } }
+  float pl[16] = {0}, plc[16] = {0}; { int bi[4] = {-1, -1, -1, -1}; float bd[4] = {1e30f, 1e30f, 1e30f, 1e30f}; int nStat = (int)lights.size(), nTot = nStat + (f.dlights ? f.ndlights : 0);
+    for (int i = 0; i < nTot; i++) { float lx = i < nStat ? lights[i].x : f.dlights[i - nStat].x, ly = i < nStat ? lights[i].y : f.dlights[i - nStat].y, lz = i < nStat ? lights[i].z : f.dlights[i - nStat].z; float d = (lx - f.eye.x) * (lx - f.eye.x) + (ly - f.eye.y) * (ly - f.eye.y) + (lz - f.eye.z) * (lz - f.eye.z); for (int k = 0; k < 4; k++) if (d < bd[k]) { for (int m = 3; m > k; m--) { bd[m] = bd[m - 1]; bi[m] = bi[m - 1]; } bd[k] = d; bi[k] = i; break; } }
+    float nk = E.night * 0.9f + 0.06f; for (int k = 0; k < 4; k++) if (bi[k] >= 0) { bool dynL = bi[k] >= nStat; Light L = dynL ? Light{f.dlights[bi[k] - nStat].x, f.dlights[bi[k] - nStat].y, f.dlights[bi[k] - nStat].z, f.dlights[bi[k] - nStat].r, f.dlights[bi[k] - nStat].g, f.dlights[bi[k] - nStat].b, f.dlights[bi[k] - nStat].range} : lights[bi[k]];
+      float fall = 1.f - smooth(L.range * 0.9f, L.range * 2.4f, std::sqrt(bd[k])); pl[k * 4] = L.x; pl[k * 4 + 1] = L.y; pl[k * 4 + 2] = L.z; pl[k * 4 + 3] = L.range * 2.2f; float in = 60.f * (dynL ? std::max(nk, 0.52f) : nk) * fall * (0.9f + 0.1f * std::sin(f.time * 9.f + L.x)); plc[k * 4] = L.r * in; plc[k * 4 + 1] = L.g * in; plc[k * 4 + 2] = L.b * in; plc[k * 4 + 3] = 1.25f; } }
   // shadow map: key light, ortho box around the focus
   { float R = 54.f; V3 tg = {std::round(f.tgt.x / 0.5f) * 0.5f, std::round(f.tgt.y / 0.5f) * 0.5f, std::round(f.tgt.z / 0.5f) * 0.5f}; V3 lp = tg + E.keyDir * 150.f; shadowVP = mul(ortho(-R, R, -R, R, 1, 330), rigidInverse(camWorld(lp, tg)));
     if (q.shadow) { gather(f, true); glBindFramebuffer(GL_FRAMEBUFFER, fboSh); glViewport(0, 0, SHS, SHS); glClear(GL_DEPTH_BUFFER_BIT); glEnable(GL_DEPTH_TEST); glDepthMask(GL_TRUE); glDisable(GL_CULL_FACE); glEnable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(2.f, 4.f);

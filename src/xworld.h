@@ -10,7 +10,8 @@ constexpr int GS = 1024; constexpr float CS = 2.f, HALF = 1024.f, SEA = 0.f, WOR
 enum Kind : uint8_t {
   K_PINE, K_PINEY, K_OAK, K_DEAD, K_BOULDER, K_CAIRN, K_BUSH, K_THORN, K_LOG, K_SIGN, K_CAMP, K_BRAZIER, K_LAMP, K_POLE, K_IFENCE, K_BARREL, K_CRATE, K_WELL, K_STALL,
   K_HEAD, K_GRAVE, K_RUNE, K_SFENCE, K_FWALL, K_LWALL, K_TORCH, K_COTTAGE, K_BARN, K_CHAPEL, K_WATCH, K_STOWER, K_BEACON, K_RGABLE, K_RWALL, K_CGATE,
-  K_WALL, K_WTOWER, K_GATE, K_KEEP, K_HOUSE, K_LONG, K_PALI, K_BRIDGE, K_TENT, K_HAY, K_MILL, K_BANNER, K_DOCK, K_BIGROCK, K_FLAGPOLE, K_ARROW, K_INHOME, K_INHALL, K_INCHAPEL, NK
+  K_WALL, K_WTOWER, K_GATE, K_KEEP, K_HOUSE, K_LONG, K_PALI, K_BRIDGE, K_TENT, K_HAY, K_MILL, K_BANNER, K_DOCK, K_BIGROCK, K_FLAGPOLE, K_ARROW, K_INHOME, K_INHALL, K_INCHAPEL,
+  K_ORE, K_RIFT, K_PURIFIED, K_SPELL_FIRE, K_SPELL_FROST, NK
 };
 struct Obj { float x, y, z, ry, sx, sy, sz; uint8_t kind, r, g, b, sway; };      // tint bytes: 128 == 1.0
 struct Settle { int type = 0, nation = 0, size = 1; float x = 0, z = 0, y = 0, r = 30, gateX = 0, gateZ = 1; char name[28] = {0}; int poi = -1; };   // type: 0 capital 1 village 2 hamlet 3 fort 4 camp 5 ruins 6 graveyard 7 border gate
