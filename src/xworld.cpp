@@ -136,7 +136,7 @@ void auditKind(int k, const float* vp, size_t nv, size_t stride, const uint16_t*
       if (seg(a, b) || seg(b, c) || seg(c, a)) { sol = true; break; }
       float d = (b[2] - c[2]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[2] - c[2]); if (std::fabs(d) < 1e-9f) continue; float l1 = ((b[2] - c[2]) * (x - c[0]) + (c[0] - b[0]) * (z - c[2])) / d, l2 = ((c[2] - a[2]) * (x - c[0]) + (a[0] - c[0]) * (z - c[2])) / d; if (l1 >= 0 && l2 >= 0 && l1 + l2 <= 1) sol = true; }
     bool cv = false; for (size_t i = 0; i < n; i++) { const Col_& c = cols[base + i]; if (c.box) { float dx = x - c.x, dz = z - c.z; float lx = dx * c.c - dz * c.s, lz = dx * c.s + dz * c.c; if (std::fabs(lx) < c.hx + 0.2f && std::fabs(lz) < c.hz + 0.2f) { cv = true; break; } } else if ((x - c.x) * (x - c.x) + (z - c.z) * (z - c.z) < (c.r + 0.2f) * (c.r + 0.2f)) { cv = true; break; } }
-    if (sol) { solid++; if (!cv) miss++; } if (cv) { cover++; if (!sol) { bool near = false; for (float dz = -1.f; dz <= 1.f && !near; dz += 0.5f) for (float dx = -1.f; dx <= 1.f; dx += 0.5f) { (void)dx; } ghost++; (void)near; } } }
+    if (sol) { solid++; if (!cv) miss++; } if (cv) { cover++; if (!sol) ghost++; } }
   fprintf(stderr, "COLAUDIT kind %d circles %zu bbox x %.1f..%.1f z %.1f..%.1f %.1fx%.1f solid %d uncovered %d (%.0f%%) ghost %d (%.0f%% of collider)\n", k, n, x0, x1, z0, z1, x1 - x0, z1 - z0, solid, miss, solid ? 100.f * miss / solid : 0.f, ghost, cover ? 100.f * ghost / cover : 0.f);
   cols.resize(base);
 }
