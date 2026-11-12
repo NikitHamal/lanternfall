@@ -9,6 +9,7 @@
 #include "settings.h"
 #include "roster.h"
 #include "explore.h"
+#include "xworld.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -129,7 +130,7 @@ int main(int argc, char** argv) {
     float danger = play ? (pl::H.mode == pl::M_WAVES ? 0.5f : 0.f) : 0; if (!play && G.hasRun && G.state != S_TITLE) { danger = G.state == S_BOSS ? 1.f : (G.state == S_FIGHT ? 0.55f : 0.1f); if (G.partyHp() < 0.4f) danger = std::min(1.f, danger + 0.3f); }
     audio::update(dtR, danger, G.panel != P_NONE, 0.f); gfx::draw(); ui::draw(fw, fh, dtR); }
     if (shot && ++frame >= shotFrames) { std::vector<uint8_t> px((size_t)fw * fh * 4), rgb((size_t)fw * fh * 3); glReadPixels(0, 0, fw, fh, GL_RGBA, GL_UNSIGNED_BYTE, px.data()); for (int y = 0; y < fh; y++) for (int x = 0; x < fw; x++) for (int k = 0; k < 3; k++) rgb[((size_t)y * fw + x) * 3 + k] = px[((size_t)(fh - 1 - y) * fw + x) * 4 + k];
-      mem::mark("at screenshot"); writePng(shot, fw, fh, rgb); fprintf(stderr, "wrote %s (%dx%d) stage=%d state=%d heroes hp=%.0f%% mons=%d\n", shot, fw, fh, G.run.stage, G.state, G.partyHp() * 100, G.liveMonCount()); break; }
+      mem::mark("at screenshot"); if (mem::on()) { extern size_t gFigClipBytes; fprintf(stderr, "ACCOUNT world CPU %.1f MB, figure clips %.1f MB\n", xw::cpuMB(), gFigClipBytes / 1048576.0); } writePng(shot, fw, fh, rgb); fprintf(stderr, "wrote %s (%dx%d) stage=%d state=%d heroes hp=%.0f%% mons=%d\n", shot, fw, fh, G.run.stage, G.state, G.partyHp() * 100, G.liveMonCount()); break; }
     glfwSwapBuffers(win); fpsN++; fpsT += dtR; if (fpsT >= 1.f) { snprintf(title, 128, "LANTERNFALL - %d fps - %s - %dx%d", (int)(fpsN / fpsT), gfx::qualityName[gfx::quality], gfx::W, gfx::H); glfwSetWindowTitle(win, title); fpsN = 0; fpsT = 0; }
   }
   if (G.hasRun || true) G.save(); audio::shutdown(); glfwDestroyWindow(win); glfwTerminate(); return 0;

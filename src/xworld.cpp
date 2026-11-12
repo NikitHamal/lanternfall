@@ -5,7 +5,7 @@
 #include <cmath>
 #include <algorithm>
 namespace xw {
-std::vector<float> Hh, Wl; std::vector<uint16_t> waterTex; std::vector<int16_t> Wq; std::vector<uint8_t> roadQ, ecoF; std::vector<uint8_t> infoA, infoB, mapRGBA;
+std::vector<float> Hh, Wl; std::vector<uint16_t> Hq; std::vector<uint16_t> waterTex; std::vector<int16_t> Wq; std::vector<uint8_t> roadQ, ecoF; std::vector<uint8_t> infoA, infoB, mapRGBA;
 std::vector<Obj> objs; std::vector<Settle> settles; Nation nations[3]; std::vector<Fall> falls; std::vector<Poi> pois; std::vector<Light> lights; std::vector<Post> posts; std::vector<Road> roads; std::vector<Lair> lairs;
 static std::vector<float> flowX, flowZ, roadD, gradeW, gradeY; static std::vector<uint8_t> fieldK; static std::vector<float> fieldA;
 static Rng rng(1); static uint32_t SEED = 1; static bool done = false;
@@ -28,17 +28,19 @@ static float urand(float a, float b) { return a + (b - a) * rng(); }
 float height(float x, float z) {
   float fx = (x + HALF) / CS - 0.5f, fz = (z + HALF) / CS - 0.5f; int ix = (int)std::floor(fx), iz = (int)std::floor(fz); float tx = fx - ix, tz = fz - iz;
   int x0 = ci(ix, 0, GS - 1), x1 = ci(ix + 1, 0, GS - 1), z0 = ci(iz, 0, GS - 1), z1 = ci(iz + 1, 0, GS - 1);
-  return lerpf(lerpf(Hh[z0 * GS + x0], Hh[z0 * GS + x1], tx), lerpf(Hh[z1 * GS + x0], Hh[z1 * GS + x1], tx), tz);
+  if (!Hh.empty()) return lerpf(lerpf(Hh[z0 * GS + x0], Hh[z0 * GS + x1], tx), lerpf(Hh[z1 * GS + x0], Hh[z1 * GS + x1], tx), tz);   // generation phase
+  auto Q = [&](int i) { return Hq[i] * (1024.f / 65535.f) - 128.f; }; return lerpf(lerpf(Q(z0 * GS + x0), Q(z0 * GS + x1), tx), lerpf(Q(z1 * GS + x0), Q(z1 * GS + x1), tx), tz);
 }
 float slopeAt(float x, float z) { float e = 2.5f; float dx = height(x + e, z) - height(x - e, z), dz = height(x, z + e) - height(x, z - e); return std::sqrt(dx * dx + dz * dz) / (2 * e); }
 float waterAt(float x, float z) { int ix = ci(cellOf(x), 0, GS - 1), iz = ci(cellOf(z), 0, GS - 1); if (!Wq.empty()) { int16_t q = Wq[iz * GS + ix]; return q == -32768 ? -1e9f : q * (1.f / 32.f); } return Wl[iz * GS + ix]; }
 bool inWater(float x, float z, float* depth) { float w = waterAt(x, z); if (w < -1e8f) return false; float d = w - height(x, z); if (depth) *depth = d; return d > 0.f; }
 float roadDist(float x, float z) { int ix = ci(cellOf(x), 0, GS - 1), iz = ci(cellOf(z), 0, GS - 1); if (!roadQ.empty()) return roadQ[iz * GS + ix] * 0.125f; return roadD[iz * GS + ix]; }
 bool flowery(float x, float z) { if (ecoF.empty()) return false; int ix = ci((int)((x + HALF) / (CS * 4)), 0, GS / 4 - 1), iz = ci((int)((z + HALF) / (CS * 4)), 0, GS / 4 - 1); return ecoF[iz * (GS / 4) + ix] != 0; }
+double cpuMB() { auto B = [](const auto& v) { return (double)v.capacity() * sizeof(typename std::remove_reference<decltype(v)>::type::value_type); }; return (B(Hh) + B(Hq) + B(Wq) + B(roadQ) + B(ecoF) + B(objs) + B(cols) + B(colStart) + B(colList) + B(decks) + B(deckStart) + B(deckList) + B(lights) + B(posts) + B(roads) + B(settles) + B(pois) + B(waterTex) + B(infoA) + B(infoB) + B(mapRGBA)) / 1048576.0; }
 void releaseGen() { std::vector<uint8_t>().swap(infoA); std::vector<uint8_t>().swap(infoB); std::vector<uint8_t>().swap(mapRGBA); std::vector<uint16_t>().swap(waterTex); }
 int nationAt(float x, float z) { int b = 0; float bd = 1e30f; for (int i = 0; i < 3; i++) { float d = (x - nations[i].x) * (x - nations[i].x) + (z - nations[i].z) * (z - nations[i].z); if (d < bd) { bd = d; b = i; } } return b; }
 int settleNear(float x, float z, float margin) { for (size_t i = 0; i < settles.size(); i++) { const Settle& s = settles[i]; float d = std::sqrt((x - s.x) * (x - s.x) + (z - s.z) * (z - s.z)); if (d < s.r + margin) return (int)i; } return -1; }
-float highestPoint(float* hx, float* hz) { float best = -1e9f; int bi = 0; for (int i = 0; i < GS * GS; i++) if (Hh[i] > best) { best = Hh[i]; bi = i; } if (hx) *hx = -HALF + (bi % GS + 0.5f) * CS; if (hz) *hz = -HALF + (bi / GS + 0.5f) * CS; return best; }
+float highestPoint(float* hx, float* hz) { float best = -1e9f; int bi = 0; for (int i = 0; i < GS * GS; i++) { float hv = !Hh.empty() ? Hh[i] : Hq[i] * (1024.f / 65535.f) - 128.f; if (hv > best) { best = hv; bi = i; } } if (hx) *hx = -HALF + (bi % GS + 0.5f) * CS; if (hz) *hz = -HALF + (bi / GS + 0.5f) * CS; return best; }
 static float forestMask(float x, float z, float h) {
   float f = fb(x * 0.0045f + 10, z * 0.0045f, 4, SEED + 40); float m = smooth(0.46f, 0.60f, f); m *= 1.f - smooth(85.f, 118.f, h); m = std::max(m, 0.03f + 0.1f * smooth(0.38f, 0.46f, f)); return h < 1.5f ? 0.f : m;
 }
@@ -470,6 +472,7 @@ void generate(uint32_t seed) {
   Wq.resize((size_t)GS * GS); for (size_t i = 0; i < Wq.size(); i++) Wq[i] = Wl[i] < -1e8f ? (int16_t)-32768 : (int16_t)clampf(Wl[i] * 32.f, -32000.f, 32000.f);
   roadQ.resize((size_t)GS * GS); for (size_t i = 0; i < roadQ.size(); i++) roadQ[i] = (uint8_t)clampf(roadD[i] * 8.f + 0.5f, 0.f, 255.f);
   { std::vector<float>* big[] = {&Wl, &flowX, &flowZ, &roadD, &gradeW, &gradeY, &fieldA}; for (auto* v : big) std::vector<float>().swap(*v); std::vector<uint8_t>().swap(fieldK); }
+  Hq.resize((size_t)GS * GS); for (size_t i = 0; i < Hq.size(); i++) Hq[i] = (uint16_t)(clampf((Hh[i] + 128.f) * (1.f / 1024.f), 0.f, 1.f) * 65535.f + 0.5f); std::vector<float>().swap(Hh);   // runtime keeps 16-bit heights only (1.6 cm steps, same as the GPU texture)
   fprintf(stderr, "world: %zu objects, %zu settlements, %zu roads, %zu falls, %zu pois, %zu posts, %zu lights, %zu colliders\n", objs.size(), settles.size(), roads.size(), falls.size(), pois.size(), posts.size(), lights.size(), cols.size());
 }
 }  // namespace xw

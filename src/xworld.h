@@ -29,9 +29,9 @@ struct Light { float x, y, z, r, g, b, range; };
 struct Post { float x, y, z, face; int settle, type; float ax, az, bx, bz; };   // type: 0 gate guard, 1 wall patrol (ax,az -> bx,bz at height y), 2 plaza knight, 3 villager home, 4 vendor, 5 sentry
 struct Road { std::vector<V3> pts; int a, b; };
 struct Lair { float x, z, r; int kind; };      // monster hot spots (camps, ruins, graveyards, deep forest, mountains)
-extern std::vector<float> Hh, Wl;                   // heights, real water level (-1e9: none)
+extern std::vector<float> Hh, Wl; extern std::vector<uint16_t> Hq;                   // heights, real water level (-1e9: none)
 extern std::vector<uint8_t> infoA, infoB, mapRGBA;  // ground albedo + grass, flowers / forest floor / field angle / field kind; minimap
-extern std::vector<uint16_t> waterTex; extern std::vector<int16_t> Wq; extern std::vector<uint8_t> roadQ, ecoF; bool flowery(float x, float z); void releaseGen();                 // RGBA32F: level (dry: terrain-1.5), flow x, flow z, speed
+extern std::vector<uint16_t> waterTex; extern std::vector<int16_t> Wq; extern std::vector<uint8_t> roadQ, ecoF; bool flowery(float x, float z); void releaseGen(); double cpuMB();                 // RGBA32F: level (dry: terrain-1.5), flow x, flow z, speed
 extern std::vector<Obj> objs; extern std::vector<Settle> settles; extern Nation nations[3]; extern std::vector<Fall> falls; extern std::vector<Poi> pois;
 extern std::vector<Light> lights; extern std::vector<Post> posts; extern std::vector<Road> roads; extern std::vector<Lair> lairs;
 void generate(uint32_t seed);

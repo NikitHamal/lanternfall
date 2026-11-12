@@ -50,6 +50,7 @@ static bool findDir(const char* argv0) {
   return false;
 }
 template <class T> static T rd(const uint8_t*& p) { T v; memcpy(&v, p, sizeof(T)); p += sizeof(T); return v; }
+size_t gFigClipBytes = 0;
 static bool loadFig(FigAsset& a, const char* key) {
   char path[1300]; snprintf(path, sizeof path, "%s/%s.lfm", gDir, key); FILE* f = fopen(path, "rb"); if (!f) return false;
   fseek(f, 0, SEEK_END); long sz = ftell(f); fseek(f, 0, SEEK_SET); uint8_t* buf = (uint8_t*)malloc(sz); if (!buf || fread(buf, 1, sz, f) != (size_t)sz) { fclose(f); free(buf); return false; } fclose(f);
@@ -84,7 +85,7 @@ static bool loadFig(FigAsset& a, const char* key) {
   p += (size_t)a.ni * 2; glBindVertexArray(0);
   const uint8_t* q = p; size_t total = 0;
   for (int i = 0; i < a.nclips; i++) { q += 12; uint16_t fr; memcpy(&fr, q, 2); q += 4 + 16; size_t bytes = (size_t)fr * a.nb * 14; q += bytes; total += bytes; }
-  a.clipMem = total ? (int16_t*)malloc(total) : nullptr; size_t off = 0;
+  a.clipMem = total ? (int16_t*)malloc(total) : nullptr; gFigClipBytes += total; size_t off = 0;
   for (int i = 0; i < a.nclips; i++) {
     FigClip& c = a.clips[i]; memcpy(c.name, p, 12); c.name[12] = 0; p += 12; c.frames = rd<uint16_t>(p); c.loop = rd<uint8_t>(p); p++; c.fps = rd<float>(p); c.hit = rd<float>(p); c.speed = rd<float>(p); c.T = rd<float>(p);
     size_t bytes = (size_t)c.frames * a.nb * 14; if (a.clipMem && bytes) memcpy((uint8_t*)a.clipMem + off, p, bytes); c.d = a.clipMem ? (const int16_t*)((uint8_t*)a.clipMem + off) : nullptr; off += bytes; p += bytes;
