@@ -1,0 +1,86 @@
+{
+ "key": "p_round_bush",
+ "polyfork_id": "round-bush-cd2ac0",
+ "name": "Round Bush",
+ "category": "prop",
+ "role": "bush",
+ "kit": "nature-forest-kit-f29d6a",
+ "triangles": 573,
+ "size_m": {
+  "x": 1.27,
+  "y": 0.63,
+  "z": 0.87
+ },
+ "palette_src": [
+  {
+   "hex": "#3d6b34",
+   "share": 0.452
+  },
+  {
+   "hex": "#77b258",
+   "share": 0.403
+  },
+  {
+   "hex": "#2f4f2e",
+   "share": 0.145
+  }
+ ],
+ "has_rig": false,
+ "ik_type": null,
+ "licence": "Polyfork free low-poly: commercial use, no attribution",
+ "page": "https://polyfork.dev/asset/round-bush-cd2ac0",
+ "glb_url": "https://polyfork.dev/cdn/round-bush-cd2ac0.glb",
+ "glb_sha256": "3a7f963bd765924c531c53369d1fe2f724f19f8f45aef2eabe5ace238871ac26",
+ "thumb_dhash": "1669e0c080e4780b",
+ "origin": "polyfork-batch3",
+ "version": 1,
+ "variant_of": null,
+ "states": [
+  "static"
+ ],
+ "verts_baked": 1719,
+ "tris_baked": 573,
+ "palette_theme": [
+  "woodDk",
+  "turf",
+  "lichen",
+  "peat"
+ ],
+ "lum_scale": 0.12,
+ "biomes": [
+  "highland",
+  "fen"
+ ],
+ "collision": {
+  "aabb": [
+   [
+    -0.6335451602935791,
+    0.0,
+    -0.4332565665245056
+   ],
+   [
+    0.6335451602935791,
+    0.6257248520851135,
+    0.4332565665245056
+   ]
+  ],
+  "radius": 0.76752245737048,
+  "height": 0.6257248520851135,
+  "footprint_pts": 12
+ },
+ "lfm": "assets/polyfork/p_round_bush.lfm",
+ "col": "assets/polyfork/p_round_bush.col.json",
+ "preview_glb": "assets/polyfork/preview/p_round_bush.glb",
+ "thumb": "assets/polyfork/thumbs/p_round_bush.png",
+ "meta": "assets/polyfork/meta/p_round_bush.json",
+ "baked": {
+  "ao": "vertex Col.a",
+  "cavity": "aBn.w",
+  "origin": "ground y=0",
+  "up": "+Y",
+  "front": "+Z",
+  "units": "metres"
+ },
+ "added": "2026-11-12",
+ "class": "prop"
+}

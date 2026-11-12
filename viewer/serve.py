@@ -9,14 +9,24 @@ HERE = os.path.dirname(os.path.abspath(__file__)); REPO = os.path.dirname(HERE)
 GLB = os.environ.get('LF_VIEWER_DIR', os.path.join(REPO, 'assets_build', 'viewer'))
 KITS = {'hero': '1 Heroes', 'monster': '2 Monsters', 'boss': '3 Bosses', 'bonus': '4 Bestiary extras', 'weapon': '5 Weapons', 'prop': '6 Terrain props', 'building': '7 Buildings'}
 
+DIRS = [GLB, os.path.join(REPO, 'assets_build', 'glb'), os.path.join(REPO, 'assets', 'polyfork', 'preview')]
+def find(f):
+    for d in DIRS:
+        p = os.path.join(d, f)
+        if os.path.exists(p): return p
+def ledger():
+    try: return {a['key']: a for a in json.load(open(os.path.join(REPO, 'assets', 'manifest.json')))['assets']}
+    except Exception: return {}
 def index():
-    try: man = json.load(open(os.path.join(REPO, 'assets_raw', 'manifest.json')))['assets']
-    except Exception: man = {}
+    man = ledger(); seen = {}; mt = 0
+    for d in DIRS:
+        for f in sorted(os.listdir(d)) if os.path.isdir(d) else []:
+            if f.endswith('.glb') and f[:-4] not in seen: seen[f[:-4]] = os.path.join(d, f)
     out = []
-    for f in sorted(os.listdir(GLB)) if os.path.isdir(GLB) else []:
-        if not f.endswith('.glb'): continue
-        k = f[:-4]; m = man.get(k, {}); p = os.path.join(GLB, f)
-        out.append(dict(key=k, kit=KITS.get(m.get('category'), '0 Other'), title=m.get('polyfork_id', k), tris=m.get('triangles'), mtime=int(os.path.getmtime(p) * 1000), size=os.path.getsize(p)))
+    for k, p in seen.items():
+        m = man.get(k, {}); kit = (m.get('kit') or 'grimlight').replace('-kit', '').rsplit('-', 1)[0] if m.get('kit') else 'native'
+        out.append(dict(key=k, kit=KITS.get(m.get('category'), '0 Other') + ' · ' + kit, title=m.get('name') or m.get('polyfork_id', k), tris=m.get('tris_baked') or m.get('triangles'), states=m.get('states'),
+                        mtime=int(os.path.getmtime(p) * 1000), size=os.path.getsize(p)))
     return sorted(out, key=lambda x: (x['kit'], x['key']))
 
 class H(http.server.BaseHTTPRequestHandler):
@@ -28,8 +38,8 @@ class H(http.server.BaseHTTPRequestHandler):
         if p in ('/', '/index.html'): return self._send(200, open(os.path.join(HERE, 'index.html'), 'rb').read(), 'text/html; charset=utf-8')
         if p == '/index.json': return self._send(200, json.dumps(index()).encode(), 'application/json')
         if p.startswith('/m/') and p.endswith('.glb') and '/' not in p[3:] and '..' not in p:
-            f = os.path.join(GLB, p[3:])
-            if os.path.exists(f): return self._send(200, open(f, 'rb').read(), 'model/gltf-binary')
+            f = find(p[3:])
+            if f: return self._send(200, open(f, 'rb').read(), 'model/gltf-binary')
         self._send(404, b'not found', 'text/plain')
 
 class S(socketserver.ThreadingMixIn, http.server.HTTPServer): daemon_threads = True; allow_reuse_address = True

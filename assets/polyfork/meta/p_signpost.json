@@ -1,0 +1,90 @@
+{
+ "key": "p_signpost",
+ "polyfork_id": "trail-signpost-bd29a7",
+ "name": "Trail Signpost",
+ "category": "prop",
+ "role": "signpost",
+ "kit": "nature-forest-kit-f29d6a",
+ "triangles": 420,
+ "size_m": {
+  "x": 1.15,
+  "y": 2,
+  "z": 1.16
+ },
+ "palette_src": [
+  {
+   "hex": "#75563b",
+   "share": 0.448
+  },
+  {
+   "hex": "#a5855e",
+   "share": 0.2
+  },
+  {
+   "hex": "#c2a479",
+   "share": 0.2
+  },
+  {
+   "hex": "#4a3527",
+   "share": 0.152
+  }
+ ],
+ "has_rig": true,
+ "ik_type": null,
+ "licence": "Polyfork free low-poly: commercial use, no attribution",
+ "page": "https://polyfork.dev/asset/trail-signpost-bd29a7",
+ "glb_url": "https://polyfork.dev/cdn/trail-signpost-bd29a7.glb",
+ "glb_sha256": "60ae52b31cb81a6ad28169c5a2d9f73a9d6b1515956c73d95620f10516f194ff",
+ "thumb_dhash": "12d1f03053711212",
+ "origin": "polyfork-batch3",
+ "version": 1,
+ "variant_of": null,
+ "states": [
+  "static"
+ ],
+ "verts_baked": 1260,
+ "tris_baked": 420,
+ "palette_theme": [
+  "woodDk",
+  "wood",
+  "peat",
+  "rope"
+ ],
+ "lum_scale": 1.0,
+ "biomes": [
+  "moor",
+  "highland"
+ ],
+ "collision": {
+  "aabb": [
+   [
+    -0.5680446190198527,
+    0.0,
+    -0.5728165578930839
+   ],
+   [
+    0.5680446190198527,
+    2.0,
+    0.5728165578930839
+   ]
+  ],
+  "radius": 0.8067177314240033,
+  "height": 2.0,
+  "footprint_pts": 12
+ },
+ "lfm": "assets/polyfork/p_signpost.lfm",
+ "col": "assets/polyfork/p_signpost.col.json",
+ "preview_glb": "assets/polyfork/preview/p_signpost.glb",
+ "thumb": "assets/polyfork/thumbs/p_signpost.png",
+ "meta": "assets/polyfork/meta/p_signpost.json",
+ "baked": {
+  "ao": "vertex Col.a",
+  "cavity": "aBn.w",
+  "origin": "ground y=0",
+  "up": "+Y",
+  "front": "+Z",
+  "units": "metres"
+ },
+ "added": "2026-11-12",
+ "class": "prop"
+}

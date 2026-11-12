@@ -348,6 +348,7 @@ def smooth_normals(P, ang=40.0):
 
 def repalette(key, C, EM):
     th = THEME.get(key) or STONE; pal = np.array([PALN[n][0] for n in th]); gl = [i for i, n in enumerate(th) if n in GLOWS]
+    C = C * float(MAN.get(key, {}).get('lum_scale', 1.0))   # optional per-asset darkening of the source before palette matching
     uq, inv = np.unique(np.round(C, 3), axis=0, return_inverse=True); inv = inv.ravel()
     em_u = np.zeros(len(uq)); np.maximum.at(em_u, inv, EM)
     out = np.zeros_like(uq); surf = np.zeros(len(uq)); rough = np.zeros(len(uq)); met = np.zeros(len(uq)); gri = np.zeros(len(uq))

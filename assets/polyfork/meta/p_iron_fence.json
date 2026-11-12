@@ -1,0 +1,99 @@
+{
+ "key": "p_iron_fence",
+ "polyfork_id": "wrought-iron-cemetery-fence-f1a113",
+ "name": "Wrought-Iron Cemetery Fence Run",
+ "category": "prop",
+ "role": "fence",
+ "kit": "halloween-night-46ade4",
+ "triangles": 808,
+ "size_m": {
+  "x": 4,
+  "y": 1.5,
+  "z": 0.4
+ },
+ "palette_src": [
+  {
+   "hex": "#332622",
+   "share": 0.723
+  },
+  {
+   "hex": "#a89c9a",
+   "share": 0.077
+  },
+  {
+   "hex": "#d5d2d2",
+   "share": 0.057
+  },
+  {
+   "hex": "#dddada",
+   "share": 0.037
+  },
+  {
+   "hex": "#834421",
+   "share": 0.03
+  },
+  {
+   "hex": "#b5a9a7",
+   "share": 0.025
+  }
+ ],
+ "has_rig": false,
+ "ik_type": null,
+ "licence": "Polyfork free low-poly: commercial use, no attribution",
+ "page": "https://polyfork.dev/asset/wrought-iron-cemetery-fence-f1a113",
+ "glb_url": "https://polyfork.dev/cdn/wrought-iron-cemetery-fence-f1a113.glb",
+ "glb_sha256": "98d709b6430b2961186d5d533ce2ffdaf0c39ac853f701322bbc98eb45066aee",
+ "thumb_dhash": "000b80a2f27e0601",
+ "origin": "polyfork-batch3",
+ "version": 1,
+ "variant_of": null,
+ "states": [
+  "static"
+ ],
+ "verts_baked": 2424,
+ "tris_baked": 808,
+ "palette_theme": [
+  "iron",
+  "rust",
+  "stone",
+  "stone2",
+  "lichen"
+ ],
+ "lum_scale": 0.7,
+ "biomes": [
+  "graveyard",
+  "moor"
+ ],
+ "collision": {
+  "aabb": [
+   [
+    -2.0,
+    0.0,
+    -0.20000000298023224
+   ],
+   [
+    2.0,
+    1.5,
+    0.20000000298023224
+   ]
+  ],
+  "radius": 2.009975124520722,
+  "height": 1.5,
+  "footprint_pts": 8
+ },
+ "lfm": "assets/polyfork/p_iron_fence.lfm",
+ "col": "assets/polyfork/p_iron_fence.col.json",
+ "preview_glb": "assets/polyfork/preview/p_iron_fence.glb",
+ "thumb": "assets/polyfork/thumbs/p_iron_fence.png",
+ "meta": "assets/polyfork/meta/p_iron_fence.json",
+ "baked": {
+  "ao": "vertex Col.a",
+  "cavity": "aBn.w",
+  "origin": "ground y=0",
+  "up": "+Y",
+  "front": "+Z",
+  "units": "metres"
+ },
+ "added": "2026-11-12",
+ "class": "prop"
+}

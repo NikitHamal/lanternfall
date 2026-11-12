@@ -21,7 +21,7 @@ if __name__ == '__main__':
         open(f'assets_raw/glb/{pid}.glb', 'wb').write(glb)
         try: open(f'assets_raw/thumb/{pid}.png', 'wb').write(get(a.get('thumbnail') or f'https://polyfork.dev/files/{pid}/renders/hero.png', True))
         except Exception as e: print('thumb fail', pid, e)
-        man['assets'][key] = {'polyfork_id': pid, 'name': a.get('title'), 'category': p['cat'], 'role': p['role'], 'theme': p.get('theme'), 'kit': a.get('kit'),
+        man['assets'][key] = {'polyfork_id': pid, 'name': a.get('title'), 'category': p['cat'], 'role': p['role'], 'theme': p.get('theme'), 'lum_scale': p.get('lum_scale', 1.0), 'kit': a.get('kit'),
             'triangles': a.get('triangles'), 'class': a.get('class'), 'has_rig': a.get('has_rig'), 'ik_type': a.get('ik_type'), 'size_m': a.get('size_m'),
             'palette': a.get('palette'), 'licence': 'Polyfork free low-poly: commercial use, no attribution', 'page': f'https://polyfork.dev/asset/{pid}',
             'glb_url': f'https://polyfork.dev/cdn/{pid}.glb', 'glb': f'assets_raw/glb/{pid}.glb', 'glb_sha256': sha}

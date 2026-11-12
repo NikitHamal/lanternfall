@@ -1,0 +1,3055 @@
+{
+ "schema": 2,
+ "assets": [
+  {
+   "key": "warden",
+   "polyfork_id": "knight-of-the-forge-7e2bee",
+   "name": "Knight Of The Forge",
+   "category": "hero",
+   "role": "TANK",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4996,
+   "size_m": {
+    "x": 2.63,
+    "y": 2.21,
+    "z": 0.54
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/knight-of-the-forge-7e2bee",
+   "lfm": "assets/polyfork/warden.lfm",
+   "glb_sha256": "b0c05c6777daede4f44bae4881b2dc976982f11d37992d97a1562157bc4b38a8",
+   "thumb_dhash": "323131717171696a",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "bash",
+    "guard",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r"
+   ],
+   "verts_baked": 14988,
+   "bones": 25
+  },
+  {
+   "key": "reaver",
+   "polyfork_id": "varka-5a6264",
+   "name": "Varka",
+   "category": "hero",
+   "role": "HEAVY MELEE",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4988,
+   "size_m": {
+    "x": 2.2,
+    "y": 1.96,
+    "z": 0.59
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/varka-5a6264",
+   "lfm": "assets/polyfork/reaver.lfm",
+   "glb_sha256": "cd481f29d8152e1f783dcffb76ab1f908e566e3676f1fb7b5ad66d3a4a577aff",
+   "thumb_dhash": "1232323171726b6a",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "cleave",
+    "sunder",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r"
+   ],
+   "verts_baked": 14964,
+   "bones": 25
+  },
+  {
+   "key": "fletcher",
+   "polyfork_id": "ashen-assassin-1ab976",
+   "name": "Ashen Assassin",
+   "category": "hero",
+   "role": "RANGED",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4874,
+   "size_m": {
+    "x": 1.98,
+    "y": 1.83,
+    "z": 0.42
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/ashen-assassin-1ab976",
+   "lfm": "assets/polyfork/fletcher.lfm",
+   "glb_sha256": "3298cb97a7354476b604c8d7a615063055254582ef99d315712651eae8d64c6d",
+   "thumb_dhash": "3432313131322968",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "aimed",
+    "volley",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r"
+   ],
+   "verts_baked": 14622,
+   "bones": 25
+  },
+  {
+   "key": "lamplighter",
+   "polyfork_id": "fire-cultist-05e52e",
+   "name": "Fire Cultist",
+   "category": "hero",
+   "role": "FIRE CASTER",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4982,
+   "size_m": {
+    "x": 1.88,
+    "y": 1.9,
+    "z": 0.47
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/fire-cultist-05e52e",
+   "lfm": "assets/polyfork/lamplighter.lfm",
+   "glb_sha256": "26dd2fd5c72df2e616f0d74b5e0c16455b0e1f6a31a704d3eb1fa0c4b8063c4d",
+   "thumb_dhash": "3432313131323168",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "kindle",
+    "cinder",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r"
+   ],
+   "verts_baked": 14946,
+   "bones": 25
+  },
+  {
+   "key": "apothecary",
+   "polyfork_id": "forest-witch-63e5f9",
+   "name": "Forest Witch",
+   "category": "hero",
+   "role": "SUPPORT",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 5000,
+   "size_m": {
+    "x": 1.71,
+    "y": 1.73,
+    "z": 0.51
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/forest-witch-63e5f9",
+   "lfm": "assets/polyfork/apothecary.lfm",
+   "glb_sha256": "03e417dbd431ae111858ad9b1edbc39299a12ef3284e55b100de300007fb3a98",
+   "thumb_dhash": "2432717132626272",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "tonic",
+    "firepot",
+    "quick",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r"
+   ],
+   "verts_baked": 15000,
+   "bones": 25
+  },
+  {
+   "key": "rimebinder",
+   "polyfork_id": "order-judge-3db47a",
+   "name": "Order Judge",
+   "category": "hero",
+   "role": "FROST CASTER",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 5000,
+   "size_m": {
+    "x": 1.79,
+    "y": 2.04,
+    "z": 0.43
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/order-judge-3db47a",
+   "lfm": "assets/polyfork/rimebinder.lfm",
+   "glb_sha256": "a7d10b5b142004bf03b9b3732955d3b979c4674c52eaaa47fe0ad5143734d5cb",
+   "thumb_dhash": "3030323232327262",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "lance",
+    "hoar",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r"
+   ],
+   "verts_baked": 15000,
+   "bones": 25
+  },
+  {
+   "key": "thornling",
+   "polyfork_id": "bloom-elemental-bbe733",
+   "name": "Bloom Elemental",
+   "category": "monster",
+   "role": "swarm",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4997,
+   "size_m": {
+    "x": 1.93,
+    "y": 1.97,
+    "z": 0.57
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/bloom-elemental-bbe733",
+   "lfm": "assets/polyfork/thornling.lfm",
+   "glb_sha256": "dba88d2b0d30271365593fabe9204524f5cc346a5b69ee6aee8dff714dd1d255",
+   "thumb_dhash": "327230323031726a",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r",
+    "burst"
+   ],
+   "verts_baked": 14991,
+   "bones": 25
+  },
+  {
+   "key": "peatwight",
+   "polyfork_id": "bog-fiend-cfd54c",
+   "name": "Bog Fiend",
+   "category": "monster",
+   "role": "bruiser",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4997,
+   "size_m": {
+    "x": 4.74,
+    "y": 3,
+    "z": 1.55
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/bog-fiend-cfd54c",
+   "lfm": "assets/polyfork/peatwight.lfm",
+   "glb_sha256": "a7202fe7a25fbbdaac719f1ba50dd4abed3405a3fd92d17161f8520ab7a66a78",
+   "thumb_dhash": "71696868e8e9e9c8",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r",
+    "burn"
+   ],
+   "verts_baked": 14991,
+   "bones": 25
+  },
+  {
+   "key": "gloamhound",
+   "polyfork_id": "flesh-eater-8401c3",
+   "name": "Flesh Eater",
+   "category": "monster",
+   "role": "flanker (quadruped)",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 3702,
+   "size_m": {
+    "x": 1.07,
+    "y": 1.14,
+    "z": 1.49
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/flesh-eater-8401c3",
+   "lfm": "assets/polyfork/gloamhound.lfm",
+   "glb_sha256": "0fcdeb1379a40d2bba9b52c04955a307bfdd63ac919441b778c092aac6c28463",
+   "thumb_dhash": "6261682c68cad939",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r",
+    "shatter"
+   ],
+   "verts_baked": 11106,
+   "bones": 27
+  },
+  {
+   "key": "gloamwisp",
+   "polyfork_id": "hanging-cheesecloth-ghosts-c569cf",
+   "name": "Hanging Cheesecloth Ghosts",
+   "category": "monster",
+   "role": "ranged floater",
+   "kit": "halloween-night-46ade4",
+   "triangles": 599,
+   "size_m": {
+    "x": 2.73,
+    "y": 2.12,
+    "z": 0.93
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/hanging-cheesecloth-ghosts-c569cf",
+   "lfm": "assets/polyfork/gloamwisp.lfm",
+   "glb_sha256": "d701cff0d893f79cc636e39822f9c7edf383287a4acd7f6ee0a5cb6118ae00b4",
+   "thumb_dhash": "87a4a4acc8e8781c",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r",
+    "gutter"
+   ],
+   "verts_baked": 525,
+   "bones": 5
+  },
+  {
+   "key": "rustbound",
+   "polyfork_id": "bell-warden-838915",
+   "name": "Bell Warden",
+   "category": "monster",
+   "role": "elite",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4924,
+   "size_m": {
+    "x": 3.2,
+    "y": 2.89,
+    "z": 0.88
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/bell-warden-838915",
+   "lfm": "assets/polyfork/rustbound.lfm",
+   "glb_sha256": "78944adb7edfcea215ba9da20865d478d46720960ef93d16f1354f6f6088b690",
+   "thumb_dhash": "242272717171696a",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r",
+    "shatter"
+   ],
+   "verts_baked": 14772,
+   "bones": 25
+  },
+  {
+   "key": "cairnback",
+   "polyfork_id": "cathedral-statue-36eaad",
+   "name": "Cathedral Statue",
+   "category": "monster",
+   "role": "elite (stone)",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4939,
+   "size_m": {
+    "x": 2.6,
+    "y": 2.61,
+    "z": 0.76
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/cathedral-statue-36eaad",
+   "lfm": "assets/polyfork/cairnback.lfm",
+   "glb_sha256": "8ac3783c984b04d0f1d87077961520a75ec831082be5001f606b7a51dc2dcc8c",
+   "thumb_dhash": "3432303139716161",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r",
+    "shatter"
+   ],
+   "verts_baked": 14817,
+   "bones": 25
+  },
+  {
+   "key": "barrowking",
+   "polyfork_id": "bone-warrior-3a0f95",
+   "name": "Bone Warrior",
+   "category": "boss",
+   "role": "sweep",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4996,
+   "size_m": {
+    "x": 2.62,
+    "y": 2.38,
+    "z": 0.65
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/bone-warrior-3a0f95",
+   "lfm": "assets/polyfork/barrowking.lfm",
+   "glb_sha256": "5fd4269e5fb754093278d03156b1b990d7f421de27f797094c0701b032ef2681",
+   "thumb_dhash": "343231317171796a",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "special",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r",
+    "shatter"
+   ],
+   "verts_baked": 14988,
+   "bones": 25
+  },
+  {
+   "key": "mossjaw",
+   "polyfork_id": "the-drowned-behemoth-889bd3",
+   "name": "The Drowned Behemoth",
+   "category": "boss",
+   "role": "slam",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4984,
+   "size_m": {
+    "x": 5.68,
+    "y": 3.18,
+    "z": 1.64
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/the-drowned-behemoth-889bd3",
+   "lfm": "assets/polyfork/mossjaw.lfm",
+   "glb_sha256": "2d0725bb7a2464e22724820f1d145103ad1fcafce3f7a08d56f8876dcec73945",
+   "thumb_dhash": "6260e16160616979",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "special",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r",
+    "shatter"
+   ],
+   "verts_baked": 14952,
+   "bones": 25
+  },
+  {
+   "key": "hollowstag",
+   "polyfork_id": "spectral-stag-d19dc1",
+   "name": "Spectral Stag",
+   "category": "boss",
+   "role": "charge (quadruped)",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 2726,
+   "size_m": {
+    "x": 1.41,
+    "y": 2.16,
+    "z": 1.56
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/spectral-stag-d19dc1",
+   "lfm": "assets/polyfork/hollowstag.lfm",
+   "glb_sha256": "6facce11408c2168d03c056ac3359feb7f7e5f034c47cf6ccbb3bcf5576bbd6b",
+   "thumb_dhash": "6848606869613134",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "special",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r",
+    "shatter"
+   ],
+   "verts_baked": 8178,
+   "bones": 27
+  },
+  {
+   "key": "emberhound",
+   "polyfork_id": "ember-dog-50b92d",
+   "name": "Ember Dog",
+   "category": "bonus",
+   "role": "bestiary extra (quadruped)",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 3924,
+   "size_m": {
+    "x": 0.34,
+    "y": 0.81,
+    "z": 1.06
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/ember-dog-50b92d",
+   "lfm": "assets/polyfork/emberhound.lfm",
+   "glb_sha256": "918cc51167fd263ff0aeceb5f42b751accb406f0bbbb10c8f3a0965aa091ebd2",
+   "thumb_dhash": "6467e0f030686253",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r",
+    "burn"
+   ],
+   "verts_baked": 11772,
+   "bones": 27
+  },
+  {
+   "key": "thornboar",
+   "polyfork_id": "thorn-boar-669ac9",
+   "name": "Thorn Boar",
+   "category": "bonus",
+   "role": "bestiary extra (quadruped)",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 3796,
+   "size_m": {
+    "x": 0.87,
+    "y": 1.3,
+    "z": 1.7
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/thorn-boar-669ac9",
+   "lfm": "assets/polyfork/thornboar.lfm",
+   "glb_sha256": "dc7c230d3e63547d3aacc683ad728ab27cff29f6483d06241f6f3c3ba7c84167",
+   "thumb_dhash": "0d787060f0f8c859",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "special",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r",
+    "burst"
+   ],
+   "verts_baked": 11388,
+   "bones": 27
+  },
+  {
+   "key": "rootcolossus",
+   "polyfork_id": "root-colossus-2b995e",
+   "name": "Root Colossus",
+   "category": "bonus",
+   "role": "bestiary extra",
+   "kit": "grimlight-denizens-kit-a6dc02",
+   "triangles": 4917,
+   "size_m": {
+    "x": 5.91,
+    "y": 3.84,
+    "z": 1.27
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/root-colossus-2b995e",
+   "lfm": "assets/polyfork/rootcolossus.lfm",
+   "glb_sha256": "cce5fc2545b6afa09977ffd073a4761ab4cf4d210ce4d9a1d0fd320d9d8ed80c",
+   "thumb_dhash": "6860717169616161",
+   "states": [
+    "idle",
+    "ready",
+    "walk",
+    "run",
+    "attack",
+    "special",
+    "stag",
+    "down",
+    "defend",
+    "dodge",
+    "hit_f",
+    "hit_l",
+    "hit_r",
+    "shatter"
+   ],
+   "verts_baked": 14751,
+   "bones": 25
+  },
+  {
+   "key": "w_arming_sword",
+   "polyfork_id": "arming-sword-ab8738",
+   "name": "Arming Sword",
+   "category": "weapon",
+   "role": "warden main hand",
+   "kit": "the-ultimate-rpg-character-a066e1",
+   "triangles": 662,
+   "size_m": {
+    "x": 0.22,
+    "y": 1.01,
+    "z": 0.05
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/arming-sword-ab8738",
+   "lfm": "assets/polyfork/w_arming_sword.lfm",
+   "glb_sha256": "60acd265c752e62716f077cc30abc5c0d8eba771ed818cfb88b7963297d87c77",
+   "thumb_dhash": "1030303010303230",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1986,
+   "bones": 1
+  },
+  {
+   "key": "w_greatsword",
+   "polyfork_id": "greatsword-a956f3",
+   "name": "Greatsword",
+   "category": "weapon",
+   "role": "reaver",
+   "kit": "primal-future-armory-kit-d7c368",
+   "triangles": 480,
+   "size_m": {
+    "x": 0.4,
+    "y": 1.5,
+    "z": 0.09
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/greatsword-a956f3",
+   "lfm": "assets/polyfork/w_greatsword.lfm",
+   "glb_sha256": "bf44d28f7731e9ec29c9cdad876f36461015fd2693be17e715404463427f40e9",
+   "thumb_dhash": "3030303034323234",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1440,
+   "bones": 1
+  },
+  {
+   "key": "w_bow",
+   "polyfork_id": "recurve-hunting-bow-2903c8",
+   "name": "Recurve Hunting Bow",
+   "category": "weapon",
+   "role": "fletcher",
+   "kit": "the-ultimate-rpg-character-a066e1",
+   "triangles": 562,
+   "size_m": {
+    "x": 0.25,
+    "y": 1.45,
+    "z": 0.07
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/recurve-hunting-bow-2903c8",
+   "lfm": "assets/polyfork/w_bow.lfm",
+   "glb_sha256": "10bc70c313c987889715886734baa923c686bd3cebaf1758d5df1443a0028975",
+   "thumb_dhash": "1212323232303212",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1686,
+   "bones": 1
+  },
+  {
+   "key": "w_kite_shield",
+   "polyfork_id": "kite-shield-343e62",
+   "name": "Kite Shield",
+   "category": "weapon",
+   "role": "warden off hand",
+   "kit": "the-ultimate-rpg-character-a066e1",
+   "triangles": 764,
+   "size_m": {
+    "x": 0.56,
+    "y": 0.92,
+    "z": 0.17
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/kite-shield-343e62",
+   "lfm": "assets/polyfork/w_kite_shield.lfm",
+   "glb_sha256": "1a57d1ae2dba576b22293796f8b0f2d37f6c227bfc6ece53365922df78b177ba",
+   "thumb_dhash": "6079797969717230",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2292,
+   "bones": 1
+  },
+  {
+   "key": "w_round_shield",
+   "polyfork_id": "round-wooden-shield-b81fe3",
+   "name": "Round Wooden Shield",
+   "category": "weapon",
+   "role": "spare",
+   "kit": "the-ultimate-rpg-character-a066e1",
+   "triangles": 826,
+   "size_m": {
+    "x": 0.79,
+    "y": 0.79,
+    "z": 0.18
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/round-wooden-shield-b81fe3",
+   "lfm": "assets/polyfork/w_round_shield.lfm",
+   "glb_sha256": "255706c4275dc5a5eeb2ab1ea87cab81d0959c48fe9e7a98bbb1d39093a59c67",
+   "thumb_dhash": "63e1e0d4cce47039",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2478,
+   "bones": 1
+  },
+  {
+   "key": "w_staff",
+   "polyfork_id": "living-wood-druid-staff-fd83c1",
+   "name": "Living Wood Druid Staff",
+   "category": "weapon",
+   "role": "rimebinder / apothecary",
+   "kit": "the-ultimate-rpg-character-a066e1",
+   "triangles": 752,
+   "size_m": {
+    "x": 0.4,
+    "y": 1.7,
+    "z": 0.19
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/living-wood-druid-staff-fd83c1",
+   "lfm": "assets/polyfork/w_staff.lfm",
+   "glb_sha256": "d10d08b804963bfe709fde0f0f174686da9181c267cfec1b9f8b2c8a46e2d362",
+   "thumb_dhash": "3232323034343434",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2256,
+   "bones": 1
+  },
+  {
+   "key": "w_cleaver",
+   "polyfork_id": "orcish-cleaver-7117ab",
+   "name": "Orcish Cleaver",
+   "category": "weapon",
+   "role": "monster weapon",
+   "kit": "the-ultimate-rpg-character-a066e1",
+   "triangles": 672,
+   "size_m": {
+    "x": 0.25,
+    "y": 0.93,
+    "z": 0.08
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/orcish-cleaver-7117ab",
+   "lfm": "assets/polyfork/w_cleaver.lfm",
+   "glb_sha256": "8f32e7bc0cc1b2fdc8425c602de7d384b77138b4d8116d2c93911289c9abb270",
+   "thumb_dhash": "3434343232323232",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2016,
+   "bones": 1
+  },
+  {
+   "key": "w_lantern",
+   "polyfork_id": "camping-lantern-21d14b",
+   "name": "Camping Lantern",
+   "category": "weapon",
+   "role": "lamplighter lantern",
+   "kit": "campground-lake-ad32b0",
+   "triangles": 942,
+   "size_m": {
+    "x": 0.18,
+    "y": 0.36,
+    "z": 0.15
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/camping-lantern-21d14b",
+   "lfm": "assets/polyfork/w_lantern.lfm",
+   "glb_sha256": "def21adea8bcae3b7bb85a8279e0e3855967823964f31200ca0812619d922e3e",
+   "thumb_dhash": "3269717169617172",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2826,
+   "bones": 1
+  },
+  {
+   "key": "p_cairn",
+   "polyfork_id": "stone-cairn-a9bf48",
+   "name": "Stone Cairn",
+   "category": "prop",
+   "role": "cairn",
+   "kit": "alpine-and-snow-092f66",
+   "triangles": 805,
+   "size_m": {
+    "x": 1,
+    "y": 1.37,
+    "z": 1
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/stone-cairn-a9bf48",
+   "lfm": "assets/polyfork/p_cairn.lfm",
+   "glb_sha256": "7ed5207104db9b7d947cc07f61c68f068507cc261164fc8a83ffaea4384c1569",
+   "thumb_dhash": "726071716160d061",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2415,
+   "bones": 1
+  },
+  {
+   "key": "p_dead_tree",
+   "polyfork_id": "dead-tree-6795fa",
+   "name": "Dead Tree",
+   "category": "prop",
+   "role": "tree",
+   "kit": "nature-forest-kit-f29d6a",
+   "triangles": 536,
+   "size_m": {
+    "x": 3.19,
+    "y": 5,
+    "z": 1.87
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/dead-tree-6795fa",
+   "lfm": "assets/polyfork/p_dead_tree.lfm",
+   "glb_sha256": "bdbd430ce3ac5af84863a7baad8c9ef82bc7efa14e9aaeb4e5b6691783070b68",
+   "thumb_dhash": "1052646130343030",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1608,
+   "bones": 1
+  },
+  {
+   "key": "p_twisted_oak",
+   "polyfork_id": "twisted-dead-oak-49457b",
+   "name": "Twisted Dead Oak",
+   "category": "prop",
+   "role": "tree",
+   "kit": "halloween-night-46ade4",
+   "triangles": 861,
+   "size_m": {
+    "x": 8.04,
+    "y": 6.97,
+    "z": 4.53
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/twisted-dead-oak-49457b",
+   "lfm": "assets/polyfork/p_twisted_oak.lfm",
+   "glb_sha256": "599e547abcc70e51c91055682388116efed9cfbf30a457a4b866f1a6b2502f34",
+   "thumb_dhash": "13d0f0f071707070",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2583,
+   "bones": 1
+  },
+  {
+   "key": "p_headstone",
+   "polyfork_id": "carved-headstone-09d9f8",
+   "name": "Carved Headstone",
+   "category": "prop",
+   "role": "standing stone",
+   "kit": "halloween-night-46ade4",
+   "triangles": 436,
+   "size_m": {
+    "x": 0.72,
+    "y": 1.04,
+    "z": 0.37
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/carved-headstone-09d9f8",
+   "lfm": "assets/polyfork/p_headstone.lfm",
+   "glb_sha256": "c507ee1b5548890d842710a22c4e47c90a16ad62ae825a4ad9305072722cd759",
+   "thumb_dhash": "6261617171617139",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1308,
+   "bones": 1
+  },
+  {
+   "key": "p_grave_mound",
+   "polyfork_id": "grave-mound-169ec3",
+   "name": "Grave Mound",
+   "category": "prop",
+   "role": "barrow mound",
+   "kit": "halloween-night-46ade4",
+   "triangles": 670,
+   "size_m": {
+    "x": 2,
+    "y": 0.62,
+    "z": 1
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/grave-mound-169ec3",
+   "lfm": "assets/polyfork/p_grave_mound.lfm",
+   "glb_sha256": "60ded8f66e1fd790e57be6a7e3f1374c42808a14df2d92152e6b493d63cf4e29",
+   "thumb_dhash": "0026c1c0f07c0c02",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2010,
+   "bones": 1
+  },
+  {
+   "key": "p_rune_stone",
+   "polyfork_id": "glowing-rune-stone-5a5558",
+   "name": "Glowing Rune Stone",
+   "category": "prop",
+   "role": "waylight plinth",
+   "kit": "dungeon-crypt-c27d93",
+   "triangles": 476,
+   "size_m": {
+    "x": 0.6,
+    "y": 0.5,
+    "z": 0.55
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/glowing-rune-stone-5a5558",
+   "lfm": "assets/polyfork/p_rune_stone.lfm",
+   "glb_sha256": "147e5b78b0621f5b133179deda6f11102eeb71eae96b7c7390ad7b851a96ca00",
+   "thumb_dhash": "70f086b2b0e07019",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1428,
+   "bones": 1
+  },
+  {
+   "key": "p_split_fence",
+   "polyfork_id": "split-rail-fence-run-87da39",
+   "name": "Split Rail Fence Run",
+   "category": "prop",
+   "role": "fence",
+   "kit": "frontier-town-a0085b",
+   "triangles": 424,
+   "size_m": {
+    "x": 2,
+    "y": 1.2,
+    "z": 0.16
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/split-rail-fence-run-87da39",
+   "lfm": "assets/polyfork/p_split_fence.lfm",
+   "glb_sha256": "5fd5521870b46b127e5ee467a8d21be920f6d9b6bef2c284ac38b5072f4986c0",
+   "thumb_dhash": "1c023e82b2be4602",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1272,
+   "bones": 1
+  },
+  {
+   "key": "p_low_wall",
+   "polyfork_id": "low-stone-wall-8a8ea3",
+   "name": "Low Stone Wall",
+   "category": "prop",
+   "role": "wall",
+   "kit": "medieval-village-kit-ca0b43",
+   "triangles": 732,
+   "size_m": {
+    "x": 2.05,
+    "y": 0.94,
+    "z": 0.5
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/low-stone-wall-8a8ea3",
+   "lfm": "assets/polyfork/p_low_wall.lfm",
+   "glb_sha256": "65288160d114527a8e79f3fa7e520afbfa43845439aa60a46d509f2d548c2e95",
+   "thumb_dhash": "618e8cf8d8fc0c03",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2196,
+   "bones": 1
+  },
+  {
+   "key": "p_field_wall",
+   "polyfork_id": "cemetery-fieldstone-wall-run-ab9077",
+   "name": "Cemetery Fieldstone Wall Run",
+   "category": "prop",
+   "role": "wall",
+   "kit": "halloween-night-46ade4",
+   "triangles": 789,
+   "size_m": {
+    "x": 4,
+    "y": 0.6,
+    "z": 0.5
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/cemetery-fieldstone-wall-run-ab9077",
+   "lfm": "assets/polyfork/p_field_wall.lfm",
+   "glb_sha256": "cb24e7063ac67d0c1c4b3ae0062b2bc2deeca155c5d321b1aef1d9efb5591b6c",
+   "thumb_dhash": "007081c0fe0e0100",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2367,
+   "bones": 1
+  },
+  {
+   "key": "p_stone_well",
+   "polyfork_id": "stone-well-2b4717",
+   "name": "Stone Well",
+   "category": "prop",
+   "role": "well",
+   "kit": "nature-forest-kit-f29d6a",
+   "triangles": 608,
+   "size_m": {
+    "x": 1.57,
+    "y": 1.86,
+    "z": 1.6
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/stone-well-2b4717",
+   "lfm": "assets/polyfork/p_stone_well.lfm",
+   "glb_sha256": "5717a38eddf890d59f22f5982a896b923e23024a0883e41ddaf165a9fd01d3ec",
+   "thumb_dhash": "6c6474f0d4c0c471",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1824,
+   "bones": 1
+  },
+  {
+   "key": "p_brazier",
+   "polyfork_id": "standing-brazier-c9e4ee",
+   "name": "Standing Brazier",
+   "category": "prop",
+   "role": "brazier",
+   "kit": "dungeon-crypt-c27d93",
+   "triangles": 680,
+   "size_m": {
+    "x": 0.92,
+    "y": 1.11,
+    "z": 0.97
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/standing-brazier-c9e4ee",
+   "lfm": "assets/polyfork/p_brazier.lfm",
+   "glb_sha256": "db6a28009b38a08914a28b1e2b5fd24e1959f47626aeec90f588debb2cdfd180",
+   "thumb_dhash": "33f0d4c070606d61",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2040,
+   "bones": 1
+  },
+  {
+   "key": "p_wall_torch",
+   "polyfork_id": "wall-torch-bracket-f5ad14",
+   "name": "Wall Torch Bracket",
+   "category": "prop",
+   "role": "torch",
+   "kit": "dungeon-crypt-c27d93",
+   "triangles": 704,
+   "size_m": {
+    "x": 0.22,
+    "y": 0.63,
+    "z": 0.21
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/wall-torch-bracket-f5ad14",
+   "lfm": "assets/polyfork/p_wall_torch.lfm",
+   "glb_sha256": "4ae97afc8f5d97372bd9d01e2d574fea398bc3cacd7cc1f464d7dd445eac6ff2",
+   "thumb_dhash": "6060246270307232",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2112,
+   "bones": 1
+  },
+  {
+   "key": "p_plank_bridge",
+   "polyfork_id": "log-plank-bridge-a5f74f",
+   "name": "Log Plank Bridge",
+   "category": "prop",
+   "role": "fen bridge",
+   "kit": "nature-forest-kit-f29d6a",
+   "triangles": 480,
+   "size_m": {
+    "x": 4,
+    "y": 1.33,
+    "z": 1.72
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/log-plank-bridge-a5f74f",
+   "lfm": "assets/polyfork/p_plank_bridge.lfm",
+   "glb_sha256": "9ad72a4a34d57e5cfa5db565e73371bb0af2174e6fb9ee9775b3d2d4b9d0a44d",
+   "thumb_dhash": "1061e084bc7c0d02",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1440,
+   "bones": 1
+  },
+  {
+   "key": "b_stone_chapel",
+   "polyfork_id": "stone-chapel-03e774",
+   "name": "Stone Chapel",
+   "category": "building",
+   "role": "chapel",
+   "kit": "medieval-village-kit-ca0b43",
+   "triangles": 1949,
+   "size_m": {
+    "x": 4.47,
+    "y": 8.15,
+    "z": 6.41
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/stone-chapel-03e774",
+   "lfm": "assets/polyfork/b_stone_chapel.lfm",
+   "glb_sha256": "4c9a41f37829d80a2ac165bef4bfcd235418a0666b6557ac29b236d0cea73d8e",
+   "thumb_dhash": "6866e978f8e0e172",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 5847,
+   "bones": 1
+  },
+  {
+   "key": "b_thatch_cottage",
+   "polyfork_id": "thatched-cottage-0e63f5",
+   "name": "Thatched Cottage",
+   "category": "building",
+   "role": "cottage",
+   "kit": "medieval-village-kit-ca0b43",
+   "triangles": 1764,
+   "size_m": {
+    "x": 6,
+    "y": 5.06,
+    "z": 3.97
+   },
+   "has_rig": true,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/thatched-cottage-0e63f5",
+   "lfm": "assets/polyfork/b_thatch_cottage.lfm",
+   "glb_sha256": "4cbd6ccc8e7e3f5ae662f479dc2e2459764d72bcb829762a83e04bd05a4cb61b",
+   "thumb_dhash": "c6c6ba86eae07819",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 5292,
+   "bones": 1
+  },
+  {
+   "key": "b_ruined_wall",
+   "polyfork_id": "ruined-lair-wall-176561",
+   "name": "Ruined Lair Wall",
+   "category": "building",
+   "role": "ruin",
+   "kit": "dragons-lair-dark-dragon-782570",
+   "triangles": 576,
+   "size_m": {
+    "x": 4,
+    "y": 6,
+    "z": 1.46
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/ruined-lair-wall-176561",
+   "lfm": "assets/polyfork/b_ruined_wall.lfm",
+   "glb_sha256": "559ce5cb8b5cbb6c1c818d376adab5dc5daea505f87302f35270a43ee027c485",
+   "thumb_dhash": "f0f0e8e8e9617939",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1728,
+   "bones": 1
+  },
+  {
+   "key": "b_beacon_tower",
+   "polyfork_id": "signal-beacon-tower-9c0d1a",
+   "name": "Signal Beacon Tower",
+   "category": "building",
+   "role": "waylight tower",
+   "kit": "three-kingdoms-settlements-a-1e817b",
+   "triangles": 1514,
+   "size_m": {
+    "x": 4,
+    "y": 9.25,
+    "z": 4
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/signal-beacon-tower-9c0d1a",
+   "lfm": "assets/polyfork/b_beacon_tower.lfm",
+   "glb_sha256": "b49163f38bdef85ca8bd4c29bcb279d6f5adfe0a002ac2327a847bbdc1a728fd",
+   "thumb_dhash": "0939713232307172",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 4542,
+   "bones": 1
+  },
+  {
+   "key": "b_stone_tower",
+   "polyfork_id": "tupa-stone-tower-801c13",
+   "name": "Tupa Stone Tower",
+   "category": "building",
+   "role": "tower",
+   "kit": "easter-island-rapa-nui-368e86",
+   "triangles": 1786,
+   "size_m": {
+    "x": 3.96,
+    "y": 3,
+    "z": 3.96
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/tupa-stone-tower-801c13",
+   "lfm": "assets/polyfork/b_stone_tower.lfm",
+   "glb_sha256": "893471bdf71b3ca2fb37cbeb65b22913e1e5645afc50d3549e21a9a367e8e4a8",
+   "thumb_dhash": "f8c4c0e0c4c4c0f0",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 5358,
+   "bones": 1
+  },
+  {
+   "key": "b_ruined_gable",
+   "polyfork_id": "ruined-gable-end-834895",
+   "name": "Ruined Gable End",
+   "category": "building",
+   "role": "ruin",
+   "kit": "world-war-ii-ba2289",
+   "triangles": 1020,
+   "size_m": {
+    "x": 4,
+    "y": 6,
+    "z": 4
+   },
+   "has_rig": false,
+   "origin": "polyfork-session2",
+   "version": 1,
+   "variant_of": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/ruined-gable-end-834895",
+   "lfm": "assets/polyfork/b_ruined_gable.lfm",
+   "glb_sha256": "bdb1c830b96a13b9a8ef44111057d31b47cc855c2c34086b7230ea032c5b9b41",
+   "thumb_dhash": "3231793171791932",
+   "states": [
+    "static"
+   ],
+   "verts_baked": 3060,
+   "bones": 1
+  },
+  {
+   "key": "p_pine_tall",
+   "polyfork_id": "tall-pine-tree-ab4108",
+   "name": "Tall Pine Tree",
+   "category": "prop",
+   "role": "tree (pine highland)",
+   "kit": "nature-forest-kit-f29d6a",
+   "triangles": 350,
+   "size_m": {
+    "x": 3.67,
+    "y": 9,
+    "z": 3.56
+   },
+   "palette_src": [
+    {
+     "hex": "#4c8140",
+     "share": 0.886
+    },
+    {
+     "hex": "#4a3527",
+     "share": 0.114
+    }
+   ],
+   "has_rig": false,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/tall-pine-tree-ab4108",
+   "glb_url": "https://polyfork.dev/cdn/tall-pine-tree-ab4108.glb",
+   "glb_sha256": "32081cc8c954233d04b9e4ee1569efc4df2a2f8e97f8e30f9e55e63ee9d6171e",
+   "thumb_dhash": "1032323232327132",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1050,
+   "tris_baked": 350,
+   "palette_theme": [
+    "woodDk",
+    "turf",
+    "lichen",
+    "peat"
+   ],
+   "lum_scale": 0.12,
+   "biomes": [
+    "highland"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -1.8332557678222656,
+      0.0,
+      -1.7817618250846863
+     ],
+     [
+      1.8332557678222656,
+      9.0,
+      1.7817618250846863
+     ]
+    ],
+    "radius": 2.556462773361411,
+    "height": 9.0,
+    "footprint_pts": 10
+   },
+   "lfm": "assets/polyfork/p_pine_tall.lfm",
+   "col": "assets/polyfork/p_pine_tall.col.json",
+   "preview_glb": "assets/polyfork/preview/p_pine_tall.glb",
+   "thumb": "assets/polyfork/thumbs/p_pine_tall.png",
+   "meta": "assets/polyfork/meta/p_pine_tall.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "prop"
+  },
+  {
+   "key": "p_pine_young",
+   "polyfork_id": "young-pine-0d7695",
+   "name": "Young Pine",
+   "category": "prop",
+   "role": "tree (pine highland)",
+   "kit": "nature-forest-kit-f29d6a",
+   "triangles": 270,
+   "size_m": {
+    "x": 1.84,
+    "y": 3,
+    "z": 1.87
+   },
+   "palette_src": [
+    {
+     "hex": "#5f9a4b",
+     "share": 0.844
+    },
+    {
+     "hex": "#5d4430",
+     "share": 0.156
+    }
+   ],
+   "has_rig": false,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/young-pine-0d7695",
+   "glb_url": "https://polyfork.dev/cdn/young-pine-0d7695.glb",
+   "glb_sha256": "9bf72146a74e005aae80ea5962623b9810279426ab605570190607e0d0cde352",
+   "thumb_dhash": "1432706161e07171",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 810,
+   "tris_baked": 270,
+   "palette_theme": [
+    "woodDk",
+    "turf",
+    "lichen",
+    "peat"
+   ],
+   "lum_scale": 0.12,
+   "biomes": [
+    "highland"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -0.9189528226852417,
+      0.0,
+      -0.9326502680778503
+     ],
+     [
+      0.9189528226852417,
+      3.0,
+      0.9326502680778503
+     ]
+    ],
+    "radius": 1.3093169260598672,
+    "height": 3.0,
+    "footprint_pts": 12
+   },
+   "lfm": "assets/polyfork/p_pine_young.lfm",
+   "col": "assets/polyfork/p_pine_young.col.json",
+   "preview_glb": "assets/polyfork/preview/p_pine_young.glb",
+   "thumb": "assets/polyfork/thumbs/p_pine_young.png",
+   "meta": "assets/polyfork/meta/p_pine_young.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "prop"
+  },
+  {
+   "key": "p_round_bush",
+   "polyfork_id": "round-bush-cd2ac0",
+   "name": "Round Bush",
+   "category": "prop",
+   "role": "bush",
+   "kit": "nature-forest-kit-f29d6a",
+   "triangles": 573,
+   "size_m": {
+    "x": 1.27,
+    "y": 0.63,
+    "z": 0.87
+   },
+   "palette_src": [
+    {
+     "hex": "#3d6b34",
+     "share": 0.452
+    },
+    {
+     "hex": "#77b258",
+     "share": 0.403
+    },
+    {
+     "hex": "#2f4f2e",
+     "share": 0.145
+    }
+   ],
+   "has_rig": false,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/round-bush-cd2ac0",
+   "glb_url": "https://polyfork.dev/cdn/round-bush-cd2ac0.glb",
+   "glb_sha256": "3a7f963bd765924c531c53369d1fe2f724f19f8f45aef2eabe5ace238871ac26",
+   "thumb_dhash": "1669e0c080e4780b",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1719,
+   "tris_baked": 573,
+   "palette_theme": [
+    "woodDk",
+    "turf",
+    "lichen",
+    "peat"
+   ],
+   "lum_scale": 0.12,
+   "biomes": [
+    "highland",
+    "fen"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -0.6335451602935791,
+      0.0,
+      -0.4332565665245056
+     ],
+     [
+      0.6335451602935791,
+      0.6257248520851135,
+      0.4332565665245056
+     ]
+    ],
+    "radius": 0.76752245737048,
+    "height": 0.6257248520851135,
+    "footprint_pts": 12
+   },
+   "lfm": "assets/polyfork/p_round_bush.lfm",
+   "col": "assets/polyfork/p_round_bush.col.json",
+   "preview_glb": "assets/polyfork/preview/p_round_bush.glb",
+   "thumb": "assets/polyfork/thumbs/p_round_bush.png",
+   "meta": "assets/polyfork/meta/p_round_bush.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "prop"
+  },
+  {
+   "key": "p_boulder",
+   "polyfork_id": "large-boulder-a29b99",
+   "name": "Large Boulder",
+   "category": "prop",
+   "role": "rock",
+   "kit": "nature-forest-kit-f29d6a",
+   "triangles": 566,
+   "size_m": {
+    "x": 2.2,
+    "y": 0.66,
+    "z": 1.39
+   },
+   "palette_src": [
+    {
+     "hex": "#6f8f3c",
+     "share": 0.677
+    },
+    {
+     "hex": "#a3a099",
+     "share": 0.212
+    },
+    {
+     "hex": "#3d6b34",
+     "share": 0.111
+    }
+   ],
+   "has_rig": false,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/large-boulder-a29b99",
+   "glb_url": "https://polyfork.dev/cdn/large-boulder-a29b99.glb",
+   "glb_sha256": "129e0a594f0a4e0a6108ad146b525d11009294bfe361ae60cf6f309730639638",
+   "thumb_dhash": "08e3e08ccae83402",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1698,
+   "tris_baked": 566,
+   "palette_theme": [
+    "stone",
+    "stone2",
+    "lichen",
+    "peat",
+    "turf"
+   ],
+   "lum_scale": 0.7,
+   "biomes": [
+    "moor",
+    "highland"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -1.100000023841858,
+      0.0,
+      -0.6945455968379974
+     ],
+     [
+      1.100000023841858,
+      0.6600000262260435,
+      0.6945455968379974
+     ]
+    ],
+    "radius": 1.3009203044534043,
+    "height": 0.6600000262260435,
+    "footprint_pts": 12
+   },
+   "lfm": "assets/polyfork/p_boulder.lfm",
+   "col": "assets/polyfork/p_boulder.col.json",
+   "preview_glb": "assets/polyfork/preview/p_boulder.glb",
+   "thumb": "assets/polyfork/thumbs/p_boulder.png",
+   "meta": "assets/polyfork/meta/p_boulder.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "prop"
+  },
+  {
+   "key": "p_fallen_log",
+   "polyfork_id": "fallen-log-1685fb",
+   "name": "Fallen Log",
+   "category": "prop",
+   "role": "log (fen/pine)",
+   "kit": "nature-forest-kit-f29d6a",
+   "triangles": 484,
+   "size_m": {
+    "x": 3.09,
+    "y": 0.9,
+    "z": 0.7
+   },
+   "palette_src": [
+    {
+     "hex": "#8c6a47",
+     "share": 0.603
+    },
+    {
+     "hex": "#a5855e",
+     "share": 0.314
+    },
+    {
+     "hex": "#c2a479",
+     "share": 0.083
+    }
+   ],
+   "has_rig": false,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/fallen-log-1685fb",
+   "glb_url": "https://polyfork.dev/cdn/fallen-log-1685fb.glb",
+   "glb_sha256": "5febe55e615a4600ea5404297945b55ef4885de9041291febe458ca7ac0d3b62",
+   "thumb_dhash": "0030cf80f83e0100",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1452,
+   "tris_baked": 484,
+   "palette_theme": [
+    "woodDk",
+    "wood",
+    "peat",
+    "root",
+    "turf"
+   ],
+   "lum_scale": 1.0,
+   "biomes": [
+    "highland",
+    "fen"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -1.5425145626068115,
+      0.0,
+      -0.3512793183326721
+     ],
+     [
+      1.5425145626068115,
+      0.8975508809089661,
+      0.3512793183326721
+     ]
+    ],
+    "radius": 1.5820076913031587,
+    "height": 0.8975508809089661,
+    "footprint_pts": 12
+   },
+   "lfm": "assets/polyfork/p_fallen_log.lfm",
+   "col": "assets/polyfork/p_fallen_log.col.json",
+   "preview_glb": "assets/polyfork/preview/p_fallen_log.glb",
+   "thumb": "assets/polyfork/thumbs/p_fallen_log.png",
+   "meta": "assets/polyfork/meta/p_fallen_log.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "prop"
+  },
+  {
+   "key": "p_barrel",
+   "polyfork_id": "wooden-barrel-ab50ca",
+   "name": "Wooden Barrel",
+   "category": "prop",
+   "role": "barrel",
+   "kit": "nature-forest-kit-f29d6a",
+   "triangles": 540,
+   "size_m": {
+    "x": 0.6,
+    "y": 0.9,
+    "z": 0.58
+   },
+   "palette_src": [
+    {
+     "hex": "#a5855e",
+     "share": 0.363
+    },
+    {
+     "hex": "#57544e",
+     "share": 0.311
+    },
+    {
+     "hex": "#c2a479",
+     "share": 0.17
+    },
+    {
+     "hex": "#3a2a1e",
+     "share": 0.078
+    },
+    {
+     "hex": "#75563b",
+     "share": 0.078
+    }
+   ],
+   "has_rig": false,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/wooden-barrel-ab50ca",
+   "glb_url": "https://polyfork.dev/cdn/wooden-barrel-ab50ca.glb",
+   "glb_sha256": "c5308391c0822d5e89653a52e2e21b86a53f748e77ee8063099422c94fff2758",
+   "thumb_dhash": "6161e0e0c0616132",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1620,
+   "tris_baked": 540,
+   "palette_theme": [
+    "woodDk",
+    "wood",
+    "iron",
+    "rust",
+    "leatherDk"
+   ],
+   "lum_scale": 1.0,
+   "biomes": [
+    "village"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -0.30000001192092896,
+      0.0,
+      -0.29247838258743286
+     ],
+     [
+      0.30000001192092896,
+      0.8999999761581421,
+      0.29247838258743286
+     ]
+    ],
+    "radius": 0.41897924940683906,
+    "height": 0.8999999761581421,
+    "footprint_pts": 12
+   },
+   "lfm": "assets/polyfork/p_barrel.lfm",
+   "col": "assets/polyfork/p_barrel.col.json",
+   "preview_glb": "assets/polyfork/preview/p_barrel.glb",
+   "thumb": "assets/polyfork/thumbs/p_barrel.png",
+   "meta": "assets/polyfork/meta/p_barrel.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "prop"
+  },
+  {
+   "key": "p_crate",
+   "polyfork_id": "timber-crate-ba0739",
+   "name": "Timber Crate",
+   "category": "prop",
+   "role": "crate",
+   "kit": "dungeon-crypt-c27d93",
+   "triangles": 588,
+   "size_m": {
+    "x": 0.79,
+    "y": 0.66,
+    "z": 0.79
+   },
+   "palette_src": [
+    {
+     "hex": "#6f5e4f",
+     "share": 0.184
+    },
+    {
+     "hex": "#b09767",
+     "share": 0.156
+    },
+    {
+     "hex": "#bfa675",
+     "share": 0.15
+    },
+    {
+     "hex": "#c6ad7c",
+     "share": 0.102
+    },
+    {
+     "hex": "#b59c6c",
+     "share": 0.088
+    },
+    {
+     "hex": "#695045",
+     "share": 0.071
+    }
+   ],
+   "has_rig": true,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/timber-crate-ba0739",
+   "glb_url": "https://polyfork.dev/cdn/timber-crate-ba0739.glb",
+   "glb_sha256": "b2b37406ed353613e174598fe5da39a91bf929989097ee353e19583870ce51a5",
+   "thumb_dhash": "e2ce88b898f87919",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1764,
+   "tris_baked": 588,
+   "palette_theme": [
+    "woodDk",
+    "wood",
+    "iron",
+    "rust",
+    "leatherDk"
+   ],
+   "lum_scale": 1.0,
+   "biomes": [
+    "village"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -0.39572834968566895,
+      0.0,
+      -0.39634984731674194
+     ],
+     [
+      0.39572834968566895,
+      0.6631727783679962,
+      0.39634984731674194
+     ]
+    ],
+    "radius": 0.5600840367417623,
+    "height": 0.6631727783679962,
+    "footprint_pts": 12
+   },
+   "lfm": "assets/polyfork/p_crate.lfm",
+   "col": "assets/polyfork/p_crate.col.json",
+   "preview_glb": "assets/polyfork/preview/p_crate.glb",
+   "thumb": "assets/polyfork/thumbs/p_crate.png",
+   "meta": "assets/polyfork/meta/p_crate.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "prop"
+  },
+  {
+   "key": "p_lamp_post",
+   "polyfork_id": "lamp-post-c9e409",
+   "name": "Lamp Post",
+   "category": "prop",
+   "role": "lantern post",
+   "kit": "medieval-village-kit-ca0b43",
+   "triangles": 478,
+   "size_m": {
+    "x": 0.26,
+    "y": 2.2,
+    "z": 0.58
+   },
+   "palette_src": [
+    {
+     "hex": "#3c4550",
+     "share": 0.668
+    },
+    {
+     "hex": "#e8dcc0",
+     "share": 0.161
+    },
+    {
+     "hex": "#8c6a4a",
+     "share": 0.143
+    },
+    {
+     "hex": "#6f4e37",
+     "share": 0.027
+    }
+   ],
+   "has_rig": true,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/lamp-post-c9e409",
+   "glb_url": "https://polyfork.dev/cdn/lamp-post-c9e409.glb",
+   "glb_sha256": "955849b4c9785241b8705d69d41a06e03e04668d696e6c04397972787719ff57",
+   "thumb_dhash": "1a3232321a32121a",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1434,
+   "tris_baked": 478,
+   "palette_theme": [
+    "woodDk",
+    "wood",
+    "iron",
+    "brass",
+    "lantern"
+   ],
+   "lum_scale": 1.0,
+   "biomes": [
+    "village",
+    "moor"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -0.12800000607967377,
+      0.0,
+      -0.29100000858306885
+     ],
+     [
+      0.12800000607967377,
+      2.200000047683716,
+      0.29100000858306885
+     ]
+    ],
+    "radius": 0.3179072294738556,
+    "height": 2.200000047683716,
+    "footprint_pts": 8
+   },
+   "lfm": "assets/polyfork/p_lamp_post.lfm",
+   "col": "assets/polyfork/p_lamp_post.col.json",
+   "preview_glb": "assets/polyfork/preview/p_lamp_post.glb",
+   "thumb": "assets/polyfork/thumbs/p_lamp_post.png",
+   "meta": "assets/polyfork/meta/p_lamp_post.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "prop"
+  },
+  {
+   "key": "p_signpost",
+   "polyfork_id": "trail-signpost-bd29a7",
+   "name": "Trail Signpost",
+   "category": "prop",
+   "role": "signpost",
+   "kit": "nature-forest-kit-f29d6a",
+   "triangles": 420,
+   "size_m": {
+    "x": 1.15,
+    "y": 2,
+    "z": 1.16
+   },
+   "palette_src": [
+    {
+     "hex": "#75563b",
+     "share": 0.448
+    },
+    {
+     "hex": "#a5855e",
+     "share": 0.2
+    },
+    {
+     "hex": "#c2a479",
+     "share": 0.2
+    },
+    {
+     "hex": "#4a3527",
+     "share": 0.152
+    }
+   ],
+   "has_rig": true,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/trail-signpost-bd29a7",
+   "glb_url": "https://polyfork.dev/cdn/trail-signpost-bd29a7.glb",
+   "glb_sha256": "60ae52b31cb81a6ad28169c5a2d9f73a9d6b1515956c73d95620f10516f194ff",
+   "thumb_dhash": "12d1f03053711212",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1260,
+   "tris_baked": 420,
+   "palette_theme": [
+    "woodDk",
+    "wood",
+    "peat",
+    "rope"
+   ],
+   "lum_scale": 1.0,
+   "biomes": [
+    "moor",
+    "highland"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -0.5680446190198527,
+      0.0,
+      -0.5728165578930839
+     ],
+     [
+      0.5680446190198527,
+      2.0,
+      0.5728165578930839
+     ]
+    ],
+    "radius": 0.8067177314240033,
+    "height": 2.0,
+    "footprint_pts": 12
+   },
+   "lfm": "assets/polyfork/p_signpost.lfm",
+   "col": "assets/polyfork/p_signpost.col.json",
+   "preview_glb": "assets/polyfork/preview/p_signpost.glb",
+   "thumb": "assets/polyfork/thumbs/p_signpost.png",
+   "meta": "assets/polyfork/meta/p_signpost.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "prop"
+  },
+  {
+   "key": "p_campfire_tripod",
+   "polyfork_id": "campfire-cook-tripod-d95a1e",
+   "name": "Campfire Cook Tripod",
+   "category": "prop",
+   "role": "campfire",
+   "kit": "nature-forest-kit-f29d6a",
+   "triangles": 470,
+   "size_m": {
+    "x": 1.5,
+    "y": 1.3,
+    "z": 1.3
+   },
+   "palette_src": [
+    {
+     "hex": "#3a2a1e",
+     "share": 0.298
+    },
+    {
+     "hex": "#57544e",
+     "share": 0.238
+    },
+    {
+     "hex": "#75563b",
+     "share": 0.179
+    },
+    {
+     "hex": "#8fa84a",
+     "share": 0.179
+    },
+    {
+     "hex": "#5d4430",
+     "share": 0.106
+    }
+   ],
+   "has_rig": true,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/campfire-cook-tripod-d95a1e",
+   "glb_url": "https://polyfork.dev/cdn/campfire-cook-tripod-d95a1e.glb",
+   "glb_sha256": "99c98a865d822b542cfd53ebcb8be6d04e56d00c14449876c88361ad6c9f2f9d",
+   "thumb_dhash": "34346265e4c69aa1",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1410,
+   "tris_baked": 470,
+   "palette_theme": [
+    "woodDk",
+    "wood",
+    "iron",
+    "rust",
+    "lantern",
+    "rope"
+   ],
+   "lum_scale": 0.7,
+   "biomes": [
+    "highland",
+    "camp"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -0.7524709701538086,
+      0.0,
+      -0.6516589671373367
+     ],
+     [
+      0.7524709701538086,
+      1.2999999523162842,
+      0.6516589671373367
+     ]
+    ],
+    "radius": 0.995425522264079,
+    "height": 1.2999999523162842,
+    "footprint_pts": 8
+   },
+   "lfm": "assets/polyfork/p_campfire_tripod.lfm",
+   "col": "assets/polyfork/p_campfire_tripod.col.json",
+   "preview_glb": "assets/polyfork/preview/p_campfire_tripod.glb",
+   "thumb": "assets/polyfork/thumbs/p_campfire_tripod.png",
+   "meta": "assets/polyfork/meta/p_campfire_tripod.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "prop"
+  },
+  {
+   "key": "p_thorn_bush",
+   "polyfork_id": "bare-thorn-bush-91a238",
+   "name": "Bare Thorn Bush",
+   "category": "prop",
+   "role": "bush (moor thorn)",
+   "kit": "halloween-night-46ade4",
+   "triangles": 813,
+   "size_m": {
+    "x": 1.41,
+    "y": 1.02,
+    "z": 0.42
+   },
+   "palette_src": [
+    {
+     "hex": "#594c4d",
+     "share": 0.82
+    },
+    {
+     "hex": "#a93206",
+     "share": 0.098
+    },
+    {
+     "hex": "#b3693e",
+     "share": 0.081
+    }
+   ],
+   "has_rig": false,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/bare-thorn-bush-91a238",
+   "glb_url": "https://polyfork.dev/cdn/bare-thorn-bush-91a238.glb",
+   "glb_sha256": "a77056b73b03953ef292b9cde661b2bb9078fa866219b84b319d12614e354b1b",
+   "thumb_dhash": "2050d848e1e06220",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2439,
+   "tris_baked": 813,
+   "palette_theme": [
+    "woodDk",
+    "root",
+    "thorn",
+    "peat",
+    "rust"
+   ],
+   "lum_scale": 0.6,
+   "biomes": [
+    "moor"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -0.7053818629313335,
+      0.0,
+      -0.20780720182899481
+     ],
+     [
+      0.7053818629313335,
+      1.0223526385914927,
+      0.20780720182899481
+     ]
+    ],
+    "radius": 0.7353552921441956,
+    "height": 1.0223526385914927,
+    "footprint_pts": 9
+   },
+   "lfm": "assets/polyfork/p_thorn_bush.lfm",
+   "col": "assets/polyfork/p_thorn_bush.col.json",
+   "preview_glb": "assets/polyfork/preview/p_thorn_bush.glb",
+   "thumb": "assets/polyfork/thumbs/p_thorn_bush.png",
+   "meta": "assets/polyfork/meta/p_thorn_bush.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "prop"
+  },
+  {
+   "key": "p_iron_fence",
+   "polyfork_id": "wrought-iron-cemetery-fence-f1a113",
+   "name": "Wrought-Iron Cemetery Fence Run",
+   "category": "prop",
+   "role": "fence",
+   "kit": "halloween-night-46ade4",
+   "triangles": 808,
+   "size_m": {
+    "x": 4,
+    "y": 1.5,
+    "z": 0.4
+   },
+   "palette_src": [
+    {
+     "hex": "#332622",
+     "share": 0.723
+    },
+    {
+     "hex": "#a89c9a",
+     "share": 0.077
+    },
+    {
+     "hex": "#d5d2d2",
+     "share": 0.057
+    },
+    {
+     "hex": "#dddada",
+     "share": 0.037
+    },
+    {
+     "hex": "#834421",
+     "share": 0.03
+    },
+    {
+     "hex": "#b5a9a7",
+     "share": 0.025
+    }
+   ],
+   "has_rig": false,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/wrought-iron-cemetery-fence-f1a113",
+   "glb_url": "https://polyfork.dev/cdn/wrought-iron-cemetery-fence-f1a113.glb",
+   "glb_sha256": "98d709b6430b2961186d5d533ce2ffdaf0c39ac853f701322bbc98eb45066aee",
+   "thumb_dhash": "000b80a2f27e0601",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2424,
+   "tris_baked": 808,
+   "palette_theme": [
+    "iron",
+    "rust",
+    "stone",
+    "stone2",
+    "lichen"
+   ],
+   "lum_scale": 0.7,
+   "biomes": [
+    "graveyard",
+    "moor"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -2.0,
+      0.0,
+      -0.20000000298023224
+     ],
+     [
+      2.0,
+      1.5,
+      0.20000000298023224
+     ]
+    ],
+    "radius": 2.009975124520722,
+    "height": 1.5,
+    "footprint_pts": 8
+   },
+   "lfm": "assets/polyfork/p_iron_fence.lfm",
+   "col": "assets/polyfork/p_iron_fence.col.json",
+   "preview_glb": "assets/polyfork/preview/p_iron_fence.glb",
+   "thumb": "assets/polyfork/thumbs/p_iron_fence.png",
+   "meta": "assets/polyfork/meta/p_iron_fence.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "prop"
+  },
+  {
+   "key": "p_cemetery_gate",
+   "polyfork_id": "arched-cemetery-gate-bdca7c",
+   "name": "Arched Cemetery Gate",
+   "category": "prop",
+   "role": "gate",
+   "kit": "halloween-night-46ade4",
+   "triangles": 904,
+   "size_m": {
+    "x": 4,
+    "y": 3.74,
+    "z": 0.61
+   },
+   "palette_src": [
+    {
+     "hex": "#150e0c",
+     "share": 0.717
+    },
+    {
+     "hex": "#a89c9a",
+     "share": 0.144
+    },
+    {
+     "hex": "#b5a9a7",
+     "share": 0.061
+    },
+    {
+     "hex": "#b1a5a3",
+     "share": 0.039
+    },
+    {
+     "hex": "#594c4d",
+     "share": 0.022
+    },
+    {
+     "hex": "#a19593",
+     "share": 0.01
+    }
+   ],
+   "has_rig": true,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/arched-cemetery-gate-bdca7c",
+   "glb_url": "https://polyfork.dev/cdn/arched-cemetery-gate-bdca7c.glb",
+   "glb_sha256": "20261a052d54f6cc14f6b2af9971b6d94b5e21df57cd5f4babdd672cc5dcef66",
+   "thumb_dhash": "3473d1d4c4f4fc0c",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2712,
+   "tris_baked": 904,
+   "palette_theme": [
+    "iron",
+    "rust",
+    "stone",
+    "stone2",
+    "lichen"
+   ],
+   "lum_scale": 0.7,
+   "biomes": [
+    "graveyard",
+    "moor"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -2.0,
+      0.0,
+      -0.3050000071525574
+     ],
+     [
+      2.0,
+      3.740000009536743,
+      0.3050000071525574
+     ]
+    ],
+    "radius": 2.0231225875767045,
+    "height": 3.740000009536743,
+    "footprint_pts": 4
+   },
+   "lfm": "assets/polyfork/p_cemetery_gate.lfm",
+   "col": "assets/polyfork/p_cemetery_gate.col.json",
+   "preview_glb": "assets/polyfork/preview/p_cemetery_gate.glb",
+   "thumb": "assets/polyfork/thumbs/p_cemetery_gate.png",
+   "meta": "assets/polyfork/meta/p_cemetery_gate.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "prop"
+  },
+  {
+   "key": "p_banner_pole",
+   "polyfork_id": "faction-banner-pole-39835b",
+   "name": "Faction Banner Pole",
+   "category": "prop",
+   "role": "banner",
+   "kit": "three-kingdoms-settlements-a-1e817b",
+   "triangles": 766,
+   "size_m": {
+    "x": 2.12,
+    "y": 6.05,
+    "z": 1.57
+   },
+   "palette_src": [
+    {
+     "hex": "#c99e49",
+     "share": 0.319
+    },
+    {
+     "hex": "#69b252",
+     "share": 0.235
+    },
+    {
+     "hex": "#6b4326",
+     "share": 0.219
+    },
+    {
+     "hex": "#987a5a",
+     "share": 0.073
+    },
+    {
+     "hex": "#867b72",
+     "share": 0.065
+    },
+    {
+     "hex": "#6d6660",
+     "share": 0.042
+    }
+   ],
+   "has_rig": false,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/faction-banner-pole-39835b",
+   "glb_url": "https://polyfork.dev/cdn/faction-banner-pole-39835b.glb",
+   "glb_sha256": "f52ed0b8bbc44aa50a0b648346453341ef0daf179325e4ed1837912ecb0bb9fc",
+   "thumb_dhash": "1432323232343232",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 2298,
+   "tris_baked": 766,
+   "palette_theme": [
+    "woodDk",
+    "wood",
+    "murrey",
+    "brass",
+    "stone",
+    "lichen",
+    "iron"
+   ],
+   "lum_scale": 0.6,
+   "biomes": [
+    "village",
+    "camp"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -1.059999942779541,
+      0.0,
+      -0.7852976322174072
+     ],
+     [
+      1.059999942779541,
+      6.050000190734863,
+      0.7852976322174072
+     ]
+    ],
+    "radius": 1.3192013681992967,
+    "height": 6.050000190734863,
+    "footprint_pts": 12
+   },
+   "lfm": "assets/polyfork/p_banner_pole.lfm",
+   "col": "assets/polyfork/p_banner_pole.col.json",
+   "preview_glb": "assets/polyfork/preview/p_banner_pole.glb",
+   "thumb": "assets/polyfork/thumbs/p_banner_pole.png",
+   "meta": "assets/polyfork/meta/p_banner_pole.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "prop"
+  },
+  {
+   "key": "b_market_stall",
+   "polyfork_id": "market-stall-94937d",
+   "name": "Market Stall",
+   "category": "building",
+   "role": "market stall",
+   "kit": "medieval-village-kit-ca0b43",
+   "triangles": 592,
+   "size_m": {
+    "x": 1.96,
+    "y": 2.02,
+    "z": 1.13
+   },
+   "palette_src": [
+    {
+     "hex": "#8c6a4a",
+     "share": 0.284
+    },
+    {
+     "hex": "#7a563d",
+     "share": 0.243
+    },
+    {
+     "hex": "#6f4e37",
+     "share": 0.108
+    },
+    {
+     "hex": "#a5423a",
+     "share": 0.101
+    },
+    {
+     "hex": "#7d8a5a",
+     "share": 0.095
+    },
+    {
+     "hex": "#9a3b32",
+     "share": 0.054
+    }
+   ],
+   "has_rig": false,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/market-stall-94937d",
+   "glb_url": "https://polyfork.dev/cdn/market-stall-94937d.glb",
+   "glb_sha256": "0b64e308814f83ac98769b4a50d4b277c6ced7183751e941ed6b3b2d03a4af35",
+   "thumb_dhash": "e6d6ace0e8f8b84d",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 1776,
+   "tris_baked": 592,
+   "palette_theme": [
+    "woodDk",
+    "wood",
+    "murrey",
+    "buff",
+    "linen",
+    "woolBrown",
+    "rope"
+   ],
+   "lum_scale": 0.7,
+   "biomes": [
+    "village"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -0.9800000190734863,
+      0.0,
+      -0.5659999847412109
+     ],
+     [
+      0.9800000190734863,
+      2.019999964237213,
+      0.5659999847412109
+     ]
+    ],
+    "radius": 1.1317049174193266,
+    "height": 2.019999964237213,
+    "footprint_pts": 4
+   },
+   "lfm": "assets/polyfork/b_market_stall.lfm",
+   "col": "assets/polyfork/b_market_stall.col.json",
+   "preview_glb": "assets/polyfork/preview/b_market_stall.glb",
+   "thumb": "assets/polyfork/thumbs/b_market_stall.png",
+   "meta": "assets/polyfork/meta/b_market_stall.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "building"
+  },
+  {
+   "key": "b_timber_barn",
+   "polyfork_id": "timber-barn-90b3ce",
+   "name": "Timber Barn",
+   "category": "building",
+   "role": "barn",
+   "kit": "medieval-village-kit-ca0b43",
+   "triangles": 1382,
+   "size_m": {
+    "x": 4,
+    "y": 5.35,
+    "z": 6.91
+   },
+   "palette_src": [
+    {
+     "hex": "#9f7b59",
+     "share": 0.336
+    },
+    {
+     "hex": "#473427",
+     "share": 0.232
+    },
+    {
+     "hex": "#856850",
+     "share": 0.229
+    },
+    {
+     "hex": "#dbcfb2",
+     "share": 0.091
+    },
+    {
+     "hex": "#44434b",
+     "share": 0.041
+    },
+    {
+     "hex": "#31333b",
+     "share": 0.038
+    }
+   ],
+   "has_rig": true,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/timber-barn-90b3ce",
+   "glb_url": "https://polyfork.dev/cdn/timber-barn-90b3ce.glb",
+   "glb_sha256": "d31775fb215e653a7443e707264a06fba7e6fcd48a6f6187155f91e2fa16e8fe",
+   "thumb_dhash": "ccccc2a6d0d0e172",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 4146,
+   "tris_baked": 1382,
+   "palette_theme": "BUILD",
+   "lum_scale": 0.7,
+   "biomes": [
+    "village"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -2.0,
+      0.0,
+      -3.4472707701408876
+     ],
+     [
+      2.0,
+      5.3499999105930325,
+      3.4472707701408876
+     ]
+    ],
+    "radius": 3.985432945448681,
+    "height": 5.3499999105930325,
+    "footprint_pts": 10
+   },
+   "lfm": "assets/polyfork/b_timber_barn.lfm",
+   "col": "assets/polyfork/b_timber_barn.col.json",
+   "preview_glb": "assets/polyfork/preview/b_timber_barn.glb",
+   "thumb": "assets/polyfork/thumbs/b_timber_barn.png",
+   "meta": "assets/polyfork/meta/b_timber_barn.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "building"
+  },
+  {
+   "key": "b_watchtower",
+   "polyfork_id": "watchtower-140f78",
+   "name": "Watchtower",
+   "category": "building",
+   "role": "tower",
+   "kit": "medieval-village-kit-ca0b43",
+   "triangles": 1736,
+   "size_m": {
+    "x": 3.61,
+    "y": 9.45,
+    "z": 4.56
+   },
+   "palette_src": [
+    {
+     "hex": "#6f4e37",
+     "share": 0.335
+    },
+    {
+     "hex": "#8c6a4a",
+     "share": 0.29
+    },
+    {
+     "hex": "#b89b72",
+     "share": 0.22
+    },
+    {
+     "hex": "#e8dcc0",
+     "share": 0.054
+    },
+    {
+     "hex": "#9a3b32",
+     "share": 0.04
+    },
+    {
+     "hex": "#333c46",
+     "share": 0.036
+    }
+   ],
+   "has_rig": true,
+   "ik_type": null,
+   "licence": "Polyfork free low-poly: commercial use, no attribution",
+   "page": "https://polyfork.dev/asset/watchtower-140f78",
+   "glb_url": "https://polyfork.dev/cdn/watchtower-140f78.glb",
+   "glb_sha256": "b938d9ff91874dfbd03172c6334ae015d65b05ace6e6efd67f732c1129b901b5",
+   "thumb_dhash": "3271713032707172",
+   "origin": "polyfork-batch3",
+   "version": 1,
+   "variant_of": null,
+   "states": [
+    "static"
+   ],
+   "verts_baked": 5208,
+   "tris_baked": 1736,
+   "palette_theme": "BUILD",
+   "lum_scale": 0.8,
+   "biomes": [
+    "highland",
+    "village"
+   ],
+   "collision": {
+    "aabb": [
+     [
+      -1.8049999475479126,
+      0.0,
+      -2.27956878952682
+     ],
+     [
+      1.8049999475479126,
+      9.449999809265137,
+      2.27956878952682
+     ]
+    ],
+    "radius": 2.907655185339682,
+    "height": 9.449999809265137,
+    "footprint_pts": 7
+   },
+   "lfm": "assets/polyfork/b_watchtower.lfm",
+   "col": "assets/polyfork/b_watchtower.col.json",
+   "preview_glb": "assets/polyfork/preview/b_watchtower.glb",
+   "thumb": "assets/polyfork/thumbs/b_watchtower.png",
+   "meta": "assets/polyfork/meta/b_watchtower.json",
+   "baked": {
+    "ao": "vertex Col.a",
+    "cavity": "aBn.w",
+    "origin": "ground y=0",
+    "up": "+Y",
+    "front": "+Z",
+    "units": "metres"
+   },
+   "added": "2026-11-12",
+   "class": "building"
+  }
+ ],
+ "count": 62
+}

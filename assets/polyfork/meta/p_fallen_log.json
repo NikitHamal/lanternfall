@@ -1,0 +1,87 @@
+{
+ "key": "p_fallen_log",
+ "polyfork_id": "fallen-log-1685fb",
+ "name": "Fallen Log",
+ "category": "prop",
+ "role": "log (fen/pine)",
+ "kit": "nature-forest-kit-f29d6a",
+ "triangles": 484,
+ "size_m": {
+  "x": 3.09,
+  "y": 0.9,
+  "z": 0.7
+ },
+ "palette_src": [
+  {
+   "hex": "#8c6a47",
+   "share": 0.603
+  },
+  {
+   "hex": "#a5855e",
+   "share": 0.314
+  },
+  {
+   "hex": "#c2a479",
+   "share": 0.083
+  }
+ ],
+ "has_rig": false,
+ "ik_type": null,
+ "licence": "Polyfork free low-poly: commercial use, no attribution",
+ "page": "https://polyfork.dev/asset/fallen-log-1685fb",
+ "glb_url": "https://polyfork.dev/cdn/fallen-log-1685fb.glb",
+ "glb_sha256": "5febe55e615a4600ea5404297945b55ef4885de9041291febe458ca7ac0d3b62",
+ "thumb_dhash": "0030cf80f83e0100",
+ "origin": "polyfork-batch3",
+ "version": 1,
+ "variant_of": null,
+ "states": [
+  "static"
+ ],
+ "verts_baked": 1452,
+ "tris_baked": 484,
+ "palette_theme": [
+  "woodDk",
+  "wood",
+  "peat",
+  "root",
+  "turf"
+ ],
+ "lum_scale": 1.0,
+ "biomes": [
+  "highland",
+  "fen"
+ ],
+ "collision": {
+  "aabb": [
+   [
+    -1.5425145626068115,
+    0.0,
+    -0.3512793183326721
+   ],
+   [
+    1.5425145626068115,
+    0.8975508809089661,
+    0.3512793183326721
+   ]
+  ],
+  "radius": 1.5820076913031587,
+  "height": 0.8975508809089661,
+  "footprint_pts": 12
+ },
+ "lfm": "assets/polyfork/p_fallen_log.lfm",
+ "col": "assets/polyfork/p_fallen_log.col.json",
+ "preview_glb": "assets/polyfork/preview/p_fallen_log.glb",
+ "thumb": "assets/polyfork/thumbs/p_fallen_log.png",
+ "meta": "assets/polyfork/meta/p_fallen_log.json",
+ "baked": {
+  "ao": "vertex Col.a",
+  "cavity": "aBn.w",
+  "origin": "ground y=0",
+  "up": "+Y",
+  "front": "+Z",
+  "units": "metres"
+ },
+ "added": "2026-11-12",
+ "class": "prop"
+}

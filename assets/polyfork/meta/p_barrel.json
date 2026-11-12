@@ -1,0 +1,94 @@
+{
+ "key": "p_barrel",
+ "polyfork_id": "wooden-barrel-ab50ca",
+ "name": "Wooden Barrel",
+ "category": "prop",
+ "role": "barrel",
+ "kit": "nature-forest-kit-f29d6a",
+ "triangles": 540,
+ "size_m": {
+  "x": 0.6,
+  "y": 0.9,
+  "z": 0.58
+ },
+ "palette_src": [
+  {
+   "hex": "#a5855e",
+   "share": 0.363
+  },
+  {
+   "hex": "#57544e",
+   "share": 0.311
+  },
+  {
+   "hex": "#c2a479",
+   "share": 0.17
+  },
+  {
+   "hex": "#3a2a1e",
+   "share": 0.078
+  },
+  {
+   "hex": "#75563b",
+   "share": 0.078
+  }
+ ],
+ "has_rig": false,
+ "ik_type": null,
+ "licence": "Polyfork free low-poly: commercial use, no attribution",
+ "page": "https://polyfork.dev/asset/wooden-barrel-ab50ca",
+ "glb_url": "https://polyfork.dev/cdn/wooden-barrel-ab50ca.glb",
+ "glb_sha256": "c5308391c0822d5e89653a52e2e21b86a53f748e77ee8063099422c94fff2758",
+ "thumb_dhash": "6161e0e0c0616132",
+ "origin": "polyfork-batch3",
+ "version": 1,
+ "variant_of": null,
+ "states": [
+  "static"
+ ],
+ "verts_baked": 1620,
+ "tris_baked": 540,
+ "palette_theme": [
+  "woodDk",
+  "wood",
+  "iron",
+  "rust",
+  "leatherDk"
+ ],
+ "lum_scale": 1.0,
+ "biomes": [
+  "village"
+ ],
+ "collision": {
+  "aabb": [
+   [
+    -0.30000001192092896,
+    0.0,
+    -0.29247838258743286
+   ],
+   [
+    0.30000001192092896,
+    0.8999999761581421,
+    0.29247838258743286
+   ]
+  ],
+  "radius": 0.41897924940683906,
+  "height": 0.8999999761581421,
+  "footprint_pts": 12
+ },
+ "lfm": "assets/polyfork/p_barrel.lfm",
+ "col": "assets/polyfork/p_barrel.col.json",
+ "preview_glb": "assets/polyfork/preview/p_barrel.glb",
+ "thumb": "assets/polyfork/thumbs/p_barrel.png",
+ "meta": "assets/polyfork/meta/p_barrel.json",
+ "baked": {
+  "ao": "vertex Col.a",
+  "cavity": "aBn.w",
+  "origin": "ground y=0",
+  "up": "+Y",
+  "front": "+Z",
+  "units": "metres"
+ },
+ "added": "2026-11-12",
+ "class": "prop"
+}

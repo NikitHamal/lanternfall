@@ -134,3 +134,55 @@ No headless browser exists in this sandbox, so the three.js page itself could no
 - Collision proxies are AABB + circle + <=12-point footprint (`*.col.json`), not meshes.
 - Terrain rocks/trees of the game's `gRock/gTree` family have only partial analogues in the Polyfork catalogue (cairn, dead trees, headstones, walls); no heather/bracken/fern.
 - Keep-alive: no molab kernel exists here; a 30 s heartbeat (`/tmp/agentB_hb.sh` pinging the local viewer server, plus a heartbeat thread cell in the notebook) ran instead.
+
+
+---
+
+## Session 3 (Agent B) — ledger bootstrap + batch 3 (nature / village / graveyard gap fill)
+
+### Agent ownership (unchanged, restated)
+Run dirs `/tmp/agentB_run/` (Blender 4.2.3 at `/tmp/agentB_run/blender-4.2.3-linux-x64`, X libs extracted to `/tmp/agentB_run/libs`, numpy/PIL in `/tmp/agentB_run/pylib`); logs `/tmp/agentB_<step>.log`; viewer port file `/tmp/agentB_viewer.port` (8791), pid `/tmp/agentB_viewer.pid`; build dirs `assets_raw/`, `assets_build/`. Rules: never `pkill -f`; never `rm -rf` outside `/tmp/agentB_*` and `assets_build/`; never checkout `main` in the shared worktree.
+
+### Environment
+- **molab notebook is gone**: `https://sb-29b1005f8560826c.sb.molab.run/` answers `HTTP 410` (sandbox retired), so no marimo execute endpoint and no keep-alive was possible. Token stored in `/tmp/marimo.env` (600, untracked). The viewer runs standalone: `python3 viewer/serve.py 8791` (auto-refresh by polling `/index.json`, `Cache-Control: no-store`); `viewer/lanternfall_viewer.py` embeds it when a kernel exists.
+- Blender needed `libXrender/libXi/libGL...`: debs fetched from deb.debian.org and extracted locally (no root), run via `LD_LIBRARY_PATH` wrapper `/tmp/agentB_run/blender.sh`.
+
+### Ledger (new)
+`assets/manifest.json` (62 entries: 45 session-2 bootstrapped with glb_sha256 + thumb_dhash + states from `.lfm` clips, plus 17 new), `assets/coverage.json` (counts by class/kit/biome/role, targets, role gaps). Dedupe rule enforced by `tools/ledger.py` (prints DUPLICATE for polyfork_id / glb_sha256 / thumb_dhash — none found) and `tools/polyfork_fetch_batch.py` (skips covered id/sha).
+Tools added: `tools/polyfork_batch.py` (gap search), `tools/polyfork_fetch_batch.py`, `tools/ledger.py`, `tools/contact_sheet.py`, `tools/batches/batch3.json`; `blender_build_assets.py` now reads `theme` and `lum_scale` per asset from the batch manifest.
+
+### Kit shortlist (recorded before download)
+Nature & Forest (`nature-forest-kit-f29d6a`), Medieval Village (`medieval-village-kit-ca0b43`), Halloween Night (`halloween-night-46ade4`), Dungeon & Crypt (`dungeon-crypt-c27d93`), Three Kingdoms Settlements, Campground & Lake, Cozy Farm, Alpine & Snow. Thumbnails of 22 candidates were inspected (`shots/shortlist_sheet.png`); rejected: reed-bed (sparse), oak-barrel (duplicate role), cattail, stump, haystack (colour/role weak). Search gap: `handcart` → `coverage: poor`, nothing substituted.
+
+### Batch 3 results (17 assets, 11740 baked triangles, all statics, 1 bone)
+| key | polyfork_id | class | kit | tris | role |
+|---|---|---|---|---|---|
+| `p_pine_tall` | tall-pine-tree-ab4108 | prop | nature-forest-kit | 350 | tree (pine highland) |
+| `p_pine_young` | young-pine-0d7695 | prop | nature-forest-kit | 270 | tree (pine highland) |
+| `p_round_bush` | round-bush-cd2ac0 | prop | nature-forest-kit | 573 | bush |
+| `p_boulder` | large-boulder-a29b99 | prop | nature-forest-kit | 566 | rock |
+| `p_fallen_log` | fallen-log-1685fb | prop | nature-forest-kit | 484 | log (fen/pine) |
+| `p_barrel` | wooden-barrel-ab50ca | prop | nature-forest-kit | 540 | barrel |
+| `p_crate` | timber-crate-ba0739 | prop | dungeon-crypt | 588 | crate |
+| `p_lamp_post` | lamp-post-c9e409 | prop | medieval-village-kit | 478 | lantern post |
+| `p_signpost` | trail-signpost-bd29a7 | prop | nature-forest-kit | 420 | signpost |
+| `p_campfire_tripod` | campfire-cook-tripod-d95a1e | prop | nature-forest-kit | 470 | campfire |
+| `p_thorn_bush` | bare-thorn-bush-91a238 | prop | halloween-night | 813 | bush (moor thorn) |
+| `p_iron_fence` | wrought-iron-cemetery-fence-f1a113 | prop | halloween-night | 808 | fence |
+| `p_cemetery_gate` | arched-cemetery-gate-bdca7c | prop | halloween-night | 904 | gate |
+| `p_banner_pole` | faction-banner-pole-39835b | prop | three-kingdoms-settlements-a | 766 | banner |
+| `b_market_stall` | market-stall-94937d | building | medieval-village-kit | 592 | market stall |
+| `b_timber_barn` | timber-barn-90b3ce | building | medieval-village-kit | 1382 | barn |
+| `b_watchtower` | watchtower-140f78 | building | medieval-village-kit | 1736 | tower |
+
+Per asset: `.lfm` + `.col.json` (AABB/radius/<=12-pt footprint) in `assets/polyfork/`, preview GLB in `assets/polyfork/preview/`, thumbnail (runtime-`.lfm` render) in `assets/polyfork/thumbs/`, `meta/<key>.json`. Origin on the ground (y=0), +Y up, real metres. Palette: every vertex snapped to the game palette subset in `THEME`; foliage uses `woodDk/turf/lichen/peat` with `lum_scale 0.12` so pines read dark green instead of khaki; other assets use `lum_scale` 0.6–0.8.
+QA screenshots read this session: `shots/shortlist_sheet.png` (22 candidate thumbs), `shots/viewer_batch3.png` (first bake: geometry on ground, silhouettes right, colours too light/khaki), `shots/viewer_batch3b.png` (after `lum_scale`: gate, barn, boulder, thorn bush OK; foliage still khaki), `shots/viewer_nature.png` (final dark-green pines/bush, OK). Screenshots come from `tools/lfm_sheet.py` (shipped bytes), not from the three.js page (no headless browser).
+
+### Next batch plan
+1. Characters: archer / guard / civilian / caster humanoids from Grimlight Denizens + Medieval Village (has_rig) — retarget idle/walk/run from the rig, author the full state suite in Blender (strafe, turn, aim, draw, release, block, dodge, hit x4, get-up, victory, taunt, spawn).
+2. Fen set: reeds, water props, jetty/boardwalk (Campground & Lake, Coast & Boardwalk), shrine (Dia de Muertos / Japanese shrine hall only if palette fits), cart (gap: none found).
+3. Terrain kits: 64 m tiles with `terrain.json` (`at(x,z)`, `flat_areas`, `scatter`) from Alpine & Snow / Prehistoric Valley / Easter Island terrain class (only 21 free terrain assets exist).
+4. Bake LOD1 for buildings; re-bake preview GLBs for the 45 session-2 assets into `assets/polyfork/preview/` (they are only in git-ignored `assets_build/` today).
+
+### Deferred
+- LOD1 for `b_*` not produced; characters/state suite untouched this batch (statics only); old 45 assets have no committed preview GLB / thumbnail / meta.json; marimo card not reachable (410); CI: `release.yml` only runs on `main`/tags, so no run exists for `assets`.

@@ -1,0 +1,87 @@
+{
+ "key": "p_boulder",
+ "polyfork_id": "large-boulder-a29b99",
+ "name": "Large Boulder",
+ "category": "prop",
+ "role": "rock",
+ "kit": "nature-forest-kit-f29d6a",
+ "triangles": 566,
+ "size_m": {
+  "x": 2.2,
+  "y": 0.66,
+  "z": 1.39
+ },
+ "palette_src": [
+  {
+   "hex": "#6f8f3c",
+   "share": 0.677
+  },
+  {
+   "hex": "#a3a099",
+   "share": 0.212
+  },
+  {
+   "hex": "#3d6b34",
+   "share": 0.111
+  }
+ ],
+ "has_rig": false,
+ "ik_type": null,
+ "licence": "Polyfork free low-poly: commercial use, no attribution",
+ "page": "https://polyfork.dev/asset/large-boulder-a29b99",
+ "glb_url": "https://polyfork.dev/cdn/large-boulder-a29b99.glb",
+ "glb_sha256": "129e0a594f0a4e0a6108ad146b525d11009294bfe361ae60cf6f309730639638",
+ "thumb_dhash": "08e3e08ccae83402",
+ "origin": "polyfork-batch3",
+ "version": 1,
+ "variant_of": null,
+ "states": [
+  "static"
+ ],
+ "verts_baked": 1698,
+ "tris_baked": 566,
+ "palette_theme": [
+  "stone",
+  "stone2",
+  "lichen",
+  "peat",
+  "turf"
+ ],
+ "lum_scale": 0.7,
+ "biomes": [
+  "moor",
+  "highland"
+ ],
+ "collision": {
+  "aabb": [
+   [
+    -1.100000023841858,
+    0.0,
+    -0.6945455968379974
+   ],
+   [
+    1.100000023841858,
+    0.6600000262260435,
+    0.6945455968379974
+   ]
+  ],
+  "radius": 1.3009203044534043,
+  "height": 0.6600000262260435,
+  "footprint_pts": 12
+ },
+ "lfm": "assets/polyfork/p_boulder.lfm",
+ "col": "assets/polyfork/p_boulder.col.json",
+ "preview_glb": "assets/polyfork/preview/p_boulder.glb",
+ "thumb": "assets/polyfork/thumbs/p_boulder.png",
+ "meta": "assets/polyfork/meta/p_boulder.json",
+ "baked": {
+  "ao": "vertex Col.a",
+  "cavity": "aBn.w",
+  "origin": "ground y=0",
+  "up": "+Y",
+  "front": "+Z",
+  "units": "metres"
+ },
+ "added": "2026-11-12",
+ "class": "prop"
+}

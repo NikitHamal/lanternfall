@@ -1,0 +1,92 @@
+{
+ "key": "b_timber_barn",
+ "polyfork_id": "timber-barn-90b3ce",
+ "name": "Timber Barn",
+ "category": "building",
+ "role": "barn",
+ "kit": "medieval-village-kit-ca0b43",
+ "triangles": 1382,
+ "size_m": {
+  "x": 4,
+  "y": 5.35,
+  "z": 6.91
+ },
+ "palette_src": [
+  {
+   "hex": "#9f7b59",
+   "share": 0.336
+  },
+  {
+   "hex": "#473427",
+   "share": 0.232
+  },
+  {
+   "hex": "#856850",
+   "share": 0.229
+  },
+  {
+   "hex": "#dbcfb2",
+   "share": 0.091
+  },
+  {
+   "hex": "#44434b",
+   "share": 0.041
+  },
+  {
+   "hex": "#31333b",
+   "share": 0.038
+  }
+ ],
+ "has_rig": true,
+ "ik_type": null,
+ "licence": "Polyfork free low-poly: commercial use, no attribution",
+ "page": "https://polyfork.dev/asset/timber-barn-90b3ce",
+ "glb_url": "https://polyfork.dev/cdn/timber-barn-90b3ce.glb",
+ "glb_sha256": "d31775fb215e653a7443e707264a06fba7e6fcd48a6f6187155f91e2fa16e8fe",
+ "thumb_dhash": "ccccc2a6d0d0e172",
+ "origin": "polyfork-batch3",
+ "version": 1,
+ "variant_of": null,
+ "states": [
+  "static"
+ ],
+ "verts_baked": 4146,
+ "tris_baked": 1382,
+ "palette_theme": "BUILD",
+ "lum_scale": 0.7,
+ "biomes": [
+  "village"
+ ],
+ "collision": {
+  "aabb": [
+   [
+    -2.0,
+    0.0,
+    -3.4472707701408876
+   ],
+   [
+    2.0,
+    5.3499999105930325,
+    3.4472707701408876
+   ]
+  ],
+  "radius": 3.985432945448681,
+  "height": 5.3499999105930325,
+  "footprint_pts": 10
+ },
+ "lfm": "assets/polyfork/b_timber_barn.lfm",
+ "col": "assets/polyfork/b_timber_barn.col.json",
+ "preview_glb": "assets/polyfork/preview/b_timber_barn.glb",
+ "thumb": "assets/polyfork/thumbs/b_timber_barn.png",
+ "meta": "assets/polyfork/meta/b_timber_barn.json",
+ "baked": {
+  "ao": "vertex Col.a",
+  "cavity": "aBn.w",
+  "origin": "ground y=0",
+  "up": "+Y",
+  "front": "+Z",
+  "units": "metres"
+ },
+ "added": "2026-11-12",
+ "class": "building"
+}

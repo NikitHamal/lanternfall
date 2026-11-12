@@ -5,11 +5,11 @@
   "role": "tree (pine highland)",
   "theme": [
    "woodDk",
-   "peat",
    "turf",
    "lichen",
-   "root"
-  ]
+   "peat"
+  ],
+  "lum_scale": 0.12
  },
  "p_pine_young": {
   "id": "young-pine-0d7695",
@@ -17,22 +17,23 @@
   "role": "tree (pine highland)",
   "theme": [
    "woodDk",
-   "peat",
    "turf",
    "lichen",
-   "root"
-  ]
+   "peat"
+  ],
+  "lum_scale": 0.12
  },
  "p_round_bush": {
   "id": "round-bush-cd2ac0",
   "cat": "prop",
   "role": "bush",
   "theme": [
-   "peat",
+   "woodDk",
    "turf",
    "lichen",
-   "root"
-  ]
+   "peat"
+  ],
+  "lum_scale": 0.12
  },
  "p_boulder": {
   "id": "large-boulder-a29b99",
@@ -44,7 +45,8 @@
    "lichen",
    "peat",
    "turf"
-  ]
+  ],
+  "lum_scale": 0.7
  },
  "p_fallen_log": {
   "id": "fallen-log-1685fb",
@@ -116,7 +118,8 @@
    "rust",
    "lantern",
    "rope"
-  ]
+  ],
+  "lum_scale": 0.7
  },
  "p_thorn_bush": {
   "id": "bare-thorn-bush-91a238",
@@ -128,7 +131,8 @@
    "thorn",
    "peat",
    "rust"
-  ]
+  ],
+  "lum_scale": 0.6
  },
  "p_iron_fence": {
   "id": "wrought-iron-cemetery-fence-f1a113",
@@ -140,7 +144,8 @@
    "stone",
    "stone2",
    "lichen"
-  ]
+  ],
+  "lum_scale": 0.7
  },
  "p_cemetery_gate": {
   "id": "arched-cemetery-gate-bdca7c",
@@ -152,7 +157,8 @@
    "stone",
    "stone2",
    "lichen"
-  ]
+  ],
+  "lum_scale": 0.7
  },
  "p_banner_pole": {
   "id": "faction-banner-pole-39835b",
@@ -166,7 +172,8 @@
    "stone",
    "lichen",
    "iron"
-  ]
+  ],
+  "lum_scale": 0.6
  },
  "b_market_stall": {
   "id": "market-stall-94937d",
@@ -180,18 +187,21 @@
    "linen",
    "woolBrown",
    "rope"
-  ]
+  ],
+  "lum_scale": 0.7
  },
  "b_timber_barn": {
   "id": "timber-barn-90b3ce",
   "cat": "building",
   "role": "barn",
-  "theme": null
+  "theme": null,
+  "lum_scale": 0.7
  },
  "b_watchtower": {
   "id": "watchtower-140f78",
   "cat": "building",
   "role": "tower",
-  "theme": null
+  "theme": null,
+  "lum_scale": 0.8
  }
 }
