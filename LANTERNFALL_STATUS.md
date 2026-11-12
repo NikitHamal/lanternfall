@@ -68,3 +68,17 @@ Deferred / known: monster sheets (b) still not inspected individually (only seen
 
 CI: run 43092334901 (commit 86d49c9) - Windows/Linux/macOS all success, release v1.2.0 published with 3 assets. (Earlier runs a5c3e5e / c2b294f failed on a double->float narrowing in ui.cpp, fixed in 86d49c9.)
 Combat capture: done (combat_tpv / combat_fpv via --bot --ff).
+
+## v1.3.0 - integration & feel (this session)
+Merged `origin/assets` (8e8dc2c) first (clean merge, Polyfork kit under `assets/polyfork/`, `assets/manifest.json` is the catalogue; there is no `catalog.json` and no entry is flagged `playable`, so "playable" = rigged biped).
+Done:
+- `src/settings.{h,cpp}`: sensitivity, invert Y, FOV, arc assist, reticle style (cross/dot/ring/brackets), camera shake, reduce motion, colourblind reticle (blue/orange), hold-vs-toggle aim, subtitles, master volume, last hero, 8 rebindable actions -> `save/settings.json` (written on every change). Options screen on the title (OPTIONS / key O) with click-to-rebind.
+- `src/roster.{h,cpp}`: 18 characters (6 native + 6 Polyfork heroes + 6 Polyfork bipeds: Bloom Elemental, Bog Fiend, Bell Warden, Cathedral Statue, Root Colossus ...) with role, weapon, six stats, one active (E) + one passive. Only current + next figure resident, previous released (`figLoad/figFree`). Bones resolved by name so the 28-bone native and 25-bone Polyfork rigs both work; rigs lacking an `aimed` clip fall back to `attack`. Quadrupeds / wisp excluded (no hands for a bow).
+- Hero select (title CHOOSE HERO / key 4): real 3D model on a pedestal, turntable, idle -> draw/release -> victory loop, stat bars, keyboard / mouse / wheel / gamepad bumpers, persisted.
+- FPV view-model rewritten: bow with limb flex + string, arrow resting at the grip, gloved bow hand, draw hand hooked on the string (arc, release finger-open, string snap overshoot), over-hold tremble. Stuck arrows now embed (tip sunk 0.12-0.34 m, sink out at end of life) - fixes the "floating arrow".
+- HUD: new reticle (4 styles, tightens + recolours at sweet spot), draw strength moved to a slim bar at bottom centre, per-view density (FPV minimal, TPV full + compass, free = INSPECT), quiver pips, ability cooldown, kill feed capped at 4, 8px grid + 3% safe margin.
+- Gameplay identity: draw speed, stability, damage, move speed, HP, quiver (regen 1/1.1 s), 7 abilities (volley, bulwark, surge, ember burst, tonic, frost nova, quake), passives.
+- Gamepad (sticks, triggers, A/Y/X), `--scene title|hero|fpv|aim|moor|highlands|fen`, `--out`, `--hero N`.
+- Worlds: three biomes (ASHEN MOOR, PINE HIGHLANDS, DROWNED FEN) are mapped onto the existing five reach palettes (fog, ground, grass, props, drizzle); `T` cycles them in play, `1/2/3` in hero select.
+Deferred (not done): 64 m chunked 4-LOD terrain, heightfield stitching, water-depth plane, GPU-instanced Polyfork foliage/buildings (the assets exist but are not placed; there is no terrain kit in the merged branch), 15/30/50 m lanes + wind flags, cover/verticality, day/night toggle, foot IK / turn-in-place / coyote time, directional hit-react clips from the Polyfork `hit_f/l/r` and `dodge` clips, five-variant death for the player, combat capture.
+QA shots read: title, hero, fpv, aim, moor, highlands, fen (1280x720, llvmpipe via molab Xvfb).
