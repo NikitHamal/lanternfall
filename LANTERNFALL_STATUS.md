@@ -239,3 +239,7 @@ QA shots Read: a_default, b_map, c_mtn (camera inside a canopy), c_horse, c_fall
 Not done / deferred: remaining pale slivers at both sides of the plunge point on some falls (upper-channel water level cells beside the lip); river bank mud strip + flow-map normals; triplanar rock; animal bodies still procedural (need Blender); NPC stair pathing for patrols (patrols are scripted on decks); gate audit for 72 settlements (palisaded villages have gates, hamlets are open); chunk streaming (the 4 km world is fully resident: 16 MB height + 64 MB water texture CPU copy); terrain biomes beyond the five existing zones; day/night capture of the new map; no combat capture.
 
 CI: main run 43264902172 (commit 9bfec5f) green (Windows/Linux/macOS build matrix); tag v2.5.0 run 43264905990 was still *queued* after ~9 min of polling, so release assets were NOT yet published when this session ended (re-check https://github.com/NikitHamal/lanternfall/releases/tag/v2.5.0). Push count this session: 8 pushes to main + 1 tag.
+
+## v2.6.0 - "Living Fauna" (this session) - IN PROGRESS
+Env: molab URL returned 410 (dead on arrival, no heartbeat). This box has passwordless sudo: `apt-get install xvfb libgl1-mesa-dri libx11-dev ...` works directly, cmake via pip. Local Release build + Xvfb llvmpipe captures. No Blender binary.
+Pillar: animals (realism, calm approach, mount) - the user's complaint "animals worst, always running away, cannot go near or mount".
