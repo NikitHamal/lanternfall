@@ -196,15 +196,15 @@ vec4 leafTex(vec2 uv, float needle){
   float pxw = max(fwidth(uv.x), fwidth(uv.y));
   if (needle > .5) {
     float p = (uv.x-.5)*2., q = uv.y, ap = abs(p), side = step(0., p);
-    float sv = q*15. - ap*4.2 + side*.5; float idx = floor(sv); float ln = abs(fract(sv) - .5);
-    float wd = mix(.22, .12, ap); float aa = pxw*17. + .03;
+    float sv = q*27. - ap*5.4 + side*.5; float idx = floor(sv); float ln = abs(fract(sv) - .5);
+    float wd = mix(.2, .1, ap); float aa = pxw*30. + .03;
     float m = 1. - smoothstep(wd, wd + aa, ln);
-    float env = .96 - .62*q; float rl = .62 + .38*lh12(vec2(idx, side + 3.));
+    float env = .8 - .5*q; float rl = .55 + .45*lh12(vec2(idx, side + 3.));
     m *= 1. - smoothstep(env*rl - .05, env*rl, ap);
     float twig = 1. - smoothstep(.022, .04 + pxw*2., ap);
     return vec4(max(m, twig), .3 + .6*ap + .25*q, lh12(vec2(idx, side)), twig*.7);
   }
-  vec2 g = uv*5.; vec2 ci = floor(g); float cov = 0., bz = -1.; vec3 res = vec3(0., .5, 0.); float vein = 0.; float fw = clamp(pxw*5.*1.4, .015, .45);
+  vec2 g = uv*6.6; vec2 ci = floor(g); float cov = 0., bz = -1.; vec3 res = vec3(0., .5, 0.); float vein = 0.; float fw = clamp(pxw*6.6*1.4, .015, .45);
   for (int j = -1; j <= 1; j++) for (int i = -1; i <= 1; i++) {
     vec2 c = ci + vec2(float(i), float(j)); float z = lh12(c + 5.5);
     vec2 ctr = c + .5 + (vec2(lh12(c), lh12(c + 7.7)) - .5)*.8;

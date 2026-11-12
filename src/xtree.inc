@@ -70,10 +70,10 @@ void buildOak(MB& b, int variant) {
   T.trunk(3.1f, 0.5f, 0.3f, 0.5f, 5, 8, 1.7f);
   for (int k = 0; k < 7; k++) { float a = k * 2.399f + T.g.r(-0.2f, 0.2f), hy = 1.9f + 1.5f * (k / 6.f) + (k == 0 ? -0.6f : 0.f), el = T.g.r(0.45f, 0.95f); if (k == 6) el = 1.2f;
     V3 d{std::cos(a) * std::cos(el), std::sin(el), std::sin(a) * std::cos(el)}; T.limb({0, hy, 0}, d, T.g.r(3.9f, 5.0f), 0.24f, 0); }
-  canopyCards(T, b, 300, 1.7f, C(0x436f2a), C(0x6b9a3a), 5 + variant, 0.6f);
+  canopyCards(T, b, 380, 1.7f, C(0x35602a), C(0x5f8f35), 5 + variant, 0.6f);
 }
 void buildPine(MB& b, int young) {
-  Sty bk = sty(0x4a3626, 9, 0.5f, 4.f); TreeGen T(b, 31 + young * 7, bk); float H = young ? 8.f : 15.5f, y0 = young ? 1.3f : 2.4f; V3 cA = C(0x1f4a2a), cB = C(0x2f6236);
+  Sty bk = sty(0x4a3626, 9, 0.5f, 4.f); TreeGen T(b, 31 + young * 7, bk); float H = young ? 8.f : 15.5f, y0 = young ? 1.3f : 2.4f; V3 cA = C(0x20401f), cB = C(0x3a5f2c);
   T.trunk(H, young ? 0.26f : 0.46f, 0.05f, 0.5f, young ? 4 : 6, 7, 1.5f);
   TRng g(901 + young); float step = young ? 0.62f : 0.86f; int w = 0;
   for (float y = y0; y < H - 0.5f; y += step, w++) {
