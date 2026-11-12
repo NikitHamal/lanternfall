@@ -79,10 +79,14 @@ static void addCollider(int k, float x, float z, float ry, float sx, float oy) {
     case K_CHAPEL: for (int i = -1; i <= 1; i++) addLocal(x, z, ry, 0, i * 2.2f, 2.3f, sx); break;
     case K_WATCH: addLocal(x, z, ry, 0, 0, 2.4f, sx); break; case K_STOWER: case K_BEACON: case K_RGABLE: addLocal(x, z, ry, 0, 0, 2.5f, sx); break;
     case K_RWALL: addLocal(x, z, ry, -1.2f, 0, 1.0f, sx); addLocal(x, z, ry, 1.2f, 0, 1.0f, sx); break;
-    case K_WTOWER: addCircle(x, z, 3.9f * sx); break;
+    case K_WTOWER: addCircle(x, z, 4.45f * sx); break;
     case K_GATE: addLocal(x, z, ry, -4.6f, 0, 2.7f, sx); addLocal(x, z, ry, 4.6f, 0, 2.7f, sx); addLocal(x, z, ry, -3.6f, 0, 1.4f, sx); addLocal(x, z, ry, 3.6f, 0, 1.4f, sx); break;
-    case K_KEEP: addCircle(x, z, 8.6f * sx); break; case K_HOUSE: for (int i = -1; i <= 1; i++) addLocal(x, z, ry, i * 2.4f, 0, 2.5f, sx); break; case K_LONG: for (int i = -1; i <= 1; i++) addLocal(x, z, ry, i * 4.f, 0, 3.4f, sx); break;
-    case K_PALI: addLocal(x, z, ry, -1.f, 0, 0.7f, sx); addLocal(x, z, ry, 1.f, 0, 0.7f, sx); break; case K_TENT: addCircle(x, z, 2.1f * sx); break; case K_HAY: addCircle(x, z, 1.3f * sx); break; case K_MILL: addCircle(x, z, 3.2f * sx); break;
+    case K_KEEP: for (int i = -2; i <= 2; i++) for (int j = -2; j <= 2; j++) if (std::max(std::abs(i), std::abs(j)) == 2) addLocal(x, z, ry, i * 4.4f, j * 4.4f, 3.5f, sx); break;   // v2.8: ring over the whole 22 m footprint (was one 8.6 m circle)
+    case K_HOUSE: for (int i = -1; i <= 2; i++) for (int j = -1; j <= 1; j += 2) addLocal(x, z, ry, i * 2.0f - 1.0f, j * 1.45f, 2.55f, sx); break;
+    case K_LONG: for (int i = -2; i <= 2; i++) for (int j = -1; j <= 1; j += 2) addLocal(x, z, ry, i * 2.6f, j * 1.7f, 2.9f, sx); break;
+    case K_LOG: addLocal(x, z, ry, -1.2f, 0, 0.5f, sx); addLocal(x, z, ry, 0, 0, 0.5f, sx); addLocal(x, z, ry, 1.2f, 0, 0.5f, sx); break; case K_GRAVE: addCircle(x, z, 0.4f * sx); break; case K_THORN: addCircle(x, z, 0.55f * sx); break;
+    case K_SFENCE: addLocal(x, z, ry, -0.9f, 0, 0.4f, sx); addLocal(x, z, ry, 0.9f, 0, 0.4f, sx); break; case K_TORCH: case K_SIGN: addCircle(x, z, 0.2f * sx); break; case K_ORE: addCircle(x, z, 0.9f * sx); break;
+    case K_PALI: addLocal(x, z, ry, -1.f, 0, 0.7f, sx); addLocal(x, z, ry, 1.f, 0, 0.7f, sx); break; case K_TENT: addCircle(x, z, 2.1f * sx); break; case K_HAY: addCircle(x, z, 1.55f * sx); break; case K_MILL: addCircle(x, z, 3.2f * sx); break;
     default: break;
   }
 }

@@ -125,6 +125,7 @@ void tickAttack(Npc& n, float dt, bool vsPlayer, Npc* tn) {
 #include "xfauna.inc"
 #include "xtown.inc"
 #include "xanim.inc"
+#include "xsolid.inc"
 void onNewNpcSlot(int i) { KEX[i] = NpcK(); SCH[i] = Sch(); }
 void aiHuman(Npc& n, float dt, float pd) {
   int nIdx = (int)(&n - npcs);
@@ -375,8 +376,8 @@ void update(float dtReal, const pl::Input& inRaw) {
     else {
       float depth = 0; bool wet = (!CI.in && inWater(P.x, P.z, &depth)); P.swim = wet && depth > 1.15f; if (wet && !P.swim) speed *= 1.f - 0.3f * clampf(depth, 0, 1.1f); if (P.swim) speed = 2.2f * hr.move;
       float tvx = (fwdx * mz + rx * mx), tvz = (fwdz * mz + rz * mx); float l = std::sqrt(tvx * tvx + tvz * tvz); if (l > 1.f) { tvx /= l; tvz /= l; } tvx *= speed; tvz *= speed; float k = std::min(1.f, dt * (P.ground ? 11.f : 3.f)); P.vx += (tvx - P.vx) * k; P.vz += (tvz - P.vz) * k;
-      float nx = P.x + P.vx * dt, nz = P.z + P.vz * dt; collideAny(nx, nz, 0.42f, P.y); float g0 = gH(P.x, P.z), g1 = gH(nx, nz); bool okStep = !(P.ground && g1 - P.y > 0.55f + 0.0f && (g1 - g0) / std::max(0.05f, std::sqrt(dist2(nx, nz, P.x, P.z))) > 1.15f);
-      if (!okStep) { float tx2 = P.x + P.vx * dt, tz2 = P.z; collideAny(tx2, tz2, 0.42f, P.y); float gx = gH(tx2, tz2); if (!(P.ground && gx - P.y > 0.55f && (gx - g0) / std::max(0.05f, std::fabs(tx2 - P.x)) > 1.15f)) { nx = tx2; nz = tz2; } else { float tx3 = P.x, tz3 = P.z + P.vz * dt; collideAny(tx3, tz3, 0.42f, P.y); float gz = gH(tx3, tz3); if (!(P.ground && gz - P.y > 0.55f && (gz - g0) / std::max(0.05f, std::fabs(tz3 - P.z)) > 1.15f)) { nx = tx3; nz = tz3; } else { nx = P.x; nz = P.z; P.vx = P.vz = 0; } } }
+      float nx = P.x + P.vx * dt, nz = P.z + P.vz * dt; collideAny(nx, nz, 0.42f, P.y); creaturePush(nx, nz, 0.4f, P.y, true); collideAny(nx, nz, 0.42f, P.y); float g0 = gH(P.x, P.z), g1 = gH(nx, nz); bool okStep = !(P.ground && g1 - P.y > 0.55f + 0.0f && (g1 - g0) / std::max(0.05f, std::sqrt(dist2(nx, nz, P.x, P.z))) > 1.15f);
+      if (!okStep) { float tx2 = P.x + P.vx * dt, tz2 = P.z; collideAny(tx2, tz2, 0.42f, P.y); creaturePush(tx2, tz2, 0.4f, P.y, true); float gx = gH(tx2, tz2); if (!(P.ground && gx - P.y > 0.55f && (gx - g0) / std::max(0.05f, std::fabs(tx2 - P.x)) > 1.15f)) { nx = tx2; nz = tz2; } else { float tx3 = P.x, tz3 = P.z + P.vz * dt; collideAny(tx3, tz3, 0.42f, P.y); float gz = gH(tx3, tz3); if (!(P.ground && gz - P.y > 0.55f && (gz - g0) / std::max(0.05f, std::fabs(tz3 - P.z)) > 1.15f)) { nx = tx3; nz = tz3; } else { nx = P.x; nz = P.z; P.vx = P.vz = 0; } } }
       P.x = std::max(-HALF + 6, std::min(HALF - 6, nx)); P.z = std::max(-HALF + 6, std::min(HALF - 6, nz)); P.speed = std::sqrt(P.vx * P.vx + P.vz * P.vz);
       float gnd = gH(P.x, P.z); if (P.swim) { float lvl = waterAt(P.x, P.z); float want = lvl - 1.2f + 0.05f * std::sin(tAbs * 2.2f); P.y += (want - P.y) * std::min(1.f, dt * 6.f); P.vy = 0; P.ground = false; }
       else { if (P.ground) { if (gnd < P.y - 0.02f) { float fall = P.y - gnd; if (fall < 0.7f) P.y = gnd; else { P.ground = false; } } else P.y = gnd; } if (!P.ground) { P.vy -= 15.5f * dt; P.y += P.vy * dt; if (P.y <= gnd) { P.y = gnd; if (P.vy < -14.f) damagePlayer(std::min(40.f, (-P.vy - 14.f) * 4.f), P.x, P.z); P.vy = 0; P.ground = true; } } else if (gnd > P.y) { P.y = gnd; } }
@@ -387,7 +388,7 @@ void update(float dtReal, const pl::Input& inRaw) {
     P.hurtT = std::max(0.f, P.hurtT - dt); P.stagT = std::max(0.f, P.stagT - dt); if (P.regenWait > 0) P.regenWait -= dt; else P.hp = std::min(P.maxHp, P.hp + dt * 2.5f);
   }
   if (!CI.in && prevHour < 20.f && clockH >= 20.f && clockH < 21.f) startKingdomSiege(false);
-  prevHour = clockH; arrowsUpdate(dt); cellUpdate(dt); updateKingdom(dt, in); faunaUpdate(dt); townTick(dt);
+  prevHour = clockH; arrowsUpdate(dt); cellUpdate(dt); updateKingdom(dt, in); faunaUpdate(dt); solidStep(dt); townTick(dt);
   for (int k = 0; k < 3; k++) bounty[k] = std::max(0.f, bounty[k] - dt * (huntCount > 0 ? 0.04f : 0.6f));
   { float mb = std::max(bounty[0], std::max(bounty[1], bounty[2])); H.wanted = mb > 12.f ? 1 + (int)(mb / 55.f) : 0; if (H.wanted > 4) H.wanted = 4; }
   H.weapon = B.weapon; H.draw = B.draw; H.arrows = B.arrows; H.gold = gold; H.inside = CI.in; H.zoom = B.zoom; H.hitT = std::max(0.f, H.hitT - dt);

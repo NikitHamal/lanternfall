@@ -128,8 +128,7 @@ void buildHuman(int vi, MB& b) {
     for (int f = 0; f < 4; f++) { float fz = hz - 0.026f + f * 0.0175f; float fl = f == 1 || f == 2 ? 0.05f : 0.044f; V3 p0{sd * 0.965f, ay - 0.004f, fz}, p1{sd * (0.965f + fl), ay - 0.01f, fz + 0.001f}; tube(b, p0, p1, 0.008f, 0.006f, 5, hsx); }
     tube(b, V3{sd * 0.91f, ay - 0.006f, hz + 0.034f}, V3{sd * 0.96f, ay - 0.012f, hz + 0.06f}, 0.0095f, 0.0072f, 5, hsx);   // thumb
     skinR(b, s0, kArm(sd));
-    s0 = b.v->size(); blob(b, sd * 0.245f, ay + 0.002f, az(0.245f), ar == 3 ? 0.095f : 0.068f * ag, ar == 3 ? 0.078f : 0.066f * ag, ar == 3 ? 0.085f : 0.07f * ag, 10, 6, ar == 3 ? plateS : ar == 2 ? mailS : ar == 1 ? quiltS : clothS, 41 + sd, 0.f);
-    { Sty ps = ar == 3 ? plateS : ar == 2 ? mailS : ar == 1 ? quiltS : clothS; (void)ps; }
+    s0 = b.v->size(); { Sty ps = ar == 3 ? plateS : ar == 2 ? mailS : ar == 1 ? quiltS : clothS; ps.col = C(uc); blob(b, sd * 0.245f, ay + 0.002f, az(0.245f), ar == 3 ? 0.095f : 0.068f * ag, ar == 3 ? 0.078f : 0.066f * ag, ar == 3 ? 0.085f : 0.07f * ag, 10, 6, ps, 41 + sd, 0.f); }
     skinR(b, s0, A);
     if (ar == 3) { s0 = b.v->size(); Sty vb = plateS; vb.col = C(0x9ca2aa); Stn vk[3] = {{sd * 0.6f, ay, az(0.6f), 0.056f, 0.056f}, {sd * 0.72f, ay, az(0.72f), 0.048f, 0.048f}, {sd * 0.86f, ay, az(0.86f), 0.04f, 0.04f}}; loft(b, vk, 3, 2, 10, plateS, hShade(0x9ca2aa, 0.7f, 1.f, 0.08f, 10.f)); skinR(b, s0, A); }
   }
@@ -141,7 +140,7 @@ void buildHuman(int vi, MB& b) {
     loft(b, lk, 7, 3, 14, plate ? clothS : clothS, hShade(lc, 0.6f, 0.9f, 0.2f, 16.f)); skinR(b, s0, Lg);
     if (sp.dress == 0 || ar > 0) {
       if (plate) { s0 = b.v->size(); Stn gk[4] = {{lx(0.5f), 0.5f, 0.012f, 0.072f, 0.076f}, {lx(0.38f), 0.38f, 0.004f, 0.072f, 0.078f}, {lx(0.22f), 0.22f, 0.0f, 0.056f, 0.06f}, {lx(0.14f), 0.14f, 0.0f, 0.05f, 0.054f}}; loft(b, gk, 4, 2, 12, plateS, hShade(0x9ca2aa, 0.7f, 1.f, 0.08f, 10.f)); skinR(b, s0, Lg);
-        s0 = b.v->size(); blob(b, lx(0.52f), 0.52f, 0.05f, 0.058f, 0.05f, 0.05f, 9, 6, plateS, 51 + sd, 0.f); skinR(b, s0, Lg); }
+        s0 = b.v->size(); { Sty ks = plateS; ks.col = C(0x9ca2aa); blob(b, lx(0.52f), 0.52f, 0.05f, 0.058f, 0.05f, 0.05f, 9, 6, ks, 51 + sd, 0.f); } skinR(b, s0, Lg); }
     }
     // boot shaft
     s0 = b.v->size(); Stn bk[4] = {{lx(0.36f), 0.36f, 0.0f, 0.058f * lg, 0.062f * lg}, {lx(0.26f), 0.26f, 0.0f, 0.054f * lg, 0.058f * lg}, {lx(0.16f), 0.16f, 0.0f, 0.052f * lg, 0.056f * lg}, {lx(0.1f), 0.1f, 0.0f, 0.052f * lg, 0.058f * lg}};
