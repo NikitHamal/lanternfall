@@ -181,3 +181,10 @@ Deferred: tavern / smithy interiors, residents asleep in beds when the player en
 ## v2.2.0 - Athran-grade fantasy overhaul (this session) - IN PROGRESS
 Env: molab URL returned 410 at tool call 11 (notebook dead before use; no heartbeat started). Rebuilt user-space sysroot (apt-get download -> dpkg -x /tmp/agentA_sys, Xvfb byte-patched), local Release build + llvmpipe captures work (see /tmp/agentA_cap.sh pattern in v2.1 notes).
 Plan: fix double-bow on TPV, FPV bow/aim, rebuild locomotion (walk/run) feel, remove Duel/Steward dead code, then world/art pass (see docs/ROADMAP.md, docs/TODO.md).
+Shipped v2.2.0 ("Living Bodies"):
+- Double bow fixed: `loadFig` builds `ibo2` (index set without triangles whose bones are wL/wR/str/arw, only on rigs that have str/arw bones); `gFigNoBaked` (set in `ex::start`) makes `figDraw` use it. TPV capture b2_tpv shows one bow.
+- Outlined reticle (dot + ticks, bow spread/gold, melee brackets). FPV capture b2_fpv: bow, nocked arrow, draw bar, centre aim marks.
+- `src/xanim.inc`: 8 activity poses (hammer, rake, talk, look, fold arms, drink, stretch, attention) chosen per NPC from schedule phase + time slicing, blended with `FigAnim::fxMode/fxW`; player air tuck / fall spread / landing crouch. Poses verified on the player via `--xcmd side,fxN` (pf1 hammer, pf3 talk, pf5 crossed arms read).
+- Gait review (r_70/75/80 side-view run): stride, lean and arm swing read correctly; no change needed beyond fixes above. Slope foot IK still TODO.
+Unverified in-engine: NPC activity poses on real NPCs (the capture spots lost the NPC), landing crouch visuals. Notebook never connected (410 at tool call 11). QA shots Read: b_tpv, b2_tpv, b2_fpv, r_70, r_75, r_80, a_talk, fy1, fy3, fx1/fx3/fx5 (looked at the wall top - bad camera spot), pf1, pf3, pf5.
+Doc: see docs/TODO.md.

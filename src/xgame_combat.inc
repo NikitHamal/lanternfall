@@ -3,7 +3,7 @@
 enum Zone { Z_TORSO, Z_HEAD, Z_ARM, Z_LEG };
 const float ZMUL[4] = {1.f, 2.6f, 0.6f, 0.5f};
 struct Bow { int weapon = 0, arrows = 30; float draw = 0, rel = -1, regen = 0, zoom = 0, drawT = 0.85f; } B;
-int gold = 0; float bounty[3] = {0, 0, 0}; float dbgSide = 0; bool dbgDrawHold = false; int dbgWalk = 0; int dbgShoot = -1, dbgFrames = 0;
+int gold = 0; float bounty[3] = {0, 0, 0}; float dbgSide = 0; int dbgFx = -1; bool dbgDrawHold = false; int dbgWalk = 0; int dbgShoot = -1, dbgFrames = 0;
 struct DmgTxt { float x = 0, y = 0, z = 0, t = -1; int val = 0, zone = 0; bool kill = false; uint32_t col = 0xffffff; char txt[20] = {0}; } DT[12]; int huntCount = 0; int dtNext = 0;
 struct Arr { bool on = false, stuck = false; V3 p, v, dir, off; float life = 0, dmg = 0; int npc = -1; } ARR[40];
 bool faunaArrow(Arr& a, V3 p0, V3 p1); bool faunaMelee(float dmg, float reach, float ox, float oy, float oz, float fx, float fz);
