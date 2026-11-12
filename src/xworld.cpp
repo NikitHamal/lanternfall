@@ -340,7 +340,7 @@ void generate(uint32_t seed) {
   for (float gz = -HALF + 6; gz < HALF - 6; gz += 4.4f) for (float gx = -HALF + 6; gx < HALF - 6; gx += 4.4f) {
     float x = gx + (rng() - 0.5f) * 4.2f, z = gz + (rng() - 0.5f) * 4.2f; float h = height(x, z); if (h < 1.6f || Wl[ci(cellOf(z), 0, GS - 1) * GS + ci(cellOf(x), 0, GS - 1)] > -1e8f) continue; float rd = roadDist(x, z); if (rd < 6.5f) continue; if (settleNear(x, z, 12) >= 0) continue;
     float sl = slopeAt(x, z); float fm = forestMask(x, z, h); float q = fb(x * 0.0022f + 50, z * 0.0022f, 3, SEED + 41); float r1 = rng();
-    if (sl > 0.95f) { if (r1 < 0.2f && h > 25) { float s = 3.f + rng() * 9.f; Obj* o = put(K_BIGROCK, x, z, rng() * TAU, s, 0.8f + rng() * 0.4f, 0.8f + rng() * 0.35f, 0.8f + rng() * 0.3f, -s * 0.15f); o->sy = s * (0.8f + rng() * 0.8f); } continue; }
+    if (sl > 0.95f) { if (r1 < 0.2f && h > 25) { float s = 3.f + rng() * 5.f; Obj* o = put(K_BIGROCK, x, z, rng() * TAU, s, 0.8f + rng() * 0.4f, 0.8f + rng() * 0.35f, 0.8f + rng() * 0.3f, -s * 0.15f); o->sy = s * (0.8f + rng() * 0.8f); } continue; }
     if (sl > 0.55f && h > 20 && r1 < 0.05f) { float s = 2.f + rng() * 6.f; Obj* o = put(K_BIGROCK, x, z, rng() * TAU, s, 0.8f + rng() * 0.4f, 0.8f + rng() * 0.3f, 0.8f + rng() * 0.3f, -s * 0.2f); o->sy = s * (0.7f + rng() * 0.7f); continue; }
     if (r1 < fm * 0.62f && sl < 0.8f) {
       float pr = rng(); bool high = h > 52.f || q > 0.64f;

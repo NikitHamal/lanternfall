@@ -12,14 +12,14 @@ static void drawExploreHud() {
   }
   if (!H.show) { return; }
   // ---- place name + nation (top-left)
-  { float a = std::min(1.f, 0.55f + H.locT); text(H.place, M, M, S * 1.5f, hexc(0xf1dfb6, a)); text(H.nation, M, M + 13 * S, S * 0.75f, hexc(0xb3a88e, a)); static char dl[48]; static int ld = -1, lk = -1; if (ld != H.disc || lk != H.kills) { ld = H.disc; lk = H.kills; snprintf(dl, 48, "DISCOVERED %d/%d   SLAIN %d", H.disc, H.discTotal, H.kills); } text(dl, M, M + 22 * S, S * 0.7f, hexc(0x8f8672)); }
+  { float a = std::min(1.f, 0.55f + H.locT); text(H.place, M, M, S * 1.2f, hexc(0xf1dfb6, a)); text(H.nation, M, M + 13 * S, S * 0.75f, hexc(0xb3a88e, a)); static char dl[48]; static int ld = -1, lk = -1; if (ld != H.disc || lk != H.kills) { ld = H.disc; lk = H.kills; snprintf(dl, 48, "DISCOVERED %d/%d   SLAIN %d", H.disc, H.discTotal, H.kills); } text(dl, M, M + 22 * S, S * 0.7f, hexc(0x8f8672)); }
   // ---- compass (top-centre)
-  { float cx = W_ / 2, cw = 150 * S; rect(cx - cw, M - 2 * S, cw * 2, 11 * S, {0, 0, 0, 0.32f}); float hd = -H.yaw * 57.2958f; hd = std::fmod(std::fmod(hd, 360.f) + 360.f, 360.f);   // bearing: 0 = north (-z), clockwise
+  { float cx = W_ / 2, cw = 118 * S; rect(cx - cw, M - 2 * S, cw * 2, 11 * S, {0, 0, 0, 0.32f}); float hd = -H.yaw * 57.2958f; hd = std::fmod(std::fmod(hd, 360.f) + 360.f, 360.f);   // bearing: 0 = north (-z), clockwise
     static const char* DIRS[8] = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"}; for (int i = -9; i <= 9; i++) { float b = std::floor(hd / 22.5f + 0.5f) * 22.5f + i * 22.5f; float off = (b - hd) / 22.5f; float x = cx + off * 16 * S; if (std::fabs(x - cx) > cw - 6 * S) continue; int di = ((int)std::floor(b / 22.5f + 0.5f) % 16 + 16) % 16; float al = 1.f - std::fabs(x - cx) / cw; if (di % 2 == 0) text(DIRS[di / 2], x, M, S * (di % 4 == 0 ? 1.1f : 0.7f), di == 0 ? hexc(0xff7a5a, al) : hexc(0xf0dcb0, al), 1); else rect(x - 0.5f, M + 3 * S, 1, 3 * S, {0.9f, 0.85f, 0.7f, al * 0.7f}); }
     rect(cx - 1, M + 9 * S, 2, 3 * S, hexc(0xe0a33c)); }
   // ---- clock + minimap frame
   { float cx = H.mapPx + H.mapSize / 2; int hh = (int)H.hour, mm = (int)((H.hour - hh) * 60); static char cl[24]; static int lm = -1; if (lm != hh * 60 + mm) { lm = hh * 60 + mm; snprintf(cl, 24, "%02d:%02d", hh, mm); } bool day = H.hour > 6.f && H.hour < 18.f; text(cl, cx + 6 * S, 7 * S, S * 1.2f, hexc(day ? 0xf6d58a : 0x9ab4ff), 1); text(day ? "DAY" : "NIGHT", cx - 24 * S, 8 * S, S * 0.7f, hexc(day ? 0xe0a33c : 0x7f9cd6), 1);
-    if (H.timeMul > 1.5f) { text("TIME >>", cx + 38 * S, 8 * S, S * 0.7f, hexc(0xff9a5a), 1); } ring: ; }
+    if (H.timeMul > 1.5f) { text("TIME >>", cx + 38 * S, 8 * S, S * 0.7f, hexc(0xff9a5a), 1); } }
   { float r = H.mapSize / 2, cx = H.mapPx + r, cy = H.mapPy + r; text("N", cx, H.mapPy + 1 * S, S * 0.8f, hexc(0xff7a5a), 1); (void)cy; }
   // ---- vitals (bottom-left)
   { float x = M, y = H_ - 44 * S; text(H.hero, x, y - 12 * S, S * 1.0f, hexc(0xe9c98a)); rect(x - 2, y - 2, 130 * S + 4, 11 * S + 4, {0, 0, 0, 0.45f}); bar(x, y, 130 * S, 6 * S, H.hp / std::max(1.f, H.maxHp), H.hp < H.maxHp * 0.3f ? hexc(0xe0453a) : hexc(0xc0504a)); bar(x, y + 8 * S, 130 * S, 3 * S, H.st / 100.f, hexc(0x8fb85a)); static char hp[24]; static int lh = -1; int hv = (int)(H.hp + 0.99f); if (lh != hv) { lh = hv; snprintf(hp, 24, "%d", hv); } text(hp, x + 132 * S, y - 1 * S, S * 0.8f, hexc(0xf0dcb0)); }

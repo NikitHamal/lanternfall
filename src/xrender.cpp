@@ -114,7 +114,7 @@ void main(){
   float n3 = vn2(p*2.6 + vec2(t*.2, -t*.1)), n4 = vn2(p*7.1 - fd*t*1.5);
   float foam = smoothstep(.5, .0, depth) * (.35 + .65*smoothstep(.35,.7,n3));
   foam += river*smoothstep(.5,.85,vn2(p*.9 - fd*t*2.4)*vn2(p*2.2 - fd*t*3.1)*2.2)*.35;
-  for (int i = 0; i < 8; i++) { if (uFalls[i].w < .5) continue; float dd = length(p - uFalls[i].xy); foam += smoothstep(uFalls[i].z, 1., dd) * (smoothstep(uFalls[i].z, 1., dd)) * (.5 + .5*n4) * .9; }
+  for (int i = 0; i < 8; i++) { if (uFalls[i].w < .5) continue; float dd = length(p - uFalls[i].xy); foam += smoothstep(uFalls[i].z, 1., dd) * (smoothstep(uFalls[i].z, 1., dd)) * (.5 + .5*n4) * .55; }
   foam = clamp(foam, 0., 1.); col = mix(col, vec3(.9,.94,.96)*uAmb*1.05 + uSunCol*.04*uSunVis, foam*.8);
   float alpha = mix(.45, .97, 1. - exp(-depth*1.5)); alpha = mix(alpha, 1., max(foam*.9, fres*.5)); oC = vec4(col, alpha); }
 )GLSL";
@@ -342,7 +342,7 @@ void render(const Frame& f, const FigDraw* figs, int nfig) {
   // water
   glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); glUseProgram(pWater); sm(pWater, "uVP", vpM); si(pWater, "uHeight", 0); si(pWater, "uInfoA", 1); si(pWater, "uWater", 3); s1(pWater, "uWorld", WORLD); s1(pWater, "uTime", f.time); s1(pWater, "uAmb", 0.22f + 0.7f * E.day + 0.1f * E.tw); s3(pWater, "uCam", f.eye);
   s3(pWater, "uSunDir", E.keyDir); s3(pWater, "uSunCol", E.keyCol * 0.5f); s3(pWater, "uZen", E.zen); s3(pWater, "uHor", E.hor); s1(pWater, "uSunVis", std::max(E.sunVis, E.night * 0.35f)); si(pWater, "uN", TN);
-  { float fl[32] = {0}; for (size_t i = 0; i < falls.size() && i < 8; i++) { fl[i * 4] = falls[i].x + falls[i].dx * 3.5f; fl[i * 4 + 1] = falls[i].z + falls[i].dz * 3.5f; fl[i * 4 + 2] = 13.f; fl[i * 4 + 3] = 1.f; } glUniform4fv(U(pWater, "uFalls"), 8, fl); }
+  { float fl[32] = {0}; for (size_t i = 0; i < falls.size() && i < 8; i++) { fl[i * 4] = falls[i].x + falls[i].dx * 3.5f; fl[i * 4 + 1] = falls[i].z + falls[i].dz * 3.5f; fl[i * 4 + 2] = 7.f; fl[i * 4 + 3] = 1.f; } glUniform4fv(U(pWater, "uFalls"), 8, fl); }
   glBindVertexArray(terrVao); for (int L = 0; L < NL; L++) { float sp = CS * (float)(1 << L), sn = sp * 2.f; float cx = CS * 0.5f + std::floor((f.eye.x - CS * 0.5f) / sn + 0.5f) * sn, cz = CS * 0.5f + std::floor((f.eye.z - CS * 0.5f) / sn + 0.5f) * sn; s2(pWater, "uCenter", cx, cz); s1(pWater, "uSp", sp); int r = L == 0 ? 0 : 1; glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrIbo[r]); glDrawElements(GL_TRIANGLES, terrNI[r], GL_UNSIGNED_SHORT, nullptr); drawCalls++; }
   // waterfalls + mist
   { glUseProgram(pFall); sm(pFall, "uVP", vpM); s1(pFall, "uTime", f.time); s1(pFall, "uAmb", 0.22f + 0.8f * E.day + 0.1f * E.tw); s3(pFall, "uSunCol", E.keyCol * 0.3f); V3 right{camW.m[0], camW.m[1], camW.m[2]}, up{camW.m[4], camW.m[5], camW.m[6]}; s3(pFall, "uRight", right); s3(pFall, "uUp", up);
