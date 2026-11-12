@@ -148,3 +148,7 @@ Deferred: Blender rebuild of Polyfork assets, new citizens/pets/trees from Polyf
     * **Noble Hart Mount (`K`)**: summons a full-scale `HOLLOWSTAG` steed (`2.15x` gallop speed, seated rider IK/bone pose, trample knockback, mounted archery & spells).
 - Metrics (Linux x86_64 Release, 1280x720 Mesa llvmpipe): executable `1.6 MB` (`1,605 KB`), `assets/` `26 MB`, peak child RSS across full Explorer + worldgen + Mesa software rasteriser `~900 MB`.
 - QA shots captured & Read (`1280x720`): `title.png`, `hero.png`, `x_build.png`, `x_siege.png`, `x_spells.png`, `x_mount.png`, `x_rift.png`, `x_fpv_bow.png`, `x_hall.png`, `x_chapel.png`, `moor.png`.
+
+## v1.9.0 - Living Lush World (this session) - IN PROGRESS
+Env: molab notebook (`sb-11c7bc88caad2a43`) returned HTTP 410 at tool call 9; sandbox has no X11/GL headers, no Xvfb, no cmake, no root. No local link or visual capture possible this session: code is checked with `g++ -fsyntax-only` + a headless worldgen harness, and compiled for real by CI. Visual QA is DEFERRED (nothing from this session is screenshot-verified).
+Pillar: fauna (dogs, cats, hens, sheep, cows, horses, songbirds, butterflies), flora II (birch, cherry blossom, jungle, willow, palm, ferns, mushrooms, reeds, lily pads), biome zones, leaf/petal fall, explore-only title (Duel / Steward / Range / Waves removed from menus).
