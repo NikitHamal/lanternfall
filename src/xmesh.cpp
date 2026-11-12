@@ -52,6 +52,31 @@ Sty cloth(uint32_t hex) { return {C(hex), 1, 0.95f, 0, 0, 0.9f, 3.f}; }
 Sty glowS(uint32_t hex, float g) { return {C(hex), 10, 0.6f, 0, g, 1, 3.f}; }
 Sty metal(uint32_t hex) { return {C(hex), 5, 0.5f, 0.7f, 0, 0.8f, 3.f}; }
 void merlonsLine(MB& b, float x0, float x1, float z, float y, int n, float hw, float hh, float hd, const Sty& s) { for (int k = 0; k < n; k++) { float x = x0 + (x1 - x0) * (k + 0.5f) / n; box(b, x, y + hh, z, hw, hh, hd, s); } }
+
+// ---- v2.8 rocks: one noise-displaced boulder cluster shared by the near and far LOD (same silhouette, fewer facets far away)
+float rkNoise(float x, float y, float z, uint32_t sd) {
+  auto h = [&](int i, int j, int k) { uint32_t n = (uint32_t)(i * 73856093) ^ (uint32_t)(j * 19349663) ^ (uint32_t)(k * 83492791) ^ (sd * 2654435761u); n = (n ^ (n >> 13)) * 1274126177u; n ^= n >> 16; return (n & 0xffff) / 65535.f; };
+  float fx = std::floor(x), fy = std::floor(y), fz = std::floor(z); int xi = (int)fx, yi = (int)fy, zi = (int)fz; float u = x - fx, v = y - fy, w = z - fz; u = u * u * (3 - 2 * u); v = v * v * (3 - 2 * v); w = w * w * (3 - 2 * w);
+  float a = h(xi, yi, zi) + (h(xi + 1, yi, zi) - h(xi, yi, zi)) * u, bb = h(xi, yi + 1, zi) + (h(xi + 1, yi + 1, zi) - h(xi, yi + 1, zi)) * u, c = h(xi, yi, zi + 1) + (h(xi + 1, yi, zi + 1) - h(xi, yi, zi + 1)) * u, d = h(xi, yi + 1, zi + 1) + (h(xi + 1, yi + 1, zi + 1) - h(xi, yi + 1, zi + 1)) * u;
+  float e = a + (bb - a) * v, f = c + (d - c) * v; return e + (f - e) * w;
+}
+void rockLump(MB& b, V3 c, V3 rad, int seg, int rings, uint32_t sd, V3 col) {
+  auto P = [&](float a, float ph) { float x = std::sin(ph) * std::cos(a), y = std::cos(ph), z = std::sin(ph) * std::sin(a);
+    float n1 = rkNoise(x * 1.6f + 7.f, y * 1.6f, z * 1.6f, sd) - 0.5f, n2 = rkNoise(x * 3.9f, y * 3.9f + 3.f, z * 3.9f, sd + 5) - 0.5f; float ridge = 1.f - std::fabs(2.f * rkNoise(x * 2.7f, y * 2.7f, z * 2.7f + 9.f, sd + 9) - 1.f);
+    float r = 1.f + 0.42f * n1 + 0.16f * n2 + 0.10f * ridge - 0.05f; float yy = y < 0 ? y * 0.30f : y; float strata = 1.f + 0.035f * std::sin(yy * 17.f + n1 * 9.f);
+    return V3{c.x + x * rad.x * r * strata, c.y + yy * rad.y * r, c.z + z * rad.z * r * strata}; };
+  int base = (int)b.v->size();
+  for (int j = 0; j <= rings; j++) for (int i = 0; i <= seg; i++) { float ph = PI * (0.001f + 0.998f * j / rings), a = TAU * (i % seg) / seg; V3 p = P(a, ph);
+    float e = 0.05f; V3 du = P(a + e, ph) - P(a - e, ph), dv = P(a, ph + e) - P(a, ph - e); V3 n = norm(cross(dv, du)); if (dot(n, p - c) < 0) n = n * -1.f;
+    float tone = 0.74f + 0.40f * rkNoise(p.x * 2.3f, p.y * 2.3f, p.z * 2.3f, sd + 21); V3 cc = col * tone; float moss = clampf((n.y - 0.55f) * 2.2f, 0, 1) * clampf(rkNoise(p.x * 1.4f, p.y * 1.4f, p.z * 1.4f, sd + 33) * 1.6f - 0.35f, 0, 1);
+    cc = mix3(cc, V3{0.30f, 0.38f, 0.20f}, moss * 0.55f); float aoV = ao((p.y - c.y) / std::max(rad.y, 0.1f) + 0.35f, 0.42f, 1.2f);
+    vert(b, p, n, cc, aoV, a * 0.9f, ph * 0.9f, 8, 0.95f, 0, 0); }
+  for (int j = 0; j < rings; j++) for (int i = 0; i < seg; i++) { int a = base + j * (seg + 1) + i, d = a + seg + 1; tri(b, a, a + 1, d); tri(b, a + 1, d + 1, d); }
+}
+void rockCluster(MB& b, int seg, int rings, bool sats) {
+  V3 g{0.48f, 0.455f, 0.40f}; rockLump(b, {0, 0.42f, 0}, {1.0f, 0.82f, 0.95f}, seg, rings, 11, g);
+  if (sats) { rockLump(b, {0.88f, 0.16f, 0.30f}, {0.42f, 0.30f, 0.40f}, 10, 6, 23, g * 0.95f); rockLump(b, {-0.72f, 0.14f, -0.52f}, {0.38f, 0.26f, 0.36f}, 10, 6, 37, g * 1.05f); }
+}
 #include "xmesh_in.inc"
 #include "xmesh_new.inc"
 #include "xtree.inc"
@@ -103,9 +128,8 @@ void build(int kind, MB& b) {
     case xw::K_BANNER: { Sty w = wood(0x3d2d1d), c = cloth(0xe8e0d0), g = cloth(0xf4d58a); cyl(b, 0, 0, 0, 0.14f, 0.12f, 6.f, 6, w, nullptr, false); box(b, 0, 5.7f, 0, 1.0f, 0.07f, 0.07f, w); quad(b, {-0.85f, 2.2f, 0.02f}, {0.85f, 2.2f, 0.02f}, {0.85f, 5.65f, 0.02f}, {-0.85f, 5.65f, 0.02f}, c, 0.3f); quad(b, {0.85f, 2.2f, -0.02f}, {-0.85f, 2.2f, -0.02f}, {-0.85f, 5.65f, -0.02f}, {0.85f, 5.65f, -0.02f}, c, 0.3f);
       quad(b, {-0.45f, 3.1f, 0.03f}, {0.45f, 3.1f, 0.03f}, {0.45f, 4.6f, 0.03f}, {-0.45f, 4.6f, 0.03f}, g, 0.3f); quad(b, {0.45f, 3.1f, -0.03f}, {-0.45f, 3.1f, -0.03f}, {-0.45f, 4.6f, -0.03f}, {0.45f, 4.6f, -0.03f}, g, 0.3f); break; }
     case xw::K_FLAGPOLE: { Sty w = wood(0x3d2d1d), c = cloth(0xe8e0d0); cyl(b, 0, 0, 0, 0.1f, 0.07f, 5.f, 6, w, nullptr, false); quad(b, {0, 4.9f, 0.02f}, {0, 3.9f, 0.02f}, {2.0f, 4.1f, 0.02f}, {2.0f, 4.7f, 0.02f}, c, 0.3f); quad(b, {0, 3.9f, -0.02f}, {0, 4.9f, -0.02f}, {2.0f, 4.7f, -0.02f}, {2.0f, 4.1f, -0.02f}, c, 0.3f); break; }
-    case xw::K_BIGROCK: { Sty s = {C(0x7a7266), 8, 0.95f, 0, 0, 0.5f, 1.2f}; const int seg = 9; for (int ring = 0; ring < 3; ring++) { float h0 = ring == 0 ? 0.f : ring == 1 ? 0.55f : 0.9f, h1 = ring == 0 ? 0.55f : ring == 1 ? 0.9f : 1.0f; float r0 = ring == 0 ? 1.0f : ring == 1 ? 0.85f : 0.45f, r1 = ring == 0 ? 0.85f : ring == 1 ? 0.45f : 0.0f;
-      for (int k = 0; k < seg; k++) { auto J = [&](int rr, int kk) { uint32_t h = (uint32_t)(rr * 92821 + kk * 68917 + 5); h = (h ^ (h >> 13)) * 1274126177u; return 0.78f + 0.44f * (((h >> 8) & 0xff) / 255.f); }; float a0 = TAU * k / seg, a1 = TAU * (k + 1) / seg; float j00 = J(ring, k), j01 = J(ring, k + 1), j10 = J(ring + 1, k), j11 = J(ring + 1, k + 1);
-        V3 p0{std::cos(a0) * r0 * j00, h0 - 0.2f, std::sin(a0) * r0 * j00}, p1{std::cos(a1) * r0 * j01, h0 - 0.2f, std::sin(a1) * r0 * j01}, p2{std::cos(a1) * r1 * j11, h1, std::sin(a1) * r1 * j11}, p3{std::cos(a0) * r1 * j10, h1, std::sin(a0) * r1 * j10}; Sty ss = s; ss.col = s.col * (0.8f + 0.4f * ((k * 37 + ring * 11) % 7) / 7.f); quad(b, p1, p0, p3, p2, ss, 0.5f); } } break; }
+    case xw::K_BIGROCK: rockCluster(b, 16, 10, true); break;
+    case XM_LOROCK: rockCluster(b, 9, 6, false); break;
     case XM_LOJUNGLE: gDim = 0.6f; buildFlora(xw::K_JUNGLE, b); gDim = 1.f; break; case XM_LOWILLOW: gDim = 0.7f; buildFlora(xw::K_WILLOW, b); gDim = 1.f; break; case XM_LOBIRCH: gDim = 0.8f; buildFlora(xw::K_BIRCH, b); gDim = 1.f; break; case XM_LOCHERRY: gDim = 0.85f; buildFlora(xw::K_CHERRY, b); gDim = 1.f; break;
     case XM_LOCONI: { Sty tr = {C(0x3a2a1c), 9, 0.9f, 0, 0, 0.6f, 3.f}; cyl(b, 0, 0, 0, 0.32f, 0.2f, 3.0f, 5, tr, nullptr, false); Sty g1 = {C(0x1f3f24), 0, 0.9f, 0, 0, 0.55f, 9.f}; V3 top = C(0x28502c);
       cyl(b, 0, 1.6f, 0, 2.5f, 0.9f, 3.0f, 9, g1, &top, false); cyl(b, 0, 3.8f, 0, 2.0f, 0.7f, 2.9f, 9, g1, &top, false); cyl(b, 0, 6.0f, 0, 1.45f, 0.0f, 3.1f, 9, g1, &top, false); break; }
