@@ -84,5 +84,5 @@ Deferred (not done): 64 m chunked 4-LOD terrain, heightfield stitching, water-de
 QA shots read: title, hero, fpv, aim, moor, highlands, fen (1280x720, llvmpipe via molab Xvfb).
 
 ## v1.4.0 - full hero combat, practice/solo class overhaul, asset & animation polish (in progress)
-- Session bootstrap: `origin/assets` (`8e8dc2c`) verified already merged into `main`.
-- Notebook status: prompt carried literal `<<PASTE_MOLAB_URL>>` / `<<PASTE_MOLAB_TOKEN>>` placeholders at tool call #10 (no active molab kernel attached); building and running Xvfb + Mesa llvmpipe locally in user-space + `tools/lfm_sheet.py` for full visual QA passes.
+- Session bootstrap: `origin/assets` (`8e8dc2c`) verified already merged into `main`; local CMake + GCC verified.
+- Connecting to live Molab session via `marimo-pair` execute wrapper (`/tmp/agentA_mx.sh`) with 30 s heartbeat, auditing hero selection bug, non-archer combat classes, monster/asset integration, and 3D animation polish.
