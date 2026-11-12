@@ -186,8 +186,8 @@ static void addPoi(const char* name, float x, float z, float r, int kind) { Poi 
 static void gatePoint(const Settle& s, float& gx, float& gz) { float d = s.type == ST_CAPITAL ? 52.f : s.type == ST_VILLAGE ? (s.size >= 3 ? 46.f : 10.f) : s.type == ST_FORT ? 22.f : s.type == ST_HAMLET ? 8.f : 6.f; gx = s.x + s.gateX * d; gz = s.z + s.gateZ * d; }
 static Obj* lastWall = nullptr;
 static std::vector<float> stairLog;
-static void putStair(float sx0, float sz0, float ex, float ez, float baseY) { stairLog.push_back(sx0); stairLog.push_back(sz0); stairLog.push_back(ex); stairLog.push_back(ez); stairLog.push_back(baseY); float ry = std::atan2(-ez, ex); gPutY = baseY; Obj* o = put(K_STAIR, sx0, sz0, ry, 1.f); (void)o; gPutY = -1e9f;
-  addDeck(sx0, sz0, ry, 5.98f, 0, 5.98f, 1.1f, baseY + 0.227f, baseY + 5.9f); addDeck(sx0, sz0, ry, 13.15f, 0, 1.3f, 1.1f, baseY + 5.9f, baseY + 5.9f); }
+static void putStair(float sx0, float sz0, float ex, float ez, float baseY, float outx, float outz) { stairLog.push_back(sx0); stairLog.push_back(sz0); stairLog.push_back(ex); stairLog.push_back(ez); stairLog.push_back(baseY); float ry = std::atan2(-ez, ex); gPutY = baseY; Obj* o = put(K_STAIR, sx0, sz0, ry, 1.f); (void)o; gPutY = -1e9f;
+  addDeck(sx0, sz0, ry, 5.98f, 0, 5.98f, 1.1f, baseY + 0.227f, baseY + 5.9f); float sgn = (outx * (-ez) + outz * ex) >= 0 ? 1.f : -1.f; addDeck(sx0, sz0, ry, 13.15f, sgn * 0.7f, 1.3f, 1.65f, baseY + 5.9f, baseY + 5.9f); }   // landing reaches across the 0.55 m gap onto the wall walk
 static void wallRun(float ax, float az, float bx, float bz, float outNx, float outNz, float seg, int kind, float skipCx, float skipCz, float skipR, float sc = 1.f, bool stairs = false) {
   float dx = bx - ax, dz = bz - az, L = std::sqrt(dx * dx + dz * dz); int n = std::max(1, (int)(L / seg + 0.5f)); float dirx = outNz, dirz = -outNx; float ry = std::atan2(-dirz, dirx);
   float base = 0; for (int i = 0; i < n; i++) { float t = (i + 0.5f) / n; base += height(ax + dx * t, az + dz * t); } base = base / n - 0.2f; lastBase = base; float c = std::cos(ry), sn = std::sin(ry);
@@ -196,8 +196,8 @@ static void wallRun(float ax, float az, float bx, float bz, float outNx, float o
     if (kind == K_WALL) addDeck(x, z, ry, 0, -0.275f * sc, L / n * 0.5f + 0.06f, 0.975f * sc, base + 5.9f * sc, base + 5.9f * sc); }
   (void)c; (void)sn;
   if (stairs && kind == K_WALL && L >= 24.f) { float ux = dx / L, uz = dz / L, inx = -outNx, inz = -outNz; float t1 = 0.07f; float p1x = ax + dx * t1 + inx * 2.35f, p1z = az + dz * t1 + inz * 2.35f;
-    if (!(skipR > 0 && std::sqrt((p1x - skipCx) * (p1x - skipCx) + (p1z - skipCz) * (p1z - skipCz)) < skipR + 2.f)) putStair(p1x, p1z, ux, uz, base);
-    if (L >= 40.f) { float t2 = 0.93f; float p2x = ax + dx * t2 + inx * 2.35f, p2z = az + dz * t2 + inz * 2.35f; if (!(skipR > 0 && std::sqrt((p2x - skipCx) * (p2x - skipCx) + (p2z - skipCz) * (p2z - skipCz)) < skipR + 2.f)) putStair(p2x, p2z, -ux, -uz, base); } }
+    if (!(skipR > 0 && std::sqrt((p1x - skipCx) * (p1x - skipCx) + (p1z - skipCz) * (p1z - skipCz)) < skipR + 2.f)) putStair(p1x, p1z, ux, uz, base, outNx, outNz);
+    if (L >= 40.f) { float t2 = 0.93f; float p2x = ax + dx * t2 + inx * 2.35f, p2z = az + dz * t2 + inz * 2.35f; if (!(skipR > 0 && std::sqrt((p2x - skipCx) * (p2x - skipCx) + (p2z - skipCz) * (p2z - skipCz)) < skipR + 2.f)) putStair(p2x, p2z, -ux, -uz, base, outNx, outNz); } }
 }
 static void flagAt(int nation, float x, float z, float yAdd, float s = 1.f) { Obj* o = put(K_FLAGPOLE, x, z, rng() * 0.6f, s, nationTint[nation][0], nationTint[nation][1], nationTint[nation][2], yAdd); (void)o; }
 static void buildCapital(int si) {
@@ -426,7 +426,7 @@ void generate(uint32_t seed) {
   buildColGrid(); if (getenv("LF_DUMP")) { for (size_t k = 0; k < settles.size() && k < 12; k++) fprintf(stderr, "SETTLE %zu type %d nat %d at %.1f %.1f y %.1f gate %.2f %.2f %s\n", k, settles[k].type, settles[k].nation, settles[k].x, settles[k].z, settles[k].y, settles[k].gateX, settles[k].gateZ, settles[k].name); for (size_t k = 0; k < falls.size(); k++) fprintf(stderr, "FALL %zu %s at %.1f %.1f top %.1f bot %.1f w %.1f\n", k, falls[k].name, falls[k].x, falls[k].z, falls[k].yTop, falls[k].yBot, falls[k].w); fprintf(stderr, "DECKS %d\n", nDecks);
     for (size_t k = 0; k + 4 < stairLog.size() && k < 40; k += 5) { float sx0 = stairLog[k], sz0 = stairLog[k + 1], ex = stairLog[k + 2], ez = stairLog[k + 3], by = stairLog[k + 4]; float y = height(sx0 - ex * 1.5f, sz0 - ez * 1.5f); float px = sx0 - ex * 1.5f, pz = sz0 - ez * 1.5f; int pushed = 0;
       for (float sd = -1.5f; sd < 18.f; sd += 0.06f) { float nx = sx0 + ex * sd, nz = sz0 + ez * sd; float ox = nx, oz = nz; collide(nx, nz, 0.42f, y); if (std::fabs(nx - ox) + std::fabs(nz - oz) > 0.01f) pushed++; y = surfaceY(nx, nz, y); px = nx; pz = nz; if (k == 0 && std::fmod(sd + 1.5f, 1.f) < 0.06f) fprintf(stderr, "  sd %.1f y-base %.2f deckTop-base %.2f push(%.2f,%.2f)\n", sd, y - by, deckTop(nx, nz) - by, nx - ox, nz - oz); }
-      float bestTop = -1e9f; for (int sg = -1; sg <= 1; sg += 2) { float wx = px - ez * sg * 2.4f, wz = pz + ex * sg * 2.4f; bestTop = std::max(bestTop, surfaceY(wx, wz, y)); }
+      float bestTop = -1e9f; for (int sg = -1; sg <= 1; sg += 2) { float qx = sx0 + ex * 13.2f, qz = sz0 + ez * 13.2f, qy = by + 5.9f; for (float t = 0; t < 3.4f; t += 0.06f) { float nx = qx - ez * sg * 0.06f, nz = qz + ex * sg * 0.06f; collide(nx, nz, 0.42f, qy); qx = nx; qz = nz; qy = surfaceY(qx, qz, qy); } bestTop = std::max(bestTop, qy); }
       fprintf(stderr, "STAIRTEST %zu endY-base %.2f pushed %d wallwalkReach %.2f\n", k / 5, y - by, pushed, bestTop - by); } }
   // ---------------- textures
   waterTex.assign((size_t)GS * GS * 4, 0.f); { std::vector<float> wb(GS * GS, -1e9f); for (int pass = 0; pass < 3; pass++) { std::vector<float> nb = pass == 0 ? Wl : wb; if (pass == 0) { wb = Wl; continue; } nb = wb; for (int j = 1; j < GS - 1; j++) for (int i = 1; i < GS - 1; i++) { float m = wb[j * GS + i]; for (int dj = -1; dj <= 1; dj++) for (int di = -1; di <= 1; di++) m = std::max(m, wb[(j + dj) * GS + i + di]); nb[j * GS + i] = m; } wb = nb; }
