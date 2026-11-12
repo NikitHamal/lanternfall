@@ -151,8 +151,8 @@ void main(){
   float n3 = vn2(p*2.6 + vec2(t*.2, -t*.1)), n4 = vn2(p*7.1 - fd*t*1.5);
   float foam = smoothstep(.5, .0, depth) * (.35 + .65*smoothstep(.35,.7,n3));
   foam += river*smoothstep(.5,.85,vn2(p*.9 - fd*t*2.4)*vn2(p*2.2 - fd*t*3.1)*2.2)*.35;
-  for (int i = 0; i < 8; i++) { if (uFalls[i].w < .5) continue; float dd = length(p - uFalls[i].xy); foam += smoothstep(uFalls[i].z, 1., dd) * (smoothstep(uFalls[i].z, 1., dd)) * (.5 + .5*n4) * .55; }
-  foam = clamp(foam, 0., 1.); col = mix(col, vec3(.9,.94,.96)*uAmb*1.05 + uSunCol*.04*uSunVis, foam*.8);
+  for (int i = 0; i < 8; i++) { if (uFalls[i].w < .5) continue; float dd = length(p - uFalls[i].xy); foam += smoothstep(uFalls[i].z, 1., dd) * (smoothstep(uFalls[i].z, 1., dd)) * (.2 + .8*smoothstep(.3,.8,n4 + .25*n3)) * .5; }
+  foam = clamp(foam, 0., 1.); col = mix(col, vec3(.9,.94,.96)*uAmb*1.05 + uSunCol*.04*uSunVis, foam*.62);
   float alpha = mix(.45, .97, 1. - exp(-depth*1.5)); alpha = mix(alpha, 1., max(foam*.9, fres*.5)); oC = vec4(col, alpha); }
 )GLSL";
 const char* FALL_VS = R"GLSL(
@@ -173,7 +173,7 @@ void main(){
     vec3 col = mix(vec3(.14,.33,.42), vec3(.52,.74,.84), st); col = mix(col, vec3(.99), white*.9); col *= uAmb*1.05; col += uSunCol*.03;
     float foam = smoothstep(.22, .0, vY) * (.55 + .6*vn2(vUv*4.2 - vec2(0., t*2.))); col = mix(col, vec3(1.)*uAmb*1.15, clamp(foam, 0., 1.)*.85);
     float a = clamp(.26 + .38*st + .5*white + foam*.5, .26, .95); oC = vec4(col, a); }
-  else { float r = length(vUv); if (r > 1.) discard; float n = vn2(vUv*2.5 + vY); float a = pow(1.-r, 2.)*(.24 + .16*n); oC = vec4(vec3(.92,.96,1.)*uAmb*1.05, a); } }
+  else { float r = length(vUv); if (r > 1.) discard; float n = vn2(vUv*2.5 + vY); float a = pow(1.-r, 2.)*(.14 + .1*n); oC = vec4(vec3(.92,.96,1.)*uAmb*1.05, a); } }
 )GLSL";
 const char* PROP_VS = R"GLSL(
 layout(location=0) in vec3 aPos; layout(location=1) in vec3 aNrm; layout(location=2) in vec4 aCol; layout(location=3) in vec2 aUv; layout(location=4) in vec4 aMat; layout(location=5) in vec4 aBn;
