@@ -84,5 +84,12 @@ Deferred (not done): 64 m chunked 4-LOD terrain, heightfield stitching, water-de
 QA shots read: title, hero, fpv, aim, moor, highlands, fen (1280x720, llvmpipe via molab Xvfb).
 
 ## v1.4.0 - full hero combat, practice/solo class overhaul, asset & animation polish (in progress)
-- Session bootstrap: `origin/assets` (`8e8dc2c`) verified already merged into `main`; local CMake + GCC verified.
-- Connecting to live Molab session via `marimo-pair` execute wrapper (`/tmp/agentA_mx.sh`) with 30 s heartbeat, auditing hero selection bug, non-archer combat classes, monster/asset integration, and 3D animation polish.
+- Session bootstrap: `origin/assets` (`8e8dc2c`) verified merged; live Molab session connected (`/tmp/agentA_mx.sh` + 30 s heartbeat active).
+- Root causes identified:
+  1. Hero selection persisted only on explicit button click, `play.cpp` forced `VW_FIRST` + archer bow viewmodel + wooden arrows for every hero, and `game.cpp` ignored `roster::sel()`.
+  2. 44 Polyfork assets (`w_*` weapons/shields, `p_*` biome props, `b_*` buildings, `emberhound`/`thornboar` monsters, Polyfork monster skins, `defend`/`dodge`/`hit_f/l/r` clips) were sitting unused on disk.
+- Implementation plan:
+  1. Multi-archetype hero combat in Practice & Solo/Wave Hunt + Steward leader integration: Melee Sword & Shield (combo slashes, shield bash, shield block + riposte), Heavy 2H Greatsword/Colossus (wide cleaves, charged heavy slam/shockwave, parry), Ranger Bow (draw/sweet-spot/volley), Fire Caster (lantern bolts, charged cinder orb, flame ward), Alchemist/Support (lobbed acid/venom flasks & firepot AoE, tonic mend), Frost Caster (piercing rime shards, charged frost lance, ice ward). Default view Third Person (`VW_THIRD`) so chosen hero + socketed 3D weapons are immediately visible; class-specific 3D viewmodels in First Person (`VW_FIRST`).
+  2. Socketed 3D `.lfm` weapons (`w_arming_sword`, `w_kite_shield`, `w_greatsword`, `w_bow`, `w_staff`, `w_lantern`, `w_cleaver`, `w_round_shield`) attached to `wR`/`wL`/`rHand`/`lHand` bones across heroes & monsters.
+  3. Full monster & biome asset integration: expand bestiary with Polyfork variants + `emberhound` & `thornboar` (12 monster types in Wave Hunt + mixed skins), GPU-instanced biome props & landmarks (`p_pine_tall`, `p_pine_young`, `p_boulder`, `p_cairn`, `p_dead_tree`, `p_twisted_oak`, `p_thorn_bush`, `p_plank_bridge`, `p_brazier`, `p_lamp_post`, `b_watchtower`, `b_stone_chapel`, `b_thatch_cottage`, `b_ruined_gable`, etc.) + melee dummies & ranged targets in Practice Arena.
+  4. 3D animation polish: blend authored `defend`, `dodge`, `hit_f/l/r`, class skill clips (`bash`, `guard`, `cleave`, `sunder`, `kindle`, `cinder`, `tonic`, `firepot`, `lance`, `hoar`, `special`), smooth clip crossfades, weapon swing trails, and upper-body pitch/aim twist.
