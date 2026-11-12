@@ -200,14 +200,14 @@ void start() { gFigNoBaked = true;
     if ((v = addRig(&gFH[WARDEN], -1, -1, gFH[WARDEN].scale, "GUARD")) >= 0) poolGuard[nPoolGuard++] = v; if ((v = addRig(&gFMAlt[RUSTBOUND], roster::WP_CLEAVER, roster::WP_ROUND, MON[RUSTBOUND].scale * 0.82f, "GATE WARDEN")) >= 0) poolGuard[nPoolGuard++] = v; if ((v = addRig(&polyHeroes[3], roster::WP_SWORD, roster::WP_KITE, 1.f, "GUARD")) >= 0) poolGuard[nPoolGuard++] = v;
     if ((v = addRig(&polyHeroes[3], roster::WP_SWORD, roster::WP_KITE, 1.08f, "KNIGHT")) >= 0) poolKnight[nPoolKnight++] = v; if ((v = addRig(&polyHeroes[4], roster::WP_GREATSWORD, roster::WP_NONE, 1.05f, "CHAMPION")) >= 0) poolKnight[nPoolKnight++] = v; if ((v = addRig(&gFH[REAVER], -1, -1, gFH[REAVER].scale, "CHAMPION")) >= 0) poolKnight[nPoolKnight++] = v;
     if ((v = addRig(&gFH[WARDEN], -1, -1, gFH[WARDEN].scale, "SOLDIER")) >= 0) poolSold[nPoolSold++] = v; if ((v = addRig(&polyHeroes[3], roster::WP_SWORD, roster::WP_KITE, 1.f, "SOLDIER")) >= 0) poolSold[nPoolSold++] = v; if ((v = addRig(&gFMAlt[RUSTBOUND], roster::WP_CLEAVER, roster::WP_ROUND, MON[RUSTBOUND].scale * 0.82f, "SOLDIER")) >= 0) poolSold[nPoolSold++] = v;
-    if (!nPoolVill) poolVill[nPoolVill++] = 0; if (!nPoolGuard) poolGuard[nPoolGuard++] = 0; if (!nPoolKnight) poolKnight[nPoolKnight++] = 0; if (!nPoolSold) poolSold[nPoolSold++] = 0; mem::mark("after figures"); populate(); faunaInit(); mem::mark("after npc+fauna"); H.discTotal = (int)pois.size(); }
-  on = true; memset(&P, 0, sizeof P); P = PlayerS(); const roster::Hero& hr = roster::at(roster::sel()); P.maxHp = P.hp = hr.hp; P.st = 100; P.dmgMul = hr.dmg;
+    if (!nPoolVill) poolVill[nPoolVill++] = 0; if (!nPoolGuard) poolGuard[nPoolGuard++] = 0; if (!nPoolKnight) poolKnight[nPoolKnight++] = 0; if (!nPoolSold) poolSold[nPoolSold++] = 0; mem::mark("after figures"); populate(); faunaInit(); releaseGen(); mem::mark("after npc+fauna"); H.discTotal = (int)pois.size(); }
+  gfx::suspend(); on = true; memset(&P, 0, sizeof P); P = PlayerS(); const roster::Hero& hr = roster::at(roster::sel()); P.maxHp = P.hp = hr.hp; P.st = 100; P.dmgMul = hr.dmg;
   { const Settle& s = settles[nations[0].capital >= 0 ? nations[0].capital : 0]; float gx = s.x + s.gateX * 66.f, gz = s.z + s.gateZ * 66.f; P.x = gx; P.z = gz; P.y = height(gx, gz); P.yaw = std::atan2(-s.gateX, -s.gateZ); P.face = P.yaw; }
   P.view = 1; B = Bow(); B.weapon = hr.style == roster::ST_BOW ? 1 : 0; bounty[0] = bounty[1] = bounty[2] = 0; CI = Cell(); for (Arr& a : ARR) a.on = false; for (Npc& n : npcs) if (n.used && n.interior) n.used = false;
   resetKingdomSession();
   H = Hud(); H.discTotal = (int)pois.size(); for (const Poi& p : pois) if (p.found) H.disc++; H.view = 1; snprintf(H.hero, sizeof H.hero, "%s", hr.name); clockH = 9.5f; tMul = 1; restT = 0; animPl = FigAnim(); animPl.id = 9999; P.camInit = false; banner("EMBERVALE REALM", "BUILD YOUR KINGDOM - COMMAND TROOPS - SURVIVE THE NIGHT", 5.f); townStart();
 }
-void stop() { townSave(); on = false; }
+void stop() { townSave(); on = false; gfx::resume(); }
 void look(float dx, float dy) { if (H.map) return; const float k = 0.0023f * cfg::S.sens; P.yaw -= dx * k; P.pitch = clampf(P.pitch + (cfg::S.invertY ? 1.f : -1.f) * dy * k * 0.9f, -1.4f, 1.3f); P.pitch = clampf(P.pitch, -1.4f, 1.3f); }
 void scroll(float dy) {
   if (K.buildMode) { K.bsel = (K.bsel + (dy > 0 ? -1 : 1) + NBT) % NBT; return; }

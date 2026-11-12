@@ -8,7 +8,7 @@ struct CamO { bool on = false; V3 eye, tgt; float fov = 1.f, nearP = 0.12f, focu
 bool rayWorld(float ax, float ay, float az, float bx, float by, float bz, float& t);   // first hit of a segment against props + terrain (t in 0..1)
 void pushOut(float& x, float& z, float r);
 constexpr int SHCAP = 640; extern Inst shW[4][SHCAP], shV[4][160]; extern int shWn[4], shVn[4];
-bool init(int quality); void resize(int winW, int winH); void setQuality(int q); void shutdown();
+bool init(int quality); void resize(int winW, int winH); void suspend(); void resume(); void setQuality(int q); void shutdown();
 void update(float dtReal, float vdt, bool paused, float alpha);
 void draw();
 bool project(float x, float y, float z, float& sx, float& sy);

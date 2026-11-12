@@ -58,7 +58,7 @@ std::string xlight() {   // the original LIGHT chunk with a daylight-aware envir
 }
 const char* TERR_VS = R"GLSL(
 uniform sampler2D uHeight; uniform vec2 uCenter; uniform float uSp, uBias, uWorld; uniform int uN; uniform mat4 uVP; out vec3 vWp;
-float Hf(vec2 xz){ return textureLod(uHeight, xz/uWorld+.5, 0.).r; }
+float Hf(vec2 xz){ return textureLod(uHeight, xz/uWorld+.5, 0.).r*1024.-128.; }
 void main(){ int id = gl_VertexID; int i = id % (uN+1), j = id / (uN+1); vec2 g = vec2(float(i - uN/2), float(j - uN/2)); vec2 xz = uCenter + g*uSp; float h = Hf(xz);
   vec2 u = abs(g)/(float(uN)*.5); float m = smoothstep(.70,.96,max(u.x,u.y));
   if (m > 0.) { vec2 ge = floor(g*.5)*2.; vec2 f = (g-ge)*.5; vec2 b = uCenter + ge*uSp; float s2 = 2.*uSp; float hc = mix(mix(Hf(b),Hf(b+vec2(s2,0.)),f.x), mix(Hf(b+vec2(0.,s2)),Hf(b+vec2(s2)),f.x), f.y); h = mix(h, hc, m); }
@@ -74,7 +74,7 @@ const char* TERR_FS = R"GLSL(
 in vec3 vWp; out vec4 oC; uniform sampler2D uHeight, uInfoA, uInfoB; uniform float uWorld, uTime;
 void main(){
   vec2 uv = vWp.xz/uWorld+.5; vec4 A = texture(uInfoA, uv), B = texture(uInfoB, uv); float e = 2.; float eu = e/uWorld;
-  float hx = texture(uHeight, uv+vec2(eu,0.)).r - texture(uHeight, uv-vec2(eu,0.)).r, hz = texture(uHeight, uv+vec2(0.,eu)).r - texture(uHeight, uv-vec2(0.,eu)).r;
+  float hx = (texture(uHeight, uv+vec2(eu,0.)).r - texture(uHeight, uv-vec2(eu,0.)).r)*1024., hz = (texture(uHeight, uv+vec2(0.,eu)).r - texture(uHeight, uv-vec2(0.,eu)).r)*1024.;
   vec3 N = normalize(vec3(-hx, 2.*e, -hz)); vec3 col = A.rgb*A.rgb; float d = length(vWp - uCam);
   float n1 = vn2(vWp.xz*.35), n2 = vn2(vWp.xz*1.7), n3 = vn2(vWp.xz*7.); float det = (.8 + .4*n1) * (.9 + .2*n2) * (.93 + .14*n3); det = mix(det, 1., smoothstep(90., 420., d)); col *= det;
   float slope = 1. - N.y; float lum = dot(col, vec3(.3,.55,.15));
@@ -129,14 +129,14 @@ void main(){ vec3 d = normalize(vDir); float h = d.y;
 )GLSL";
 const char* WATER_VS = R"GLSL(
 uniform sampler2D uWater; uniform vec2 uCenter; uniform float uSp, uWorld; uniform int uN; uniform mat4 uVP; out vec3 vWp;
-void main(){ int id = gl_VertexID; int i = id % (uN+1), j = id / (uN+1); vec2 g = vec2(float(i - uN/2), float(j - uN/2)); vec2 xz = uCenter + g*uSp; float y = textureLod(uWater, xz/uWorld+.5, 0.).r; vWp = vec3(xz.x, y, xz.y); gl_Position = uVP*vec4(vWp,1.); }
+void main(){ int id = gl_VertexID; int i = id % (uN+1), j = id / (uN+1); vec2 g = vec2(float(i - uN/2), float(j - uN/2)); vec2 xz = uCenter + g*uSp; float y = textureLod(uWater, xz/uWorld+.5, 0.).r*1024.-128.; vWp = vec3(xz.x, y, xz.y); gl_Position = uVP*vec4(vWp,1.); }
 )GLSL";
 const char* WATER_FS = R"GLSL(
 in vec3 vWp; out vec4 oC; uniform sampler2D uHeight, uWater, uInfoA; uniform float uWorld, uTime, uAmb; uniform vec3 uSunDir, uSunCol, uZen, uHor; uniform float uSunVis; uniform vec4 uFalls[8];
 vec3 skyR(vec3 r){ vec3 c = mix(uHor, uZen, pow(clamp(r.y,0.,1.), .45)); float sd = max(dot(r,uSunDir),0.); c += uSunCol*(pow(sd,6.)*.12)*uSunVis; return c; }
 void main(){
-  vec2 uv = vWp.xz/uWorld+.5; float th = texture(uHeight, uv).r; float depth = vWp.y - th; if (depth < 0.) discard;
-  vec4 Wt = texture(uWater, uv); vec2 flow = Wt.gb; float spd = length(flow); vec2 fd = spd > .02 ? flow/spd : vec2(0.); float river = smoothstep(.02,.6,spd);
+  vec2 uv = vWp.xz/uWorld+.5; float th = texture(uHeight, uv).r*1024.-128.; float depth = vWp.y - th; if (depth < 0.) discard;
+  vec4 Wt = texture(uWater, uv); Wt = vec4(Wt.r*1024.-128., Wt.gb*2.-1., Wt.a); vec2 flow = Wt.gb; float spd = length(flow); vec2 fd = spd > .02 ? flow/spd : vec2(0.); float river = smoothstep(.02,.6,spd);
   float t = uTime; vec2 p = vWp.xz; float v1 = mix(.25, 2.2, river), v2 = mix(.4, 3.4, river);
   vec2 q1 = p*.42 - fd*t*v1 + vec2(t*.05, t*.03), q2 = p*1.15 - fd*t*v2 + vec2(-t*.06, t*.04), q3 = p*3.1 - fd*t*v2*1.4;
   float e = .08; float a1 = mix(.35, .6, river);
@@ -257,7 +257,7 @@ void main(){
   vec4 A = textureLod(uInfoA, uv, 0.), B = textureLod(uInfoB, uv, 0.); float keep;
   if (uMode == 0) keep = step(h21(cell+3.1), A.a*.92); else keep = step(h21(cell+9.7), B.r*.55) * step(.05, A.a);
   if (keep < .5 || vFade <= 0.01 || uv.x < 0. || uv.y < 0. || uv.x > 1. || uv.y > 1.) { gl_Position = vec4(2.,2.,2.,1.); vWp = vec3(0.); vCol = vec3(0.); vN = vec3(0.,1.,0.); return; }
-  float h0 = textureLod(uHeight, uv, 0.).r; float hr = h21(cell+5.5); float yaw = hr*6.2831; vec3 base = A.rgb*A.rgb; float wind = sin(uTime*1.6 + xz.x*.35 + xz.y*.22)*.5 + sin(uTime*2.7 + xz.y*.6)*.25;
+  float h0 = textureLod(uHeight, uv, 0.).r*1024.-128.; float hr = h21(cell+5.5); float yaw = hr*6.2831; vec3 base = A.rgb*A.rgb; float wind = sin(uTime*1.6 + xz.x*.35 + xz.y*.22)*.5 + sin(uTime*2.7 + xz.y*.6)*.25;
   vec3 pos; vec3 col; vec3 nrm = vec3(0.,1.,0.);
   if (uMode == 0) {
     float bid = aP.w; float ang = h21(cell*1.7 + bid*3.3)*6.2831; vec2 off = (vec2(h21(cell+bid*1.3), h21(cell-bid*2.1))-.5)*.5; float pa = h21(floor(xz*.07)+4.), pb = h21(floor(xz*.31)+9.), pc = h21(floor(xz*.045)+11.); float Hh = (.15 + .32*h21(cell+bid*7.7)) * (1.-.4*B.g) * vFade * (1. + .5*hr) * (.8 + 1.0*smoothstep(.5,.92,pc)); float w = .024*(1.+h21(cell+bid)*.7);
@@ -312,11 +312,11 @@ void texAlloc(GLuint& t, int w, int h, GLenum ifmt, GLenum fmt, GLenum type, GLi
 void fboAttach(GLuint& f, GLenum att, GLenum target, GLuint tex) { if (!f) glGenFramebuffers(1, &f); glBindFramebuffer(GL_FRAMEBUFFER, f); glFramebufferTexture2D(GL_FRAMEBUFFER, att, target, tex, 0); }
 void allocTargets() {
   const Q& q = QS[gfx::quality]; float s = std::min(1.f, std::sqrt(q.cap / std::max(1.f, (float)winW * winH))); W = std::max(2, (int)std::round(winW * s)); H = std::max(2, (int)std::round(winH * s));
-  texAlloc(texScene, W, H, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_LINEAR); texAlloc(texDepth, W, H, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT, GL_NEAREST); fboAttach(fboScene, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texScene); glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texDepth, 0);
+  texAlloc(texScene, W, H, GL_R11F_G11F_B10F, GL_RGBA, GL_FLOAT, GL_LINEAR); texAlloc(texDepth, W, H, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT, GL_NEAREST); fboAttach(fboScene, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texScene); glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texDepth, 0);
   texAlloc(texA, W, H, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_LINEAR); fboAttach(fboA, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texA);
-  int w = W, h = H; for (int i = 0; i < 4; i++) { w = std::max(2, w >> 1); h = std::max(2, h >> 1); bw[i] = w; bh[i] = h; texAlloc(texB[i], w, h, GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_LINEAR); fboAttach(fboB[i], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texB[i]); }
+  int w = W, h = H; for (int i = 0; i < 4; i++) { w = std::max(2, w >> 1); h = std::max(2, h >> 1); bw[i] = w; bh[i] = h; texAlloc(texB[i], w, h, GL_R11F_G11F_B10F, GL_RGBA, GL_FLOAT, GL_LINEAR); fboAttach(fboB[i], GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texB[i]); }
   curMsaa = q.msaa;
-  if (q.msaa > 0) { if (!texMSc) glGenTextures(1, &texMSc); if (!texMSd) glGenTextures(1, &texMSd); glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texMSc); glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, q.msaa, GL_RGBA16F, W, H, GL_TRUE); glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texMSd); glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, q.msaa, GL_DEPTH_COMPONENT32F, W, H, GL_TRUE);
+  if (q.msaa > 0) { if (!texMSc) glGenTextures(1, &texMSc); if (!texMSd) glGenTextures(1, &texMSd); glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texMSc); glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, q.msaa, GL_R11F_G11F_B10F, W, H, GL_TRUE); glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texMSd); glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, q.msaa, GL_DEPTH_COMPONENT32F, W, H, GL_TRUE);
     fboAttach(fboMS, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, texMSc); glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, texMSd, 0); if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) { fprintf(stderr, "MSAA FBO incomplete\n"); curMsaa = 0; } }
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -345,8 +345,8 @@ bool init() {
   pGrass = gfx::program(V(GRASS_VS).c_str(), V(XL.c_str(), GRASS_FS).c_str(), "x-grass"); pFall = gfx::program(V(FALL_VS).c_str(), V(NOISE, FALL_FS).c_str(), "x-fall"); pMapP = gfx::program(V(MAP_VS).c_str(), V(MAP_FS).c_str(), "x-map");
   pFogP = gfx::program(sh::FS_VS, sh::FOG_FS, "x-fog"); pDownP = gfx::program(sh::FS_VS, sh::DOWN_FS, "x-down"); pFinalP = gfx::program(sh::FS_VS, sh::FINAL_FS, "x-final"); glGenVertexArrays(1, &vaoEmpty);
   // world textures
-  tex2D(texH, GS, GS, GL_R32F, GL_RED, GL_FLOAT, Hh.data(), GL_LINEAR, GL_CLAMP_TO_EDGE, false); tex2D(texInfoA, GS, GS, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, infoA.data(), GL_LINEAR, GL_CLAMP_TO_EDGE, true); tex2D(texInfoB, GS, GS, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, infoB.data(), GL_LINEAR, GL_CLAMP_TO_EDGE, true);
-  tex2D(texWater, GS, GS, GL_RGBA32F, GL_RGBA, GL_FLOAT, waterTex.data(), GL_LINEAR, GL_CLAMP_TO_EDGE, false); tex2D(texMap, MAPN, MAPN, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, mapRGBA.data(), GL_LINEAR, GL_CLAMP_TO_EDGE, true);
+  { std::vector<uint16_t> h16((size_t)GS * GS); for (size_t i = 0; i < h16.size(); i++) h16[i] = (uint16_t)(clampf((Hh[i] + 128.f) * (1.f / 1024.f), 0.f, 1.f) * 65535.f + 0.5f); tex2D(texH, GS, GS, GL_R16, GL_RED, GL_UNSIGNED_SHORT, h16.data(), GL_LINEAR, GL_CLAMP_TO_EDGE, false); } tex2D(texInfoA, GS, GS, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, infoA.data(), GL_LINEAR, GL_CLAMP_TO_EDGE, true); tex2D(texInfoB, GS, GS, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, infoB.data(), GL_LINEAR, GL_CLAMP_TO_EDGE, true);
+  tex2D(texWater, GS, GS, GL_RGBA16, GL_RGBA, GL_UNSIGNED_SHORT, waterTex.data(), GL_LINEAR, GL_CLAMP_TO_EDGE, false); tex2D(texMap, MAPN, MAPN, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, mapRGBA.data(), GL_LINEAR, GL_CLAMP_TO_EDGE, true);
   // clipmap index buffers (full grid + ring with a hole)
   for (int r = 0; r < 2; r++) { std::vector<uint16_t> ix; for (int j = 0; j < TN; j++) for (int i = 0; i < TN; i++) { if (r == 1 && i >= TN / 4 + 2 && i < TN * 3 / 4 - 2 && j >= TN / 4 + 2 && j < TN * 3 / 4 - 2) continue; uint16_t a = (uint16_t)(j * (TN + 1) + i), b = a + 1, c = (uint16_t)(a + TN + 1), d = c + 1; uint16_t t[6] = {a, c, b, b, c, d}; ix.insert(ix.end(), t, t + 6); }
     glGenBuffers(1, &terrIbo[r]); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrIbo[r]); glBufferData(GL_ELEMENT_ARRAY_BUFFER, ix.size() * 2, ix.data(), GL_STATIC_DRAW); terrNI[r] = (int)ix.size(); }

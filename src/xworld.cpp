@@ -5,7 +5,7 @@
 #include <cmath>
 #include <algorithm>
 namespace xw {
-std::vector<float> Hh, Wl, waterTex; std::vector<uint8_t> infoA, infoB, mapRGBA;
+std::vector<float> Hh, Wl; std::vector<uint16_t> waterTex; std::vector<int16_t> Wq; std::vector<uint8_t> roadQ, ecoF; std::vector<uint8_t> infoA, infoB, mapRGBA;
 std::vector<Obj> objs; std::vector<Settle> settles; Nation nations[3]; std::vector<Fall> falls; std::vector<Poi> pois; std::vector<Light> lights; std::vector<Post> posts; std::vector<Road> roads; std::vector<Lair> lairs;
 static std::vector<float> flowX, flowZ, roadD, gradeW, gradeY; static std::vector<uint8_t> fieldK; static std::vector<float> fieldA;
 static Rng rng(1); static uint32_t SEED = 1; static bool done = false;
@@ -31,9 +31,11 @@ float height(float x, float z) {
   return lerpf(lerpf(Hh[z0 * GS + x0], Hh[z0 * GS + x1], tx), lerpf(Hh[z1 * GS + x0], Hh[z1 * GS + x1], tx), tz);
 }
 float slopeAt(float x, float z) { float e = 2.5f; float dx = height(x + e, z) - height(x - e, z), dz = height(x, z + e) - height(x, z - e); return std::sqrt(dx * dx + dz * dz) / (2 * e); }
-float waterAt(float x, float z) { int ix = ci(cellOf(x), 0, GS - 1), iz = ci(cellOf(z), 0, GS - 1); return Wl[iz * GS + ix]; }
+float waterAt(float x, float z) { int ix = ci(cellOf(x), 0, GS - 1), iz = ci(cellOf(z), 0, GS - 1); if (!Wq.empty()) { int16_t q = Wq[iz * GS + ix]; return q == -32768 ? -1e9f : q * (1.f / 32.f); } return Wl[iz * GS + ix]; }
 bool inWater(float x, float z, float* depth) { float w = waterAt(x, z); if (w < -1e8f) return false; float d = w - height(x, z); if (depth) *depth = d; return d > 0.f; }
-float roadDist(float x, float z) { int ix = ci(cellOf(x), 0, GS - 1), iz = ci(cellOf(z), 0, GS - 1); return roadD[iz * GS + ix]; }
+float roadDist(float x, float z) { int ix = ci(cellOf(x), 0, GS - 1), iz = ci(cellOf(z), 0, GS - 1); if (!roadQ.empty()) return roadQ[iz * GS + ix] * 0.125f; return roadD[iz * GS + ix]; }
+bool flowery(float x, float z) { if (ecoF.empty()) return false; int ix = ci((int)((x + HALF) / (CS * 4)), 0, GS / 4 - 1), iz = ci((int)((z + HALF) / (CS * 4)), 0, GS / 4 - 1); return ecoF[iz * (GS / 4) + ix] != 0; }
+void releaseGen() { std::vector<uint8_t>().swap(infoA); std::vector<uint8_t>().swap(infoB); std::vector<uint8_t>().swap(mapRGBA); std::vector<uint16_t>().swap(waterTex); }
 int nationAt(float x, float z) { int b = 0; float bd = 1e30f; for (int i = 0; i < 3; i++) { float d = (x - nations[i].x) * (x - nations[i].x) + (z - nations[i].z) * (z - nations[i].z); if (d < bd) { bd = d; b = i; } } return b; }
 int settleNear(float x, float z, float margin) { for (size_t i = 0; i < settles.size(); i++) { const Settle& s = settles[i]; float d = std::sqrt((x - s.x) * (x - s.x) + (z - s.z) * (z - s.z)); if (d < s.r + margin) return (int)i; } return -1; }
 float highestPoint(float* hx, float* hz) { float best = -1e9f; int bi = 0; for (int i = 0; i < GS * GS; i++) if (Hh[i] > best) { best = Hh[i]; bi = i; } if (hx) *hx = -HALF + (bi % GS + 0.5f) * CS; if (hz) *hz = -HALF + (bi / GS + 0.5f) * CS; return best; }
@@ -430,8 +432,11 @@ void generate(uint32_t seed) {
       float bestTop = -1e9f; for (int sg = -1; sg <= 1; sg += 2) { float qx = sx0 + ex * 13.2f, qz = sz0 + ez * 13.2f, qy = by + 5.9f; float mxy = qy; for (float t = 0; t < 3.4f; t += 0.06f) { float nx = qx - ez * sg * 0.06f, nz = qz + ex * sg * 0.06f; collide(nx, nz, 0.42f, qy); qx = nx; qz = nz; qy = surfaceY(qx, qz, qy); if (t < 2.5f) mxy = std::min(mxy, qy); if (k == 0 && t > 2.0f && t < 2.07f && qy > by + 5.f) fprintf(stderr, "WALLPT %.1f %.1f dir %.2f %.2f y %.1f\n", qx, qz, ex, ez, qy); } bestTop = std::max(bestTop, mxy); }
       fprintf(stderr, "STAIRTEST %zu endY-base %.2f pushed %d wallwalkReach %.2f\n", k / 5, y - by, pushed, bestTop - by); } }
   // ---------------- textures
-  waterTex.assign((size_t)GS * GS * 4, 0.f); { std::vector<float> wb(GS * GS, -1e9f); for (int pass = 0; pass < 7; pass++) { std::vector<float> nb = pass == 0 ? Wl : wb; if (pass == 0) { wb = Wl; continue; } nb = wb; for (int j = 1; j < GS - 1; j++) for (int i = 1; i < GS - 1; i++) { float m = wb[j * GS + i]; for (int dj = -1; dj <= 1; dj++) for (int di = -1; di <= 1; di++) m = std::max(m, wb[(j + dj) * GS + i + di]); nb[j * GS + i] = m; } wb = nb; }
-    for (int i = 0; i < GS * GS; i++) { float h = Hh[i]; float lvl = Wl[i]; float f = 0; if (lvl > -1e8f) f = 1; float outv = lvl > -1e8f ? lvl : (wb[i] > -1e8f ? std::min(h - 1.5f, wb[i]) : h - 1.5f); waterTex[i * 4] = outv; waterTex[i * 4 + 1] = flowX[i]; waterTex[i * 4 + 2] = flowZ[i]; waterTex[i * 4 + 3] = f; } 
+  waterTex.assign((size_t)GS * GS * 4, 0); std::vector<float> wb;
+  { wb = Wl; std::vector<float> nb(GS * GS); for (int pass = 1; pass < 7; pass++) { nb = wb; for (int j = 1; j < GS - 1; j++) for (int i = 1; i < GS - 1; i++) { float m = wb[j * GS + i]; for (int dj = -1; dj <= 1; dj++) for (int di = -1; di <= 1; di++) m = std::max(m, wb[(j + dj) * GS + i + di]); nb[j * GS + i] = m; } wb.swap(nb); } }
+  { auto enc = [](float v) { return (uint16_t)(clampf((v + 128.f) * (1.f / 1024.f), 0.f, 1.f) * 65535.f + 0.5f); }; auto encF = [](float v) { return (uint16_t)(clampf(v * 0.5f + 0.5f, 0.f, 1.f) * 65535.f + 0.5f); };
+    for (int i = 0; i < GS * GS; i++) { float h = Hh[i]; float lvl = Wl[i]; float f = 0; if (lvl > -1e8f) f = 1; float outv = lvl > -1e8f ? lvl : (wb[i] > -1e8f ? std::min(h - 1.5f, wb[i]) : h - 1.5f); waterTex[i * 4] = enc(outv); waterTex[i * 4 + 1] = encF(flowX[i]); waterTex[i * 4 + 2] = encF(flowZ[i]); waterTex[i * 4 + 3] = (uint16_t)(f * 65535.f); } }
+  {
     infoA.assign((size_t)GS * GS * 4, 255); infoB.assign((size_t)GS * GS * 4, 0);
     for (int j = 0; j < GS; j++) for (int i = 0; i < GS; i++) { int id = j * GS + i; float x = -HALF + (i + 0.5f) * CS, z = -HALF + (j + 0.5f) * CS; float h = Hh[id]; float hxm = Hh[j * GS + std::max(0, i - 1)], hxp = Hh[j * GS + std::min(GS - 1, i + 1)], hzm = Hh[std::max(0, j - 1) * GS + i], hzp = Hh[std::min(GS - 1, j + 1) * GS + i]; float sl = std::sqrt((hxp - hxm) * (hxp - hxm) + (hzp - hzm) * (hzp - hzm)) / (2 * CS);
       float n1 = fb(x * 0.02f, z * 0.02f, 3, SEED + 21), n2 = fb(x * 0.2f, z * 0.2f, 2, SEED + 22), n3 = fb(x * 0.006f, z * 0.006f, 2, SEED + 23); float fm = forestMask(x, z, h); float q = fb(x * 0.0022f + 50, z * 0.0022f, 3, SEED + 41);
@@ -453,6 +458,12 @@ void generate(uint32_t seed) {
     float hs = clampf(0.5f + (Hh[gj * GS + std::min(GS - 1, gi + 2)] - Hh[gj * GS + std::max(0, gi - 2)] + Hh[std::max(0, gj - 2) * GS + gi] - Hh[std::min(GS - 1, gj + 2) * GS + gi]) * 0.05f, 0.25f, 1.15f); c = c * (hs * 1.3f + 0.25f);
     if (Wl[id] > -1e8f && h < Wl[id] + 0.05f) c = mix3(V3{0.10f, 0.28f, 0.50f}, V3{0.18f, 0.42f, 0.62f}, clampf((Wl[id] - h) * -0.2f + 1.f, 0, 1)); else if (h < 0.f) c = V3{0.08f, 0.22f, 0.42f};
     mapRGBA[(j * MAPN + i) * 4] = (uint8_t)(clampf(c.x, 0, 1) * 255); mapRGBA[(j * MAPN + i) * 4 + 1] = (uint8_t)(clampf(c.y, 0, 1) * 255); mapRGBA[(j * MAPN + i) * 4 + 2] = (uint8_t)(clampf(c.z, 0, 1) * 255); }
+  std::vector<float>().swap(wb);
+  ecoF.assign((GS / 4) * (GS / 4), 0); for (int j = 0; j < GS / 4; j++) for (int i = 0; i < GS / 4; i++) { int id = (j * 4 + 2) * GS + i * 4 + 2; ecoF[j * (GS / 4) + i] = (infoB[id * 4] >= 55 && infoA[id * 4 + 3] >= 90) ? 1 : 0; }
+  { float lo = 1e9f, hi = -1e9f; for (int i = 0; i < GS * GS; i += 7) { lo = std::min(lo, Hh[i]); hi = std::max(hi, Hh[i]); } fprintf(stderr, "world heights %.1f .. %.1f m (texture range -128..896)\n", lo, hi); }
+  Wq.resize((size_t)GS * GS); for (size_t i = 0; i < Wq.size(); i++) Wq[i] = Wl[i] < -1e8f ? (int16_t)-32768 : (int16_t)clampf(Wl[i] * 32.f, -32000.f, 32000.f);
+  roadQ.resize((size_t)GS * GS); for (size_t i = 0; i < roadQ.size(); i++) roadQ[i] = (uint8_t)clampf(roadD[i] * 8.f + 0.5f, 0.f, 255.f);
+  { std::vector<float>* big[] = {&Wl, &flowX, &flowZ, &roadD, &gradeW, &gradeY, &fieldA}; for (auto* v : big) std::vector<float>().swap(*v); std::vector<uint8_t>().swap(fieldK); }
   fprintf(stderr, "world: %zu objects, %zu settlements, %zu roads, %zu falls, %zu pois, %zu posts, %zu lights, %zu colliders\n", objs.size(), settles.size(), roads.size(), falls.size(), pois.size(), posts.size(), lights.size(), cols.size());
 }
 }  // namespace xw

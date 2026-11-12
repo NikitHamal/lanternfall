@@ -93,6 +93,13 @@ GLuint program(const char* vs, const char* fs, const char* name) {
   GLuint v = cs(GL_VERTEX_SHADER, vs), f = cs(GL_FRAGMENT_SHADER, fs), p = glCreateProgram(); glAttachShader(p, v); glAttachShader(p, f); glLinkProgram(p); GLint ok = 0; glGetProgramiv(p, GL_LINK_STATUS, &ok);
   if (!ok) { char log[2048]; glGetProgramInfoLog(p, 2048, nullptr, log); fprintf(stderr, "link %s error:\n%s\n", name, log); } glDeleteShader(v); glDeleteShader(f); return p;
 }
+static bool suspended = false;
+static void allocShadow() {
+  if (!texSh) glGenTextures(1, &texSh); glBindTexture(GL_TEXTURE_2D, texSh); glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, SHS, SHS, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  { float bc[4] = {1, 1, 1, 1}; glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bc); } glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+  fboAttach(fboSh, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texSh); glDrawBuffer(GL_NONE); glReadBuffer(GL_NONE); glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
 bool init(int q) {
   quality = std::min(3, std::max(0, q));
   const char* fsHead = "";
@@ -111,15 +118,14 @@ bool init(int q) {
     for (int a = 0; a < 3; a++) { glEnableVertexAttribArray(1 + a); glVertexAttribPointer(1 + a, 4, GL_FLOAT, GL_FALSE, sizeof(PInst), (void*)(intptr_t)(a * 16)); glVertexAttribDivisor(1 + a, 1); } }
   glGenVertexArrays(1, &markVao); glBindVertexArray(markVao); glBindBuffer(GL_ARRAY_BUFFER, quadVbo); glEnableVertexAttribArray(0); glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 8, nullptr);
   glGenBuffers(1, &markInst); glBindBuffer(GL_ARRAY_BUFFER, markInst); glBufferData(GL_ARRAY_BUFFER, sizeof(mbuf), nullptr, GL_DYNAMIC_DRAW); for (int a = 0; a < 3; a++) { glEnableVertexAttribArray(1 + a); glVertexAttribPointer(1 + a, 4, GL_FLOAT, GL_FALSE, sizeof(MInst), (void*)(intptr_t)(a * 16)); glVertexAttribDivisor(1 + a, 1); } glBindVertexArray(0);
-  glGenTextures(1, &texSh); glBindTexture(GL_TEXTURE_2D, texSh); glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, SHS, SHS, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-  { float bc[4] = {1, 1, 1, 1}; glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, bc); } glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-  fboAttach(fboSh, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, texSh); glDrawBuffer(GL_NONE); glReadBuffer(GL_NONE); glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  allocShadow();
   setReach(0, true); resize(winW, winH); return true;
 }
 void shutdown() {}
-void resize(int w, int h) { winW = std::max(2, w); winH = std::max(2, h); allocTargets(); }
-void setQuality(int q) { quality = ((q % 4) + 4) % 4; allocTargets(); }
+void resize(int w, int h) { winW = std::max(2, w); winH = std::max(2, h); if (suspended) return; allocTargets(); }
+void suspend() { if (suspended) return; suspended = true; GLuint* ts[] = {&texScene, &texDepth, &texA, &texB[0], &texB[1], &texB[2], &texB[3], &texMSc, &texMSd, &texSh}; for (GLuint* t : ts) { if (*t) glDeleteTextures(1, t); *t = 0; } }
+void resume() { if (!suspended) return; suspended = false; allocShadow(); allocTargets(); }
+void setQuality(int q) { quality = ((q % 4) + 4) % 4; if (suspended) return; allocTargets(); }
 void setReach(int i, bool instant) { reachIdx = i % 5; tgt = &REACHES[reachIdx]; if (instant) blendTo(1); }
 void resetCamera() { camS.init = false; }
 void addWaylight(float x, bool litNow) { for (auto& w : ways) if (!w.used) { w.used = true; w.x = x; w.z = pathZ(x) - 3.1f; w.lit = litNow; w.glow = litNow ? 1.f : 0.f; return; } }

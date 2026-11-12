@@ -17,6 +17,15 @@ typedef ptrdiff_t GLsizeiptr, GLintptr;
 #define GL_FLOAT 0x1406
 #define GL_UNSIGNED_INT 0x1405
 #define GL_UNSIGNED_SHORT 0x1403
+#ifndef GL_R16
+#define GL_R16 0x822A
+#endif
+#ifndef GL_RGBA16
+#define GL_RGBA16 0x805B
+#endif
+#ifndef GL_R11F_G11F_B10F
+#define GL_R11F_G11F_B10F 0x8C3A
+#endif
 #define GL_UNSIGNED_BYTE 0x1401
 #define GL_BYTE 0x1400
 #define GL_DEPTH_TEST 0x0B71

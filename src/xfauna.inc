@@ -166,7 +166,7 @@ void faunaUpdate(float dt) {
   // butterflies: stay close to the player over flowery ground, by day
   if (clockH > 6.f && clockH < 18.6f && !CI.in) { for (int i = 0; i < 44; i++) { Bfly& b = BF[i]; if (b.on && dist2(b.ax, b.az, P.x, P.z) > 46.f * 46.f) b.on = false;
       if (!b.on) { for (int tr = 0; tr < 5; tr++) { float a = fr01() * TAU, r = 5.f + fr01() * 36.f; float x = P.x + std::cos(a) * r, z = P.z + std::sin(a) * r; if (std::fabs(x) > HALF - 8 || std::fabs(z) > HALF - 8) continue; float h = height(x, z); if (h < 1.5f || h > 70.f || waterAt(x, z) > -1e8f) continue;
-          int gi = std::min(GS - 1, std::max(0, (int)((z + HALF) / CS))) * GS + std::min(GS - 1, std::max(0, (int)((x + HALF) / CS))); if (infoB[gi * 4] < 55 || infoA[gi * 4 + 3] < 90) continue; b.ax = x; b.az = z; b.ph = fr01() * TAU; b.on = true; static const uint32_t BC[6] = {0xf08a2a, 0xf2dc3a, 0x5a9af0, 0xf4f4ee, 0xe86aa8, 0xa07af0}; tintHex(b.tint, BC[(int)(fr01() * 5.99f)], 1.15f); break; } }
+          if (!flowery(x, z)) continue; b.ax = x; b.az = z; b.ph = fr01() * TAU; b.on = true; static const uint32_t BC[6] = {0xf08a2a, 0xf2dc3a, 0x5a9af0, 0xf4f4ee, 0xe86aa8, 0xa07af0}; tintHex(b.tint, BC[(int)(fr01() * 5.99f)], 1.15f); break; } }
       if (b.on) { float t = tAbs * 0.6f + b.ph; b.x = b.ax + std::sin(t * 0.7f) * 2.6f + std::sin(t * 1.9f) * 0.6f; b.z = b.az + std::cos(t * 0.55f) * 2.6f + std::cos(t * 1.7f) * 0.6f; b.y = height(b.x, b.z) + 0.55f + 0.35f * std::sin(t * 1.3f) + 0.15f * std::sin(tAbs * 3.f + b.ph); } } }
   else for (Bfly& b : BF) b.on = false;
   // falling petals / leaves around the camera
