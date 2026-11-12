@@ -12,7 +12,9 @@ spells, gather by day, survive demon hordes at night, explore lost kingdoms and 
 - [x] daytime: lanterns only carried when dusk/night/indoors
 - [x] reputation & crime: victims fight back or flee, witnesses panic, guards hunt you, per-nation bounty (WANTED stars) that decays
 - [x] summonable Noble Hart mount (`K`) with seated riding pose, trample charge, mounted archery & spellcasting (v1.8)
-- [ ] NPC daily schedules (work / market / tavern / sleep), shopkeepers & trade, quests, dialogue trees
+- [x] NPC daily schedules: morning at home, work at stalls / wells / mills / barns, evening on the plaza, asleep indoors 20:30-05:30 (v2.1)
+- [x] talk menu (E), shopkeepers & trade (arrows, healing draughts, weapon tiers 1-3, armour tiers 1-3, sell food), quest journal (slay / hunt / gather wood / gather stone / scout) with report-back reward + crime pardon (v2.1)
+- [ ] tavern interiors, dialogue trees with branching consequences, escort / delivery quests, merchant stock rotation
 - [x] pets (dogs befriend + guard), cats, hens, sheep, cows, horses (rideable, E), songbirds, crows, butterflies (v1.9)
 - [ ] children, NPC daily schedules, animal species sounds, hunting drops beyond food
 ### P3 Combat  (v1.7-v1.8)
@@ -42,7 +44,8 @@ spells, gather by day, survive demon hordes at night, explore lost kingdoms and 
 - [x] biome flora: cherry blossom, birch, jungle, willow, palm, ferns, mushrooms, reeds, lilies, rock spires, flowering shrubs, falling petals / leaves (v1.9)
 - [ ] town hubbub, procedural exploration music, snow / desert / swamp biomes
 ### P8 Systems
-- [ ] persistent world save / load (`save/kingdom.json`), custom map markers, quest journal, gamepad bindings in explorer
+- [x] persistent explorer save (`save/explorer.sav`: gold, ammo, resources, tiers, draughts, clock, position, discovered POIs, quests; autosave 45 s + on exit) (v2.1)
+- [ ] persist built fortifications / warband, custom map markers, gamepad bindings in explorer
 
 ## Stats (update every session)
 | version | lines of C++ | assets | binary | notes |
@@ -51,6 +54,8 @@ spells, gather by day, survive demon hordes at night, explore lost kingdoms and 
 | v1.7.0 | ~5.6 k (dense) + 3 new modules | 26 MB | 1.5 MB | gait IK, body-part combat, bow, crime, interiors, horde |
 | v1.9.0 | ~7.0 k + xfauna.inc + xmesh_new.inc | 26 MB | ~1.7 MB | biome flora (11 kinds), fauna + ride horses, ambience, explore-only title |
 | v1.8.0 | ~6.5 k (dense) + `src/xkingdom.inc` | 26 MB | 1.6 MB | Athran kingdom build/siege loop, tower defense AI, warband orders, 4 spells + mana, rifts, Noble Hart mount, FPV bow fix |
+
+| v2.1.0 | ~7.4 k + xtown.inc | 26 MB | ~1.8 MB | schedules, talk menu, merchants, quests, tiers, save |
 
 ## Next session candidates (pick ONE major pillar)
 1. Persistent Kingdom Save/Load (`save/kingdom.json`) + Multi-Tier Structure Upgrades (Timber -> Stone -> Citadel) & Siege Catapults

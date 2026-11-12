@@ -147,6 +147,7 @@ void townDraught() {
   if (potions <= 0) { banner("NO DRAUGHTS", "BUY THEM FROM MERCHANTS - SOMETIMES MONSTERS DROP ONE", 1.8f); return; } if (P.hp >= P.maxHp - 1.f && K.mana >= K.maxMana - 1.f) return;
   potions--; P.hp = std::min(P.maxHp, P.hp + P.maxHp * 0.7f); K.mana = std::min(K.maxMana, K.mana + 35.f); banner("HEALING DRAUGHT", "HEALTH AND MANA RESTORED", 1.6f); audio::play(S_LEVELUP, 0, 0.5f); townRefresh();
 }
+bool dbgCensus = false; int dbgCensusN = 0;
 bool townBlocks() { return TM.open; }
 
 // ------------------------------------------------------------------ save / load
@@ -182,6 +183,7 @@ void townTick(float dt) {
   qTimer -= dt; if (qTimer <= 0) { qTimer = 0.5f;
     for (Quest& q : QS) if (q.on && !q.ready && q.type == QT_SCOUT && q.poi >= 0 && q.poi < (int)pois.size() && pois[q.poi].found) questDone(q);
     questRefresh(); if (TM.open) townRefresh(); }
+  if (dbgCensus && ++dbgCensusN % 900 == 0) { int tot = 0, sl = 0, wk = 0, pl = 0, hm = 0; for (int i = 0; i < MAXN; i++) { const Npc& n = npcs[i]; if (!n.used || !n.alive || n.role != R_VILL || n.settle < 0) continue; tot++; const Sch& c = SCH[i]; if (n.asleep) sl++; else if (c.init && dist2(n.x, n.z, c.wx, c.wz) < 36.f) wk++; else if (dist2(n.x, n.z, settles[n.settle].x, settles[n.settle].z) < 225.f) pl++; else hm++; } fprintf(stderr, "census h=%.2f villagers=%d asleep=%d atWork=%d plaza=%d other=%d\n", clockH, tot, sl, wk, pl, hm); }
   H.potions = potions; H.wpnTier = wpnTier; H.armorTier = armorTier;
   saveTimer += dt; if (saveTimer > 45.f && sinceStart > 20.f && !CI.in) { saveTimer = 0; townSave(); }
 }
