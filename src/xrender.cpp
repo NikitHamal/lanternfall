@@ -82,6 +82,10 @@ void main(){
   // macro colour life on grass: warm/cool patches, slightly calmer saturation
   float gk = clamp(A.a*1.4, 0., 1.) * (1. - rockK) * (1. - snowK);
   float pm = vn2(vWp.xz*.012 + 9.), pm2 = vn2(vWp.xz*.045 + 3.);
+  { float nf = 1. - smoothstep(25., 150., d); float m1 = vn2(vWp.xz*2.6), m2 = vn2(vWp.xz*11. + 4.), m3 = vn2(vWp.xz*.9 + 20.);
+    col *= 1. + nf*gk*((m2 - .5)*.55 + (m1 - .5)*.35);
+    col = mix(col, vec3(.16,.105,.05)*(.55 + m2), gk*nf*smoothstep(.70,.88,m3)*.6);
+    col = mix(col, col*vec3(1.35,1.15,.55), gk*nf*smoothstep(.62,.9,vn2(vWp.xz*1.4 + 40.))*.5); }
   col = mix(col, col*vec3(1.16,1.04,.68), gk*smoothstep(.45,.85,pm)*.55);
   col = mix(col, col*vec3(.78,.98,.9), gk*smoothstep(.55,.2,pm2)*.18);
   col = mix(vec3(dot(col, vec3(.33))), col, mix(1., .78, gk));
@@ -406,7 +410,7 @@ void render(const Frame& f, const FigDraw* figs, int nfig) {
   glDrawArrays(GL_TRIANGLES, 0, 3);
   glUseProgram(pDownP); si(pDownP, "tC", 0); GLuint src = texA; int sw = W, sh2 = H; for (int i = 0; i < 4; i++) { glBindFramebuffer(GL_FRAMEBUFFER, fboB[i]); glViewport(0, 0, bw[i], bh[i]); glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, src); s2(pDownP, "uTx", 1.f / sw, 1.f / sh2); s1(pDownP, "uThr", i == 0 ? 1.6f : 0.f); glDrawArrays(GL_TRIANGLES, 0, 3); src = texB[i]; sw = bw[i]; sh2 = bh[i]; }
   glBindFramebuffer(GL_FRAMEBUFFER, 0); glViewport(0, 0, winW, winH); glUseProgram(pFinalP); GLuint tx[5] = {texA, texB[0], texB[1], texB[2], texB[3]}; const char* nm[5] = {"tC", "tB1", "tB2", "tB3", "tB4"}; for (int i = 0; i < 5; i++) { glActiveTexture(GL_TEXTURE0 + i); glBindTexture(GL_TEXTURE_2D, tx[i]); si(pFinalP, nm[i], i); } glActiveTexture(GL_TEXTURE0);
-  s2(pFinalP, "uRes", (float)W, (float)H); s1(pFinalP, "uTime", f.time); s1(pFinalP, "uExp", E.exposure); s1(pFinalP, "uFocus", 20.f); s1(pFinalP, "uAp", 0.f); s1(pFinalP, "uBloom", E.bloom); s1(pFinalP, "uVig", 0.9f); s1(pFinalP, "uFlash", f.flash); s1(pFinalP, "uSat", 1.12f); s1(pFinalP, "uCon", 0.55f); s1(pFinalP, "uCol", 1.f); s1(pFinalP, "uFade", f.fade);
+  s2(pFinalP, "uRes", (float)W, (float)H); s1(pFinalP, "uTime", f.time); s1(pFinalP, "uExp", E.exposure); s1(pFinalP, "uFocus", 20.f); s1(pFinalP, "uAp", 0.f); s1(pFinalP, "uBloom", E.bloom); s1(pFinalP, "uVig", 0.9f); s1(pFinalP, "uFlash", f.flash); s1(pFinalP, "uSat", 0.82f); s1(pFinalP, "uCon", 0.55f); s1(pFinalP, "uCol", 0.5f); s1(pFinalP, "uFade", f.fade);
   glDrawArrays(GL_TRIANGLES, 0, 3); glEnable(GL_DEPTH_TEST);
 }
 
