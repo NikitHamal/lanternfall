@@ -357,7 +357,7 @@ void arrowGeo(V3 tip, V3 d, float len_, bool view) {
 }  // namespace
 void buildShapes() {
   for (int k = 0; k < 4; k++) shWn[k] = shVn[k] = 0; if (mode == M_OFF) return;
-  if (mode == M_SELECT) { V3 b{P.x, terrH(P.x, P.z), P.z}; wCyl(b - V3{0, 0.02f, 0}, b + V3{0, 0.2f, 0}, 1.35f, C(0x3a3a38), 0.9f); wCyl(b + V3{0, 0.2f, 0}, b + V3{0, 0.29f, 0}, 1.1f, C(0x55524a), 0.85f); wCyl(b + V3{0, 0.29f, 0}, b + V3{0, 0.305f, 0}, 1.14f, C(0xe0a33c), 0.5f, 0.3f, 1.6f); return; }
+  if (mode == M_SELECT) { V3 b{P.x, terrH(P.x, P.z), P.z}; wCyl(b - V3{0, 0.02f, 0}, b + V3{0, 0.2f, 0}, 1.0f, C(0x3a3a38), 0.9f); wCyl(b + V3{0, 0.2f, 0}, b + V3{0, 0.29f, 0}, 0.82f, C(0x55524a), 0.85f); wCyl(b + V3{0, 0.29f, 0}, b + V3{0, 0.30f, 0}, 0.9f, C(0xe0a33c), 0.5f, 0.3f, 0.5f); return; }
   // world arrows & projectiles
   for (const Arrow& a : arrows) { if (!a.on) continue;
     if (a.own == 0) { V3 d = a.stuck ? V3{a.vx, a.vy, a.vz} : norm(V3{a.vx, a.vy, a.vz}); V3 tp{a.x, a.y, a.z}; if (a.stuck) { float emb = a.tg >= 0 ? 0.12f : 0.34f, sink = a.life < 1.2f ? (1.2f - a.life) * 0.6f : 0.f; tp = tp + d * emb; tp.y -= sink; } arrowGeo(tp, d, 0.8f, false); }
