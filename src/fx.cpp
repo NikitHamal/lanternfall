@@ -59,9 +59,9 @@ void Fx::slash(float x, float y, float z, float yaw, float reach, float half, fl
     float u = (i + rnd()) / n, a = yaw + dirSign * lerpf(-half, half, u), rr = reach * R2(*this, 0.8f, 1.02f); Particle& q = add(); q.kind = 3;
     q.x = x + std::sin(a) * rr; q.z = z + std::cos(a) * rr; q.y = y + tilt * (u - 0.5f) + 0.18f * std::sin(u * PI);
     float sp = dirSign * reach * 3.6f; q.vx = std::cos(a) * sp; q.vz = -std::sin(a) * sp; q.vy = tilt * 1.2f; q.life = R2(*this, 0.16f, 0.3f); q.size = 0.018f + 0.04f * u;
-    float k = 0.45f + 1.1f * u; q.r = col.x * k; q.g = col.y * k; q.b = col.z * k; q.a = 1; q.grav = 0; q.drag = 3.5f;
+    float k = 0.3f + 0.75f * u; q.r = col.x * k; q.g = col.y * k; q.b = col.z * k; q.a = 1; q.grav = 0; q.drag = 3.5f;
   }
-  Particle& g = add(); g.kind = 0; float a = yaw + dirSign * half; g.x = x + std::sin(a) * reach * 0.9f; g.z = z + std::cos(a) * reach * 0.9f; g.y = y + tilt * 0.5f; g.life = 0.14f; g.size = reach * 0.22f; g.r = col.x * 0.8f; g.g = col.y * 0.8f; g.b = col.z * 0.8f; g.a = 0.5f;
+  Particle& g = add(); g.kind = 0; float a = yaw + dirSign * half; g.x = x + std::sin(a) * reach * 0.9f; g.z = z + std::cos(a) * reach * 0.9f; g.y = y + tilt * 0.5f; g.life = 0.14f; g.size = reach * 0.1f; g.r = col.x * 0.4f; g.g = col.y * 0.4f; g.b = col.z * 0.4f; g.a = 0.5f;
 }
 void Fx::impact(float x, float y, float z, float nx, float nz, V3 col, float power) {
   int n = 6 + (int)(16 * power); sparks(x, y, z, n, col, 3.f + 4.f * power, nx, nz);

@@ -222,8 +222,8 @@ void spellTrail(const Arrow& a, V3 p) {
 void actEffect() {
   const int st = P.style; float dm = P.dmgMul * passBonus() * (P.sprAtk ? 1.25f : 1.f); bool ch = P.atkCharged; float cf = P.atkCf, yaw = P.atkYaw; V3 f = fwdOf(yaw, 0); P.relT = 0;
   if (st == roster::ST_SWORD || st == roster::ST_HEAVY || st == roster::ST_SPEAR) { P.kickP -= st == roster::ST_HEAVY ? 0.03f : 0.014f; P.kickY += ((P.atkIdx & 1) ? -1.f : 1.f) * 0.012f; if (P.sprAtk) fx.floatText(P.x, P.y + 2.3f, P.z, "CHARGE", 0xffd27a, 10, 0.6f); }
-  if (st == roster::ST_SWORD && P.atkKind != A_BASH) { int i2 = P.atkIdx % 3; fx.slash(P.x, P.y + 1.05f, P.z, yaw, 2.5f, i2 == 2 ? 1.3f : 1.0f, (i2 & 1) ? -1.f : 1.f, i2 == 2 ? 1.2f : 0.3f, {2.4f, 2.3f, 2.0f}, 20); }
-  else if (st == roster::ST_HEAVY && !ch) fx.slash(P.x, P.y + 1.0f, P.z, yaw, 3.3f, 1.4f, 1.f, 0.5f, {2.8f, 2.0f, 1.0f}, 28);
+  if (st == roster::ST_SWORD && P.atkKind != A_BASH && H.view != VW_FIRST) { int i2 = P.atkIdx % 3; fx.slash(P.x, P.y + 1.05f, P.z, yaw, 2.5f, i2 == 2 ? 1.3f : 1.0f, (i2 & 1) ? -1.f : 1.f, i2 == 2 ? 1.2f : 0.3f, {2.4f, 2.3f, 2.0f}, 20); }
+  else if (st == roster::ST_HEAVY && !ch && H.view != VW_FIRST) fx.slash(P.x, P.y + 1.0f, P.z, yaw, 3.3f, 1.4f, 1.f, 0.5f, {2.8f, 2.0f, 1.0f}, 28);
   if (st == roster::ST_SWORD) {
     if (P.atkKind == A_BASH) { meleeArc(2.7f, 0.95f, 14 * dm, 1.1f, 9.f, yaw, 0xcfe0ff); fx.ring(P.x + f.x * 1.2f, P.z + f.z * 1.2f, 0.2f, 2.2f, 0.3f, {1.4f, 1.6f, 2.2f}); audio::play(S_HITSHIELD, 0, 0.7f); fx.sparks(P.x + f.x * 1.1f, P.y + 1.2f, P.z + f.z * 1.1f, 10, {1.8f, 2.f, 2.4f}, 3.f); }
     else { static const float DM[3] = {22, 24, 40}, RG[3] = {2.9f, 2.9f, 3.5f}, HF[3] = {0.95f, 0.95f, 1.4f}, SG[3] = {0.25f, 0.25f, 0.9f}, KB[3] = {2.5f, 2.5f, 8.f}; int i = P.atkIdx % 3; float rip = P.ripT > 0 ? 2.f : 1.f;
@@ -673,7 +673,7 @@ void fpvOther() {
   float cfull = st == roster::ST_FIRE ? 0.9f : st == roster::ST_ALCH ? 0.8f : 1.f, pw = 0, ps = 0, pr = 0;
   if (att) { if (!P.atkDone) { float u = clampf(P.atkT / std::max(0.05f, P.atkWind), 0, 1); if (P.atkCharged) { pw = 1; ps = smooth(0.3f, 1.f, u); } else { pw = smooth(0, 0.55f, u); ps = smooth(0.45f, 1.f, u); } } else { pw = ps = 1; pr = smooth(0.06f, 0.06f + std::max(0.12f, P.atkRec - 0.06f), P.atkT - P.atkWind); } }
   else if (P.charging) pw = clampf(spear ? (P.chargeT - 0.3f) / 0.6f : P.chargeT / cfull, 0, 1);
-  VK idle{0.30f, -0.32f, -0.55f, 0.12f, 0.85f, -0.45f, 0}, wind = idle, strike = idle, guard{0.0f, -0.18f, -0.55f, 0.8f, 0.45f, -0.35f, 0.4f}; int ix = P.atkIdx % 3; const int ak = P.atkKind;
+  VK idle{0.36f, -0.34f, -0.55f, 0.16f, 0.85f, -0.45f, 0}, wind = idle, strike = idle, guard{0.0f, -0.18f, -0.55f, 0.8f, 0.45f, -0.35f, 0.4f}; int ix = P.atkIdx % 3; const int ak = P.atkKind;
   if (st == roster::ST_SWORD) {
     if (att && ak == A_BASH) strike = {0.34f, -0.28f, -0.68f, 0.10f, 0.80f, -0.50f, 0};
     else if (ix == 0) { wind = {0.52f, -0.14f, -0.40f, 0.62f, 0.55f, -0.30f, 0.5f}; strike = {-0.26f, -0.24f, -0.68f, -0.76f, 0.20f, -0.60f, -0.4f}; }
@@ -684,14 +684,14 @@ void fpvOther() {
     if ((att && ak == A_SUNDER) || (!att && P.charging)) { wind = {0.16f, 0.14f, -0.26f, 0.12f, 1.0f, 0.2f, 0}; strike = {0.06f, -0.46f, -0.84f, 0.0f, -0.45f, -0.90f, 0}; }
     else { wind = {0.58f, -0.22f, -0.40f, 0.70f, 0.45f, -0.20f, 0.5f}; strike = {-0.38f, -0.32f, -0.74f, -0.80f, 0.05f, -0.60f, -0.5f}; }
   } else if (spear) {
-    idle = {0.30f, -0.36f, -0.46f, 0.45f, 0.55f, -0.70f, 0}; guard = {0.02f, -0.30f, -0.50f, 0.78f, 0.55f, -0.35f, 0};
+    idle = {0.32f, -0.38f, -0.46f, 0.60f, 0.50f, -0.55f, 0}; guard = {0.02f, -0.30f, -0.50f, 0.78f, 0.55f, -0.35f, 0};
     if (att && ak == A_LANCE || (!att && P.charging)) { wind = {0.38f, 0.02f, -0.16f, 0.26f, 0.42f, -0.87f, 0}; strike = {0.22f, -0.22f, -0.86f, -0.05f, 0.12f, -0.99f, 0}; }
     else if (att && ak == A_BASH) { strike = {0.30f, -0.30f, -0.50f, 0.45f, 0.55f, -0.70f, 0}; }
     else if (ix == 0) { wind = {0.36f, -0.30f, -0.18f, 0.22f, 0.20f, -0.96f, 0}; strike = {0.22f, -0.27f, -0.80f, -0.06f, 0.12f, -0.99f, 0}; }
     else if (ix == 1) { wind = {0.30f, -0.37f, -0.20f, 0.08f, 0.12f, -0.99f, 0}; strike = {0.17f, -0.31f, -0.82f, -0.11f, 0.14f, -0.98f, 0}; }
     else { wind = {0.42f, -0.20f, -0.04f, 0.24f, 0.26f, -0.94f, 0}; strike = {0.18f, -0.25f, -0.96f, -0.08f, 0.15f, -0.98f, 0}; }
   } else {
-    idle = {0.36f, -0.40f, -0.50f, 0.25f, 0.85f, -0.45f, 0}; wind = {0.34f, -0.30f, -0.52f, 0.30f, 0.55f, -0.75f, 0}; strike = {0.28f, -0.31f, -0.74f, -0.02f, 0.35f, -0.93f, 0}; guard = {0.12f, -0.30f, -0.56f, 0.40f, 0.80f, -0.40f, 0};
+    idle = {0.40f, -0.46f, -0.50f, 0.45f, 0.75f, -0.45f, 0}; wind = {0.38f, -0.36f, -0.52f, 0.40f, 0.55f, -0.70f, 0}; strike = {0.28f, -0.31f, -0.74f, -0.02f, 0.35f, -0.93f, 0}; guard = {0.12f, -0.30f, -0.56f, 0.40f, 0.80f, -0.40f, 0};
   }
   VK k = vmix(vmix(idle, wind, pw), strike, ps); k = vmix(k, idle, pr); if (P.blocking > 0.01f) k = vmix(k, guard, P.blocking);
   const float mv = std::min(1.f, P.speed / 4.f), spr = clampf((P.speed - 4.8f) / 2.f, 0, 1) * ((att || P.charging) ? 0.f : 1.f);
@@ -699,7 +699,7 @@ void fpvOther() {
   if (P.rollT > 0) { float r = std::sin(std::min(1.f, P.rollT / ROLL_T) * PI); k.y -= 0.16f * r; k.z += 0.06f * r; k.dy -= 0.3f * r; }
   if (P.stagT > 0) { k.x += 0.05f * nz(tm * 30, 1); k.y += 0.04f * nz(tm * 33, 2); }
   if (P.charging && pw >= 1.f) { k.x += 0.004f * nz(tm * 26, 7); k.y += 0.004f * nz(tm * 29, 8); }
-  const float sc = (wR == 5) ? 0.6f : 0.85f; V3 G = W(k.x, k.y, k.z), D = Wd(k.dx, k.dy, k.dz);
+  float sc = (wR == 5) ? 0.45f : 0.85f; const float sc0 = sc; V3 G = W(k.x, k.y, k.z), D = Wd(k.dx, k.dy, k.dz);
   auto mk = [&](V3 pos, V3 yA, V3 zA, float rl) { yA = norm(yA); V3 zr = zA - yA * dot(zA, yA); if (len(zr) < 0.25f) zr = rt - yA * dot(rt, yA); zA = norm(zr); V3 xA = cross(yA, zA); if (rl != 0.f) { float c = std::cos(rl), s = std::sin(rl); V3 x2 = xA * c + zA * s, z2 = zA * c - xA * s; xA = x2; zA = z2; }
     M4 m = ident(); m.m[0] = xA.x * sc; m.m[1] = xA.y * sc; m.m[2] = xA.z * sc; m.m[4] = yA.x * sc; m.m[5] = yA.y * sc; m.m[6] = yA.z * sc; m.m[8] = zA.x * sc; m.m[9] = zA.y * sc; m.m[10] = zA.z * sc; m.m[12] = pos.x; m.m[13] = pos.y; m.m[14] = pos.z; return m; };
   static const float GRIP[8] = {0.12f, 0.18f, 0.f, 0.f, 0.f, 0.62f, 0.12f, 0.f};
@@ -711,14 +711,14 @@ void fpvOther() {
     V3 tc = heavy ? C(0xffc880) : spear ? C(0xfff0c0) : C(0xdfe8ff);
     for (int i = 0; i + 1 < trlN; i++) { float f = 1.f - (float)i / (float)trlN; V3 a = W(trlV[i].x, trlV[i].y, trlV[i].z), b = W(trlV[i + 1].x, trlV[i + 1].y, trlV[i + 1].z); float r = 0.004f + 0.012f * f; putV(SH_CYL, seg(a, b, r, r), tc * (5.f * f), 0.4f, 0, 3.f * f); } }
   V3 leather = C(0x4a2f1c), sleeve = C(0x3b4a52); putV(SH_SPHERE, ball(G, 0.034f), leather, 0.8f, 0, 0); putV(SH_CYL, seg(G, W(0.50f, -0.62f, -0.05f), 0.034f, 0.034f), sleeve, 0.9f, 0, 0);
-  V3 L = W(-0.32f, -0.30f + std::sin(P.bob * 2.f) * 0.008f * mv * mo, -0.55f); const bool hasL = wL >= 0;
+  V3 L = W(-0.40f, -0.40f + std::sin(P.bob * 2.f) * 0.008f * mv * mo, -0.55f); const bool hasL = wL >= 0;
   if (heavy) { V3 G2 = G - D * 0.28f; putV(SH_SPHERE, ball(G2, 0.034f), leather, 0.8f, 0, 0); putV(SH_CYL, seg(G2, W(-0.45f, -0.62f, -0.05f), 0.034f, 0.034f), sleeve, 0.9f, 0, 0); }
   else if (wR == 8 && !hasL) { V3 G2 = G - D * 0.32f; putV(SH_SPHERE, ball(G2, 0.032f), leather, 0.8f, 0, 0); putV(SH_CYL, seg(G2, W(-0.20f, -0.70f, -0.05f), 0.034f, 0.034f), sleeve, 0.9f, 0, 0); }
   if (hasL) { float blk = P.blocking, bsh = (att && ak == A_BASH && P.atkDone) ? (1.f - pr) : (att && ak == A_BASH ? ps : 0.f);
-    if (wL == 3 || wL == 4) { V3 Ls = mix3(L, W(-0.04f, -0.12f, -0.62f), blk); Ls = mix3(Ls, W(-0.02f, -0.10f, -0.86f), bsh); V3 zA = norm(fw + rt * 0.45f); vmw.m[1] = mk(Ls - up * 0.46f * sc + zA * 0.07f, up, zA, 0.f); L = Ls; }
+    if (wL == 3 || wL == 4) { V3 Ls = mix3(W(-0.46f, -0.38f, -0.62f), W(-0.04f, -0.14f, -0.64f), blk); Ls = mix3(Ls, W(-0.02f, -0.10f, -0.88f), bsh); V3 zA = norm(fw + rt * 0.45f); sc = 0.62f; vmw.m[1] = mk(Ls - up * 0.46f * sc + zA * 0.07f, up, zA, 0.f); sc = sc0; L = Ls; }
     else if (wL == 7) { V3 y = norm(up + rt * 0.08f * std::sin(tm * 3.1f) + fw * 0.07f * std::cos(tm * 2.6f)); vmw.m[1] = mk(L - y * 0.34f * sc, y, fw, 0.f); } else vmw.m[1] = mk(L - up * 0.1f, up, fw, 0.f);
     putV(SH_SPHERE, ball(L, 0.034f), leather, 0.8f, 0, 0); putV(SH_CYL, seg(L, W(-0.52f, -0.62f, -0.05f), 0.034f, 0.034f), sleeve, 0.9f, 0, 0); }
-  if (caster && (pw > 0.05f || ps > 0.01f) && pr < 0.5f) { V3 tip = G + D * 0.95f, c = st == roster::ST_FROST ? C(0xa8e0ff) : st == roster::ST_ALCH ? C(0x7aff8a) : C(0xff9a3a); putV(SH_SPHERE, ball(tip, (0.012f + 0.028f * pw) * (1.f - 0.85f * ps)), c, 0.5f, 0, 6.f); }
+  if (caster && (pw > 0.05f || ps > 0.01f) && pr < 0.5f) { V3 tip = G + D * 0.72f, c = st == roster::ST_FROST ? C(0xa8e0ff) : st == roster::ST_ALCH ? C(0x7aff8a) : C(0xff9a3a); putV(SH_SPHERE, ball(tip, (0.012f + 0.028f * pw) * (1.f - 0.85f * ps)), c, 0.5f, 0, 6.f); }
 }
 }  // namespace
 void spearWorld(const M4& m) {
