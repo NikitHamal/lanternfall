@@ -1,5 +1,6 @@
 // Lanternfall native: window, input, fixed-step loop, screenshot smoke-test mode.
 #define GLFW_INCLUDE_NONE
+#include "memstat.h"
 #include "gl.h"
 #include <GLFW/glfw3.h>
 #include "render.h"
@@ -81,7 +82,7 @@ static void padMenu() {   // hero select: bumpers change, A selects
 static int lastRuns = -1;
 namespace gfx { extern const char* gArgv0; }
 int main(int argc, char** argv) {
-  gfx::gArgv0 = argv[0];
+  gfx::gArgv0 = argv[0]; mem::mark("process start");
   const char* xcmd = nullptr; const char* scene = nullptr; int heroArg = -1, biomeArg = -1; int quality = 2, shotFrames = 0, simSpeed = 1, W0 = 1280, H0 = 720; const char* shot = nullptr; bool demo = false, noAudio = false; int startMode = 0, startView = 0; bool exStart = false, exAt = false; float exHour = -1, exX = 0, exZ = 0, exYaw = 0, exPitch = 8, exDist = -1; int exPoi = -1; bool exFly = false, exMap = false, exFp = false; bool bestiary = false; bool bot = false; float dbgDraw = -1, dbgYaw = 99, dbgPitch = 0; int ff = 0;
   for (int i = 1; i < argc; i++) { if (!strcmp(argv[i], "--shot") && i + 1 < argc) shot = argv[++i]; else if (!strcmp(argv[i], "--out") && i + 1 < argc) shot = argv[++i]; else if (!strcmp(argv[i], "--scene") && i + 1 < argc) scene = argv[++i]; else if (!strcmp(argv[i], "--hero") && i + 1 < argc) heroArg = atoi(argv[++i]); else if (!strcmp(argv[i], "--biome") && i + 1 < argc) biomeArg = atoi(argv[++i]);
     else if (!strcmp(argv[i], "--frames") && i + 1 < argc) shotFrames = atoi(argv[++i]); else if (!strcmp(argv[i], "--quality") && i + 1 < argc) quality = atoi(argv[++i]);
@@ -100,7 +101,7 @@ int main(int argc, char** argv) {
   glfwMakeContextCurrent(win); glfwSwapInterval(vsync && !shot ? 1 : 0); glLoadAll([](const char* n) { return (void*)glfwGetProcAddress(n); });
   fprintf(stderr, "GL %s | %s\n", glGetString(GL_VERSION), glGetString(GL_RENDERER));
   G.onWaylight = [](float x) { gfx::addWaylight(x, false); }; G.onRelight = []() { gfx::lightLastWaylight(); }; G.onShift = [](float dx) { gfx::shiftWorld(dx); }; G.onReach = [](int r, bool inst) { gfx::setReach(r, inst); };
-  G.load(); { int fw, fh; glfwGetFramebufferSize(win, &fw, &fh); gfx::winW = fw; gfx::winH = fh; } if (!gfx::init(quality)) return 1; ui::init(); if (!noAudio && !shot) audio::init(); audio::setVolume(cfg::S.master, G.P.mute);
+  G.load(); { int fw, fh; glfwGetFramebufferSize(win, &fw, &fh); gfx::winW = fw; gfx::winH = fh; } if (!gfx::init(quality)) return 1; mem::mark("after legacy gfx"); ui::init(); if (!noAudio && !shot) audio::init(); audio::setVolume(cfg::S.master, G.P.mute);
   G.newRun(); G.state = S_TITLE; gfx::addWaylight(G.anchorX + 2.2f, true); lastRuns = G.P.runs;
   glfwSetKeyCallback(win, onKey); glfwSetMouseButtonCallback(win, onMouse); glfwSetCursorPosCallback(win, onCursor); glfwSetScrollCallback(win, onScroll);
   if (startMode) { pl::start(startMode); pl::setView(startView); pl::H.view = startView; pl::H.bot = bot; if (dbgDraw >= 0) pl::debugDraw(dbgDraw); if (dbgYaw < 90) pl::debugAim(dbgYaw, dbgPitch); if (!shot) lockCursor(true); }
@@ -128,7 +129,7 @@ int main(int argc, char** argv) {
     float danger = play ? (pl::H.mode == pl::M_WAVES ? 0.5f : 0.f) : 0; if (!play && G.hasRun && G.state != S_TITLE) { danger = G.state == S_BOSS ? 1.f : (G.state == S_FIGHT ? 0.55f : 0.1f); if (G.partyHp() < 0.4f) danger = std::min(1.f, danger + 0.3f); }
     audio::update(dtR, danger, G.panel != P_NONE, 0.f); gfx::draw(); ui::draw(fw, fh, dtR); }
     if (shot && ++frame >= shotFrames) { std::vector<uint8_t> px((size_t)fw * fh * 4), rgb((size_t)fw * fh * 3); glReadPixels(0, 0, fw, fh, GL_RGBA, GL_UNSIGNED_BYTE, px.data()); for (int y = 0; y < fh; y++) for (int x = 0; x < fw; x++) for (int k = 0; k < 3; k++) rgb[((size_t)y * fw + x) * 3 + k] = px[((size_t)(fh - 1 - y) * fw + x) * 4 + k];
-      writePng(shot, fw, fh, rgb); fprintf(stderr, "wrote %s (%dx%d) stage=%d state=%d heroes hp=%.0f%% mons=%d\n", shot, fw, fh, G.run.stage, G.state, G.partyHp() * 100, G.liveMonCount()); break; }
+      mem::mark("at screenshot"); writePng(shot, fw, fh, rgb); fprintf(stderr, "wrote %s (%dx%d) stage=%d state=%d heroes hp=%.0f%% mons=%d\n", shot, fw, fh, G.run.stage, G.state, G.partyHp() * 100, G.liveMonCount()); break; }
     glfwSwapBuffers(win); fpsN++; fpsT += dtR; if (fpsT >= 1.f) { snprintf(title, 128, "LANTERNFALL - %d fps - %s - %dx%d", (int)(fpsN / fpsT), gfx::qualityName[gfx::quality], gfx::W, gfx::H); glfwSetWindowTitle(win, title); fpsN = 0; fpsT = 0; }
   }
   if (G.hasRun || true) G.save(); audio::shutdown(); glfwDestroyWindow(win); glfwTerminate(); return 0;

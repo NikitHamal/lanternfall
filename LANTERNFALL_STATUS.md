@@ -255,3 +255,8 @@ QA shots Read: a_horse (bad: far, grazing), b_horse / b_cow (FPV, bow in the way
 Known / deferred: deer never captured in a clear spot (forest); rider legs on the horse look a little stiff (thigh rot constants from the Noble Hart pose); no neck/head or leg rig on the ridden horse in first person (horse hidden in FPV); animal sounds per species; cows are slightly short-legged; wool lumps are coarse; fish / wolves / bears / foxes; herd flocking; animals do not path around fences; mount tack (reins) not drawn.
 
 CI: tag run 43287298337 (commit 897c15a) - Windows/Linux/macOS + release all success; release v2.6.0: https://github.com/NikitHamal/lanternfall/releases/tag/v2.6.0. Main runs 43287250005 (50fcf0f) and 43287294215 (897c15a) green. Push count this session: 7 pushes to main + 1 tag.
+
+## v2.7.0 - "Lean Realm": memory + graphics refinement (this session) - IN PROGRESS
+Env: molab URL returned 410 (dead on arrival; no heartbeat; placeholders in the prompt were never filled). Local build + Xvfb/llvmpipe capture works (`sudo apt-get install xvfb libgl1-mesa-dri libx11-dev ...`, cmake via pip). Capture helper pattern: `/tmp/agentA_cap.sh name [args]` (960x540 q0 ~11 s).
+Pillar: memory budget < 120 MB without visual regressions. Added `src/memstat.h` (`LF_MEM=1` prints RSS / peak / malloc-heap marks at each load stage).
+Baseline (v2.6.0, llvmpipe, 960x540 q0): process start 11 MB RSS; after legacy gfx init heap 104 MB; after worldgen heap 354 MB (peak 440); after renderer init heap 622 MB; first frame 1455 MB (llvmpipe JIT + textures live in host RAM under a software rasteriser, so numbers include Mesa).

@@ -7,6 +7,7 @@
 #include "render.h"
 #include "game.h"
 #include "xinterior.h"
+#include "memstat.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -189,7 +190,7 @@ bool active() { return on; } float danger() { int c = 0; for (int k = 0; k < nMo
 int poiCount() { return (int)pois.size(); } const char* poiName(int i) { return pois[i].name; } bool poiFound(int i) { return pois[i].found; } void poiPos(int i, float& x, float& z) { x = pois[i].x; z = pois[i].z; }
 void resize(int w, int h) { if (built) xr::resize(w, h); }
 void start() { gFigNoBaked = true;
-  if (!built) { built = true; generate(7); buildEnters(); initKingdomWorld(); xr::init();
+  if (!built) { built = true; mem::mark("before worldgen"); generate(7); mem::mark("after worldgen"); buildEnters(); initKingdomWorld(); mem::mark("after kingdom init"); xr::init(); mem::mark("after renderer init");
     memset(WID, 0, sizeof WID); for (int b = 0; b < FMAXB; b++) { float* o = WID + b * 12; o[0] = o[5] = o[10] = 1; }
     static const char* PK[6] = {"polyfork/apothecary", "polyfork/lamplighter", "polyfork/rimebinder", "polyfork/warden", "polyfork/reaver", "polyfork/fletcher"}; for (int i = 0; i < 6; i++) figLoad(polyHeroes[i], PK[i]);
     int v;
@@ -199,7 +200,7 @@ void start() { gFigNoBaked = true;
     if ((v = addRig(&gFH[WARDEN], -1, -1, gFH[WARDEN].scale, "GUARD")) >= 0) poolGuard[nPoolGuard++] = v; if ((v = addRig(&gFMAlt[RUSTBOUND], roster::WP_CLEAVER, roster::WP_ROUND, MON[RUSTBOUND].scale * 0.82f, "GATE WARDEN")) >= 0) poolGuard[nPoolGuard++] = v; if ((v = addRig(&polyHeroes[3], roster::WP_SWORD, roster::WP_KITE, 1.f, "GUARD")) >= 0) poolGuard[nPoolGuard++] = v;
     if ((v = addRig(&polyHeroes[3], roster::WP_SWORD, roster::WP_KITE, 1.08f, "KNIGHT")) >= 0) poolKnight[nPoolKnight++] = v; if ((v = addRig(&polyHeroes[4], roster::WP_GREATSWORD, roster::WP_NONE, 1.05f, "CHAMPION")) >= 0) poolKnight[nPoolKnight++] = v; if ((v = addRig(&gFH[REAVER], -1, -1, gFH[REAVER].scale, "CHAMPION")) >= 0) poolKnight[nPoolKnight++] = v;
     if ((v = addRig(&gFH[WARDEN], -1, -1, gFH[WARDEN].scale, "SOLDIER")) >= 0) poolSold[nPoolSold++] = v; if ((v = addRig(&polyHeroes[3], roster::WP_SWORD, roster::WP_KITE, 1.f, "SOLDIER")) >= 0) poolSold[nPoolSold++] = v; if ((v = addRig(&gFMAlt[RUSTBOUND], roster::WP_CLEAVER, roster::WP_ROUND, MON[RUSTBOUND].scale * 0.82f, "SOLDIER")) >= 0) poolSold[nPoolSold++] = v;
-    if (!nPoolVill) poolVill[nPoolVill++] = 0; if (!nPoolGuard) poolGuard[nPoolGuard++] = 0; if (!nPoolKnight) poolKnight[nPoolKnight++] = 0; if (!nPoolSold) poolSold[nPoolSold++] = 0; populate(); faunaInit(); H.discTotal = (int)pois.size(); }
+    if (!nPoolVill) poolVill[nPoolVill++] = 0; if (!nPoolGuard) poolGuard[nPoolGuard++] = 0; if (!nPoolKnight) poolKnight[nPoolKnight++] = 0; if (!nPoolSold) poolSold[nPoolSold++] = 0; mem::mark("after figures"); populate(); faunaInit(); mem::mark("after npc+fauna"); H.discTotal = (int)pois.size(); }
   on = true; memset(&P, 0, sizeof P); P = PlayerS(); const roster::Hero& hr = roster::at(roster::sel()); P.maxHp = P.hp = hr.hp; P.st = 100; P.dmgMul = hr.dmg;
   { const Settle& s = settles[nations[0].capital >= 0 ? nations[0].capital : 0]; float gx = s.x + s.gateX * 66.f, gz = s.z + s.gateZ * 66.f; P.x = gx; P.z = gz; P.y = height(gx, gz); P.yaw = std::atan2(-s.gateX, -s.gateZ); P.face = P.yaw; }
   P.view = 1; B = Bow(); B.weapon = hr.style == roster::ST_BOW ? 1 : 0; bounty[0] = bounty[1] = bounty[2] = 0; CI = Cell(); for (Arr& a : ARR) a.on = false; for (Npc& n : npcs) if (n.used && n.interior) n.used = false;
