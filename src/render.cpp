@@ -180,10 +180,11 @@ static inline float ix(const Unit& u) { return u.ox + (u.x - u.ox) * alphaI; }
 static inline float iz(const Unit& u) { return u.oz + (u.z - u.oz) * alphaI; }
 static float sm01(float a, float b, float x) { return smooth(a, b, x); }
 static FigAnim animH[4], animM[MAXMON]; static FigDraw fdraw[4 + MAXMON + 6]; static int nfd = 0;
-static void figUnit(const Unit& u, bool mon, FigAnim& an, float dt, float t, bool carrier) {
-  const FigAsset& a = mon ? gFM[u.cls] : gFH[u.cls]; if (!a.ok || nfd >= 4 + MAXMON + 6) return;
+void addWeapon(const FigAsset&, const FigAnim&, bool, int, const M4&, const float*);
+static void figUnit(const Unit& u, bool mon, FigAnim& an, float dt, float t, bool carrier, const FigAsset* over = nullptr) {
+  const FigAsset& a = over ? *over : (mon ? gFM[u.cls] : gFH[u.cls]); if (!a.ok || nfd >= 4 + MAXMON + 6) return;
   if (an.id != u.id) { an = FigAnim(); an.id = u.id; an.t = (u.id % 97) * 0.37f; }
-  float sc = a.scale, x = ix(u), z = iz(u), y = terrH(x, z); bool dead = mon && u.hp <= 0; FigDraw& d = fdraw[nfd++]; d.vm = false;
+  float sc = a.scale, x = ix(u), z = iz(u), y = terrH(x, z); const bool rv = over != nullptr; bool dead = mon && u.hp <= 0 && !rv; FigDraw& d = fdraw[nfd++]; d.vm = false;
   d.a = &a; d.mat = an.mat; d.dissolve = 0; d.disH = std::max(1.f, a.height); d.glow = 1; d.shadow = true; d.dim = 1; d.lantern = !mon && carrier && u.cls != LAMPLIGHTER && a.lant;
   for (int k = 0; k < 3; k++) d.disCol[k] = a.disCol[k];
   float sx = 1, sy = 1, sink = 0;
@@ -191,7 +192,7 @@ static void figUnit(const Unit& u, bool mon, FigAnim& an, float dt, float t, boo
     int ac = -1; float au = -1;
     if (u.act.on) { ac = figActClip(a, u.act.kind); if (ac >= 0) { const Act& A = u.act; float hit = a.clips[ac].hit > 0.01f ? a.clips[ac].hit : 0.5f; au = A.t < A.wind ? A.t / std::max(0.01f, A.wind) * hit : hit + (A.t - A.wind) / std::max(0.01f, A.rec) * (1 - hit); } }
     bool combat = mon ? (u.seen && u.target) : u.ready;
-    figAnimUpdate(an, a, dt, u.moving / sc, combat, ac, au, u.stagV, !mon && u.down); figAnimPose(an, a);
+    figAnimUpdate(an, a, dt, u.moving / sc, combat, ac, au, u.stagV, rv ? u.hp <= 0 : (!mon && u.down), rv && u.guardT > 0 ? 1.f : 0.f); figAnimPose(an, a);
   } else {
     float td = u.deadT; if (!an.dying) { an.dying = true; if (!strcmp(a.death, "shatter")) figShatter(an, a, u.boss ? 3.2f : 2.4f, -std::sin(u.face) * 0.5f, -std::cos(u.face) * 0.5f); }
     if (!strcmp(a.death, "shatter")) { figStepFree(an, a, dt); figAnimPose(an, a); float k = std::min(1.f, std::max(0.f, (td - 1.5f) / 1.5f)); d.disH = 0.6f; d.dissolve = k; d.shadow = k < 0.3f; }
@@ -203,7 +204,7 @@ static void figUnit(const Unit& u, bool mon, FigAnim& an, float dt, float t, boo
   d.model = mul(translate(x, y + sink * sc, z), mul(rotY(u.face), scale4(sc * sx, sc * sy, sc * sx)));
   float fl = u.flashV * u.flashV * (mon ? (u.boss ? 0.05f : 0.16f) : 0.1f); d.flash[0] = fl * 1.2f; d.flash[1] = fl * 0.9f; d.flash[2] = fl * 0.6f;
   if (mon && u.chillT > 0 && !dead) { d.flash[0] += 0.02f; d.flash[1] += 0.07f; d.flash[2] += 0.14f; }
-  if (mon) { if (!dead) d.glow = u.boss ? (u.enr ? 3.f + std::sin(t * 9) : 3.f) : 2.2f; }
+  if (mon && !rv) { if (!dead) d.glow = u.boss ? (u.enr ? 3.f + std::sin(t * 9) : 3.f) : 2.2f; }
   else { an.dim += ((u.down ? 0.4f : 1.f) - an.dim) * std::min(1.f, dt * 3); d.dim = an.dim; if (u.cls == LAMPLIGHTER) d.glow = (0.9f + 0.06f * std::sin(t * 9.1f) + 0.04f * std::sin(t * 23.7f)) * (1 + G.flareV * 3); }
 }
 static FigAnim animPl;
@@ -214,9 +215,9 @@ static void figPlayer(float dt) {
   if (P.drawing) au = hit * 0.985f * pl::curve(P.draw); else if (P.relT < 0.5f && ac >= 0) au = hit + (1 - hit) * (P.relT / 0.5f);   // anticipation (draw) -> release -> follow-through -> recovery
   bool combat = P.drawing || P.blocking > 0.3f || P.relT < 2.f || pl::H.view == pl::VW_FREE; float guardW = 0;
   if (P.style != roster::ST_BOW) {
-    static const int CK[6] = {A_AIMED, A_BASH, A_SUNDER, A_CINDER, A_FIREPOT, A_LANCE}; static const float CF[6] = {1.f, 1.f, 1.f, 0.9f, 0.8f, 1.f}; ac = -1; au = -1; guardW = P.blocking;
-    if (pl::H.mode == pl::M_SELECT) { int k = CK[P.style % 6]; if (P.style == roster::ST_SWORD) { int cyc = (int)(pl::selT / 8.f) % 3; k = cyc == 0 ? A_BASIC : cyc == 1 ? A_BASH : A_CLEAVE; } else if (P.style == roster::ST_HEAVY) k = A_SUNDER; ac = figActClip(a, k); float h2 = ac >= 0 && a.clips[ac].hit > 0.01f ? a.clips[ac].hit : 0.5f; float t8 = std::fmod(pl::selT, 8.f); if (ac >= 0 && t8 >= 1.6f && t8 < 3.6f) au = clampf((t8 - 1.6f) / 2.0f, 0.f, 1.f) * 1.0f; (void)h2; combat = au >= 0 || t8 < 1.f; }
-    else if (P.charging) { ac = figActClip(a, CK[P.style % 6]); float h2 = ac >= 0 && a.clips[ac].hit > 0.01f ? a.clips[ac].hit : 0.5f; if (ac >= 0) au = h2 * 0.985f * clampf(P.chargeT / CF[P.style % 6], 0.f, 1.f); combat = true; }
+    static const int CK[7] = {A_AIMED, A_BASH, A_SUNDER, A_CINDER, A_FIREPOT, A_LANCE, A_LANCE}; static const float CF[7] = {1.f, 1.f, 1.f, 0.9f, 0.8f, 1.f, 0.9f}; ac = -1; au = -1; guardW = P.blocking;
+    if (pl::H.mode == pl::M_SELECT) { int k = CK[P.style % 7]; if (P.style == roster::ST_SWORD) { int cyc = (int)(pl::selT / 8.f) % 3; k = cyc == 0 ? A_BASIC : cyc == 1 ? A_BASH : A_CLEAVE; } else if (P.style == roster::ST_HEAVY) k = A_SUNDER; ac = figActClip(a, k); float h2 = ac >= 0 && a.clips[ac].hit > 0.01f ? a.clips[ac].hit : 0.5f; float t8 = std::fmod(pl::selT, 8.f); if (ac >= 0 && t8 >= 1.6f && t8 < 3.6f) au = clampf((t8 - 1.6f) / 2.0f, 0.f, 1.f) * 1.0f; (void)h2; combat = au >= 0 || t8 < 1.f; }
+    else if (P.charging) { ac = figActClip(a, CK[P.style % 7]); float h2 = ac >= 0 && a.clips[ac].hit > 0.01f ? a.clips[ac].hit : 0.5f; if (ac >= 0) au = h2 * 0.985f * clampf(P.chargeT / CF[P.style % 7], 0.f, 1.f); combat = true; }
     else if (P.atkOn) { ac = figActClip(a, P.atkKind); if (ac >= 0) { float h2 = a.clips[ac].hit > 0.01f ? a.clips[ac].hit : 0.5f; au = P.atkT < P.atkWind ? P.atkT / std::max(0.01f, P.atkWind) * h2 : std::min(1.f, h2 + (P.atkT - P.atkWind) / std::max(0.01f, P.atkRec) * (1 - h2)); } combat = true; }
     combat = combat || P.blocking > 0.3f || P.relT < 3.f;
   }
@@ -233,6 +234,7 @@ static void figPlayer(float dt) {
 }
 static float WID[FMAXB * 12];
 void addWeapon(const FigAsset& rig, const FigAnim& an, bool left, int wp, const M4& um, const float* fl) {
+  if (wp == 8) { M4 sm; figWeaponMat(rig, an, left, 5, um, time_, sm); pl::spearWorld(sm); return; }
   if (wp < 0 || wp >= NWEAP || !gFW[wp].ok || nfd >= 4 + MAXMON + 6) return; static bool inited = false; if (!inited) { inited = true; for (int b = 0; b < FMAXB; b++) { float* o = WID + b * 12; for (int k = 0; k < 12; k++) o[k] = 0; o[0] = o[5] = o[10] = 1; } }
   FigDraw& w = fdraw[nfd++]; M4 m; figWeaponMat(rig, an, left, wp, um, time_, m); w.a = &gFW[wp]; w.model = m; w.mat = WID; w.dissolve = 0; w.disH = 1; w.glow = 1; w.shadow = true; w.dim = pl::P.down ? 0.55f : 1.f; w.lantern = true; w.vm = false; for (int k = 0; k < 3; k++) { w.flash[k] = fl[k]; w.disCol[k] = 0; }
 }
@@ -300,7 +302,8 @@ void update(float dt, float vdt, bool paused, float alpha) {
   bool play = pl::active(); if (play) { pl::camera(dt); pl::buildShapes(); }
   blendTo(1 - std::exp(-(paused ? dt * 0.35f : std::max(vdt, dt * 0.3f)) * 0.35f)); cameraUpdate(dt); lightsUpdate(dt); updateChunks(camS.fx); if (colsDirty) { rebuildCols(); colsDirty = false; }
   // unit instances
-  nfd = 0; if (play) { for (int i = 0; i < pl::MAXFOE; i++) if (pl::foes[i].u.used) figUnit(pl::foes[i].u, true, animM[i], dt, t, false); if (pl::H.view != pl::VW_FIRST) figPlayer(dt); else addVm(); } else { float fdt = paused ? 0.f : dt; const Unit* carU = G.carrier ? G.carrier : &G.heroes[3]; for (int i = 0; i < 4; i++) figUnit(G.heroes[i], false, animH[i], fdt, t, &G.heroes[i] == carU); for (int i = 0; i < MAXMON; i++) if (G.mons[i].used) figUnit(G.mons[i], true, animM[i], fdt, t, false); }
+  nfd = 0; if (play) { for (int i = 0; i < pl::MAXFOE; i++) if (pl::foes[i].u.used) { const int rvi = pl::foes[i].rival; const FigAsset* ov = rvi >= 0 ? roster::rival(rvi) : nullptr; if (rvi >= 0 && !ov) continue; int n0 = nfd; figUnit(pl::foes[i].u, true, animM[i], dt, t, false, ov);
+        if (ov && nfd > n0) { FigDraw& dd = fdraw[n0]; const roster::Hero& hh = roster::at(rvi); if (pl::foes[i].u.hp <= 0) dd.dissolve = clampf((pl::foes[i].u.deadT - 2.2f) / 1.6f, 0, 1); addWeapon(*ov, animM[i], false, hh.wpR, dd.model, dd.flash); addWeapon(*ov, animM[i], true, hh.wpL, dd.model, dd.flash); } } if (pl::H.view != pl::VW_FIRST) figPlayer(dt); else addVm(); } else { float fdt = paused ? 0.f : dt; const Unit* carU = G.carrier ? G.carrier : &G.heroes[3]; for (int i = 0; i < 4; i++) figUnit(G.heroes[i], false, animH[i], fdt, t, &G.heroes[i] == carU); for (int i = 0; i < MAXMON; i++) if (G.mons[i].used) figUnit(G.mons[i], true, animM[i], fdt, t, false); }
   for (int k = 0; k < NPK; k++) for (int v = 0; v < PROP_VARIANTS[k]; v++) if (k != PK_WAY) { static int last[NPK][5]; (void)last; meshUpload(gProp[k][v], propInst[k][v], propN[k][v]); }
   { int n = 0; static Inst wi[8]; for (auto& w : ways) if (w.used && n < 8) { M4 m = mul(translate(w.x, 0, w.z), rotY(-PI / 2 + 0.3f)); memcpy(wi[n].m, m.m, 64); wi[n].tint[0] = wi[n].tint[1] = wi[n].tint[2] = 1; wi[n].tint[3] = 0; wi[n].mat[0] = wi[n].mat[1] = 1; wi[n].mat[2] = w.glow * 7 * w.fl; wi[n].mat[3] = 0; n++; } meshUpload(gProp[PK_WAY][0], wi, n); }
   // zone particles

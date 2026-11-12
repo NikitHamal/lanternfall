@@ -43,6 +43,11 @@ static const H TAB[] = {
   0.82f, 1.35f, 1.58f, 0.88f, 205, 0, ST_HEAVY, AB_QUAKE, PS_TITAN, 14, 0.5f, -1, REAVER, WP_GREATSWORD, WP_NONE},
  {"polyfork/barrowking", "CROWNLESS REVENANT", "DEATH KNIGHT", "BARROW KING'S BLADE", "SURGE", "SPECTRAL REAPER DASH THROUGH ALL FOES", "BLOODLUST", "+12% SPEED & EXECUTION CRITS",
   0.94f, 1.20f, 1.50f, 1.00f, 175, 0, ST_SWORD, AB_SURGE, PS_BLOOD, 10, 0.5f, -1, WARDEN, WP_GREATSWORD, WP_KITE},
+
+ {"warden", "SPEARMAN", "ROAD SKIRMISHER", "ASHWOOD WAR SPEAR", "SKEWER", "DASH 9 M, IMPALING EVERY FOE IN YOUR PATH", "PHALANX DRILL", "-15% DAMAGE TAKEN, SPEAR TIPS CRIT FOR X1.35",
+  1.12f, 1.10f, 1.18f, 1.06f, 140, 0, ST_SPEAR, AB_SURGE, PS_STEEL, 10, 0.5f, WARDEN, WARDEN, WP_SPEAR, WP_NONE},
+ {"polyfork/warden", "HOPLITE OF THE FORGE", "SHIELDED LANCER", "FORGE SPEAR & KITE SHIELD", "SHIELD WALL", "70% GUARD FOR 4 S & SHIELD BASH SHOCKWAVE", "FORMATION", "-15% DAMAGE TAKEN, DEFLECT ARROWS WITH THE SHIELD",
+  1.02f, 1.25f, 1.20f, 0.98f, 165, 0, ST_SPEAR, AB_BULWARK, PS_STEEL, 14, 4.f, -1, WARDEN, WP_SPEAR, WP_KITE},
 };
 const int N = (int)(sizeof TAB / sizeof TAB[0]);
 static int cur_ = 0;
@@ -51,15 +56,15 @@ static bool inited = false;
 const Hero& at(int i) { return TAB[((i % N) + N) % N]; }
 int sel() { return cur_; }
 const char* styleName(int st) {
-  static const char* S[NSTYLE] = {"MARKSMAN BOW", "SWORD & SHIELD", "2H HEAVY MELEE", "FIRE CASTER", "ALCHEMIST", "FROST CASTER"};
+  static const char* S[NSTYLE] = {"MARKSMAN BOW", "SWORD & SHIELD", "2H HEAVY MELEE", "FIRE CASTER", "ALCHEMIST", "FROST CASTER", "SPEAR & REACH"};
   return S[(st >= 0 && st < NSTYLE) ? st : 0];
 }
 const char* styleHint(int st) {
-  static const char* S[NSTYLE] = {"LMB DRAW   RMB BLOCK   SPACE ROLL   SHIFT SPRINT", "LMB COMBO   RMB SHIELD / PARRY   SPACE ROLL", "TAP LMB CLEAVE   HOLD LMB SLAM   RMB GUARD   SPACE ROLL", "LMB FIREBOLT   HOLD CINDER ORB   RMB WARD   SPACE ROLL", "LMB FLASK   HOLD FIREPOT   RMB MEND WARD   SPACE ROLL", "LMB SHARDS   HOLD FROST LANCE   RMB ICE WARD   SPACE ROLL"};
+  static const char* S[NSTYLE] = {"LMB DRAW   RMB BLOCK   SPACE ROLL   SHIFT SPRINT", "LMB COMBO   RMB SHIELD / PARRY   SPACE ROLL", "TAP LMB CLEAVE   HOLD LMB SLAM   RMB GUARD   SPACE ROLL", "LMB FIREBOLT   HOLD CINDER ORB   RMB WARD   SPACE ROLL", "LMB FLASK   HOLD FIREPOT   RMB MEND WARD   SPACE ROLL", "LMB SHARDS   HOLD FROST LANCE   RMB ICE WARD   SPACE ROLL", "LMB THRUST COMBO   HOLD THROW   RMB DEFLECT   SPACE ROLL"};
   return S[(st >= 0 && st < NSTYLE) ? st : 0];
 }
 const char* styleTip(int st) {
-  static const char* S[NSTYLE] = {"HOLD LMB TO DRAW - RELEASE AT THE GOLD MARK", "LMB COMBO - RMB PARRY - LMB IN GUARD: BASH", "TAP LMB CLEAVE - HOLD + RELEASE: SLAM", "LMB BOLT - HOLD FOR A CINDER ORB - RMB WARD", "LMB FLASK - HOLD FOR AN ACID FIREPOT", "LMB RIME SHARDS - HOLD FOR A FROST LANCE"};
+  static const char* S[NSTYLE] = {"HOLD LMB TO DRAW - RELEASE AT THE GOLD MARK", "LMB COMBO - RMB PARRY - LMB IN GUARD: BASH", "TAP LMB CLEAVE - HOLD + RELEASE: SLAM", "LMB BOLT - HOLD FOR A CINDER ORB - RMB WARD", "LMB FLASK - HOLD FOR AN ACID FIREPOT", "LMB RIME SHARDS - HOLD FOR A FROST LANCE", "LMB THRUST - TIP HITS CRIT - HOLD TO THROW"};
   return S[(st >= 0 && st < NSTYLE) ? st : 0];
 }
 static FigAsset* resident(int i) {
@@ -93,5 +98,11 @@ void step(int d) { select(cur_ + d); }
 const FigAsset* fig(int i) { return resident(i); }
 const FigAsset* cur() { const FigAsset* a = resident(cur_); return a ? a : &gFH[FLETCHER]; }
 void init() { if (inited) return; inited = true; select(cfg::S.hero); }
-void shutdown() { for (auto& s : slot) { figFree(s.a); s.idx = -1; } }
+static FigAsset rslot; static int ridx = -1;
+const FigAsset* rival(int i) {
+  i = ((i % N) + N) % N; if (const FigAsset* a = resident(i)) return a;
+  if (ridx != i) { if (rslot.ok || rslot.vao) figFree(rslot); ridx = -1; if (figLoad(rslot, TAB[i].key)) ridx = i; }
+  return (ridx == i && rslot.ok) ? &rslot : nullptr;
+}
+void shutdown() { for (auto& s : slot) { figFree(s.a); s.idx = -1; } if (rslot.ok || rslot.vao) figFree(rslot); ridx = -1; }
 }

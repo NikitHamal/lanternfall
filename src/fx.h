@@ -19,6 +19,10 @@ struct Fx {
   void glow(float x, float y, float z, float size, V3 col, float dur);
   void ring(float x, float z, float r0, float r1, float dur, V3 col, float thick = 0.12f);
   void arc(float x, float y, float z, float face, float r, float a0, float a1, float h, const V3* col, float dur);
+  void slash(float x, float y, float z, float yaw, float reach, float half, float dirSign, float tilt, V3 col, int n);   // sweeping crescent of streaks
+  void impact(float x, float y, float z, float nx, float nz, V3 col, float power);                                       // hit star: sparks + streaks + flash
+  void shock(float x, float y, float z, float r, V3 col, int n);                                                         // ground shockwave: ring + radial streaks + dust
+  void thrust(float x, float y, float z, float dx, float dy, float dz, float len, V3 col);                                // piercing speed lines
   void floatText(float x, float y, float z, const char* s, uint32_t col, float size, float dur);
   void update(float dt, float t, float cx, float cy, float cz, float drizzle, V3 mote);
   void clear(); void shift(float dx);

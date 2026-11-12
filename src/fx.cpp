@@ -52,3 +52,27 @@ void Fx::update(float dt, float t, float cx, float cy, float cz, float drizzle, 
 }
 void Fx::clear() { for (auto& q : p) q.t = q.life; for (auto& r : rings) r.on = false; for (auto& f : ft) f.on = false; fl.on = false; }
 void Fx::shift(float dx) { for (auto& q : p) q.x -= dx; for (auto& r : rings) r.x -= dx; for (auto& f : ft) f.x -= dx; fl.x -= dx; }
+
+// ---- v1.5 effects library: all spawn into the same fixed particle pool (no allocation)
+void Fx::slash(float x, float y, float z, float yaw, float reach, float half, float dirSign, float tilt, V3 col, int n) {
+  for (int i = 0; i < n; i++) {
+    float u = (i + rnd()) / n, a = yaw + dirSign * lerpf(-half, half, u), rr = reach * R2(*this, 0.8f, 1.02f); Particle& q = add(); q.kind = 3;
+    q.x = x + std::sin(a) * rr; q.z = z + std::cos(a) * rr; q.y = y + tilt * (u - 0.5f) + 0.18f * std::sin(u * PI);
+    float sp = dirSign * reach * 3.6f; q.vx = std::cos(a) * sp; q.vz = -std::sin(a) * sp; q.vy = tilt * 1.2f; q.life = R2(*this, 0.16f, 0.3f); q.size = 0.018f + 0.04f * u;
+    float k = 0.45f + 1.1f * u; q.r = col.x * k; q.g = col.y * k; q.b = col.z * k; q.a = 1; q.grav = 0; q.drag = 3.5f;
+  }
+  Particle& g = add(); g.kind = 0; float a = yaw + dirSign * half; g.x = x + std::sin(a) * reach * 0.9f; g.z = z + std::cos(a) * reach * 0.9f; g.y = y + tilt * 0.5f; g.life = 0.14f; g.size = reach * 0.22f; g.r = col.x * 0.8f; g.g = col.y * 0.8f; g.b = col.z * 0.8f; g.a = 0.5f;
+}
+void Fx::impact(float x, float y, float z, float nx, float nz, V3 col, float power) {
+  int n = 6 + (int)(16 * power); sparks(x, y, z, n, col, 3.f + 4.f * power, nx, nz);
+  for (int i = 0; i < 4 + (int)(6 * power); i++) { Particle& q = add(); float a, b, c; dirv(*this, a, b, c); float s = R2(*this, 7.f, 13.f) * (0.6f + 0.6f * power); q.kind = 3; q.x = x; q.y = y; q.z = z; q.vx = a * s + nx * 4; q.vy = b * s * 0.7f; q.vz = c * s + nz * 4; q.life = R2(*this, 0.08f, 0.16f); q.size = 0.05f; q.r = col.x * 1.4f; q.g = col.y * 1.4f; q.b = col.z * 1.4f; q.a = 1; q.drag = 5; }
+  glow(x, y, z, 0.45f + 0.9f * power, col * 0.7f, 0.1f + 0.06f * power);
+}
+void Fx::shock(float x, float y, float z, float r, V3 col, int n) {
+  ring(x, z, 0.3f, r, 0.45f, col, 0.18f); ring(x, z, 0.2f, r * 0.55f, 0.3f, col * 0.7f, 0.12f);
+  for (int i = 0; i < n; i++) { float a = (i + rnd()) / n * TAU; Particle& q = add(); q.kind = 3; q.x = x + std::sin(a) * 0.4f; q.y = y + 0.1f; q.z = z + std::cos(a) * 0.4f; q.vx = std::sin(a) * r * 3.2f; q.vz = std::cos(a) * r * 3.2f; q.vy = R2(*this, 0.f, 1.2f); q.life = R2(*this, 0.22f, 0.42f); q.size = 0.04f; q.r = col.x; q.g = col.y; q.b = col.z; q.a = 1; q.grav = 6; q.drag = 4.f; }
+  V3 dc{0.2f, 0.17f, 0.13f}; for (int i = 0; i < n / 2; i++) { float a = (i + rnd()) / (n / 2) * TAU; Particle& q = add(); q.kind = 1; q.x = x + std::sin(a) * r * 0.3f; q.y = y + 0.1f; q.z = z + std::cos(a) * r * 0.3f; q.vx = std::sin(a) * r * 1.6f; q.vz = std::cos(a) * r * 1.6f; q.vy = R2(*this, 0.2f, 0.9f); q.life = R2(*this, 0.5f, 1.0f); q.size = R2(*this, 0.4f, 0.8f); q.r = dc.x; q.g = dc.y; q.b = dc.z; q.a = 0.45f; q.grav = -0.1f; q.drag = 2.6f; }
+}
+void Fx::thrust(float x, float y, float z, float dx, float dy, float dz, float len_, V3 col) {
+  for (int i = 0; i < 9; i++) { float u = (i + rnd()) / 9; Particle& q = add(); q.kind = 3; float s = R2(*this, 0.02f, 0.14f); float ox = R2(*this, -1, 1) * 0.12f, oy = R2(*this, -1, 1) * 0.12f; q.x = x + dx * len_ * u + ox; q.y = y + dy * len_ * u + oy; q.z = z + dz * len_ * u + ox * 0.5f; q.vx = dx * 14 * (0.5f + s * 5); q.vy = dy * 14 * (0.5f + s * 5); q.vz = dz * 14 * (0.5f + s * 5); q.life = R2(*this, 0.1f, 0.2f); q.size = 0.022f; q.r = col.x; q.g = col.y; q.b = col.z; q.a = 1; q.drag = 5; }
+}
