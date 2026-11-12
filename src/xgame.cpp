@@ -6,12 +6,13 @@
 #include "audio.h"
 #include "render.h"
 #include "game.h"
+#include "xinterior.h"
 #include <cstdio>
 #include <cstring>
 #include <cmath>
 #include <algorithm>
 namespace ex {
-Hud H; Label labels[28]; int nLabels = 0; bool pending = false;
+Hud H; Label labels[44]; int nLabels = 0; bool pending = false;
 namespace {
 using namespace xw;
 bool on = false, built = false; Rng rng(77); float clockH = 9.5f, tMul = 1.f, tAbs = 0, sinceStart = 0;
@@ -21,7 +22,7 @@ constexpr int MAXN = 520;
 struct RigDef { const FigAsset* a; int wR, wL; float scale; const char* title; bool own; };
 struct Npc {
   bool used = false, alive = true, hitDone = false, lair = false, boss = false, onWall = false, vis = false, talking = false; int role = 0, rig = 0, mon = 0, state = 0, post = -1, road = -1, dir = 1, tgtKind = 0, tgtIdx = -1, settle = -1;
-  float x = 0, y = 0, z = 0, face = 0, vx = 0, vz = 0, sc = 1, hp = 50, maxHp = 50, dmg = 10, spd = 1.5f, runSpd = 3.4f, hitT = 0, deadT = 0, cd = 0, atkT = -1, atkWind = 0.4f, atkRec = 0.5f, atkRange = 2.f, stT = 0, homeX = 0, homeZ = 0, tx = 0, tz = 0, aggro = 20, pathD = 0, wallY = 0, ax = 0, az = 0, bx = 0, bz = 0, moving = 0, ph = 0, look = 0, wander = 14, lastPlayerD = 99; char name[22] = {0}; FigAnim an;
+  float x = 0, y = 0, z = 0, face = 0, vx = 0, vz = 0, sc = 1, hp = 50, maxHp = 50, dmg = 10, spd = 1.5f, runSpd = 3.4f, hitT = 0, deadT = 0, cd = 0, atkT = -1, atkWind = 0.4f, atkRec = 0.5f, atkRange = 2.f, stT = 0, homeX = 0, homeZ = 0, tx = 0, tz = 0, aggro = 20, pathD = 0, wallY = 0, ax = 0, az = 0, bx = 0, bz = 0, moving = 0, ph = 0, look = 0, wander = 14, lastPlayerD = 99, angry = 0, limp = 0, panic = 0, stun = 0; bool brave = false, interior = false; char name[22] = {0}; FigAnim an;
 };
 Npc npcs[MAXN]; int monList[MAXN], nMonL = 0; RigDef rigs[40]; int nRigs = 0; int poolVill[10], nPoolVill = 0, poolGuard[4], nPoolGuard = 0, poolKnight[4], nPoolKnight = 0, poolSold[4], nPoolSold = 0;
 FigAsset polyHeroes[6]; bool polyLoaded = false; float WID[FMAXB * 12];
@@ -54,7 +55,7 @@ Npc* spawnHuman(int role, float x, float z, float face, int settle, int pool = -
   else if (role == R_GUARD) { r = poolGuard[(int)(rng() * nPoolGuard) % nPoolGuard]; n->hp = n->maxHp = 150; n->dmg = 16; n->spd = 1.2f; n->runSpd = 4.8f; setName(*n, GN[(int)(rng() * 10) % 10]); n->aggro = 30; }
   else if (role == R_KNIGHT) { r = poolKnight[(int)(rng() * nPoolKnight) % nPoolKnight]; n->hp = n->maxHp = 280; n->dmg = 30; n->spd = 1.2f; n->runSpd = 5.0f; setName(*n, GN[(int)(rng() * 10) % 10]); n->aggro = 34; }
   else { r = poolSold[(int)(rng() * nPoolSold) % nPoolSold]; n->hp = n->maxHp = 190; n->dmg = 20; n->spd = 1.6f; n->runSpd = 4.6f; setName(*n, GN[(int)(rng() * 10) % 10]); n->aggro = 30; }
-  if (pool >= 0) r = pool; n->rig = r; n->sc = rigs[r].scale * (0.94f + rng() * 0.12f); n->atkWind = 0.4f; n->atkRec = 0.5f; n->atkRange = 2.4f; return n;
+  if (pool >= 0) r = pool; n->rig = r; n->sc = rigs[r].scale * (0.94f + rng() * 0.12f); n->atkWind = 0.4f; n->atkRec = 0.5f; n->atkRange = role == R_VILL ? 1.9f : 2.4f; n->brave = rng() < 0.45f; if (role == R_VILL) n->dmg = 7; return n;
 }
 Npc* spawnMon(int type, float x, float z, bool lair, bool boss) {
   Npc* n = newNpc(); if (!n) return nullptr; const MonDef2& d = MD[type]; n->role = type == HOLLOWSTAG ? R_STAG : (type == THORNBOAR ? R_BOAR : R_MON); n->mon = type; n->x = x; n->z = z; n->y = groundAt(x, z); n->face = rng() * 6.28f; n->homeX = x; n->homeZ = z; n->hp = n->maxHp = d.hp * (boss ? 1.3f : 1.f); n->dmg = d.dmg; n->spd = d.spd * 0.45f; n->runSpd = d.spd; n->aggro = d.aggro; n->atkRange = d.range; n->atkWind = d.wind; n->atkRec = d.rec;
@@ -91,23 +92,11 @@ void damagePlayer(float d, float fx, float fz) {
   if (P.block && front) { d *= 0.25f; audio::play(S_HITSHIELD, 0, 0.8f); } else audio::play(S_HITSOFT, 0, 0.8f); P.hp -= d; P.hurtT = 0.4f; P.stagT = 0.25f; hurtFlash = std::min(1.f, hurtFlash + 0.5f); P.regenWait = 6.f;
   if (P.hp <= 0) { P.hp = 0; P.deadT = 0.01f; H.dead = true; }
 }
-void hurtNpc(Npc& t, float d, float fx, float fz, bool byPlayer) {
-  if (!t.alive) return; t.hp -= d; t.hitT = 0.28f; float dx = t.x - fx, dz = t.z - fz, l = std::sqrt(dx * dx + dz * dz) + 1e-4f; float kb = t.boss ? 0.15f : 0.5f; float nx = t.x + dx / l * kb, nz = t.z + dz / l * kb; collide(nx, nz, 0.4f); if (!badStep(nx, nz, t.y)) { t.x = nx; t.z = nz; }
-  if (t.role >= R_MON && byPlayer) { t.tgtKind = 1; if (t.role != R_MON && t.state != S_CHASE) t.state = S_CHASE; }
-  if (t.hp <= 0) { t.alive = false; t.deadT = 0; t.atkT = -1; audio::play(t.boss ? S_DIEBIG : S_DIE, 0, 0.8f); if (byPlayer && t.role >= R_MON) { H.kills++; if (t.boss) banner("BOSS SLAIN", t.name, 5.f); } }
-}
-void playerAttack() {
-  if (P.atkT >= 0 || P.deadT > 0 || P.fly) return; P.atkT = 0; P.hitDone = false; P.comboT = 1.2f; P.combo = (P.combo + 1) % 3; P.atkWind = 0.30f - 0.03f * P.combo; P.atkRec = 0.36f; audio::play(S_SWING, 0, 0.6f);
-}
-void playerHit() {
-  const roster::Hero& hr = roster::at(roster::sel()); float dmg = 24.f * hr.dmg * (P.combo == 0 ? 1.4f : 1.f); float range = 3.1f; bool hit = false; float fx = std::sin(P.face), fz = std::cos(P.face);
-  for (int i = 0; i < MAXN; i++) { Npc& n = npcs[i]; if (!n.used || !n.alive || n.role < R_MON) continue; float dx = n.x - P.x, dz = n.z - P.z, d = std::sqrt(dx * dx + dz * dz); if (d > range + n.sc * 0.5f || (dx * fx + dz * fz) / (d + 1e-4f) < 0.15f) continue; hurtNpc(n, dmg, P.x, P.z, true); hit = true; }
-  if (hit) audio::play(S_HITMETAL, 0, 0.7f);
-}
+#include "xgame_combat.inc"
 // ------------------------------------------------------------------ NPC AI
 float steer(Npc& n, float tx, float tz, float speed, float dt) {
-  float dx = tx - n.x, dz = tz - n.z, d = std::sqrt(dx * dx + dz * dz); if (d < 0.05f) { n.moving = 0; return d; } float want = std::atan2(dx, dz); float da = angDiff(n.face, want); n.face += clampf(da, -dt * (speed > 3 ? 9.f : 5.f), dt * (speed > 3 ? 9.f : 5.f)); if (std::fabs(da) > 1.3f) speed *= 0.2f;
-  float step = std::min(d, speed * dt); float nx = n.x + std::sin(n.face) * step, nz = n.z + std::cos(n.face) * step; collide(nx, nz, 0.4f * n.sc); if (!n.onWall && badStep(nx, nz, n.y)) { n.moving = 0; n.stT = 0; n.state = S_IDLE; return d; }
+  float dx = tx - n.x, dz = tz - n.z, d = std::sqrt(dx * dx + dz * dz); if (d < 0.05f) { n.moving = 0; return d; } float want = std::atan2(dx, dz); float da = angDiff(n.face, want); n.face += clampf(da, -dt * (speed > 3 ? 9.f : 5.f), dt * (speed > 3 ? 9.f : 5.f)); if (std::fabs(da) > 1.3f) speed *= 0.2f; if (n.limp > 0) speed *= 0.55f;
+  float step = std::min(d, speed * dt); float nx = n.x + std::sin(n.face) * step, nz = n.z + std::cos(n.face) * step; if (n.interior) roomCollide(nx, nz, 0.4f * n.sc); else collide(nx, nz, 0.4f * n.sc); if (!n.onWall && !n.interior && badStep(nx, nz, n.y)) { n.moving = 0; n.stT = 0; n.state = S_IDLE; return d; }
   n.x = nx; n.z = nz; n.moving = speed; return d;
 }
 void faceToward(Npc& n, float tx, float tz, float dt) { float da = angDiff(n.face, std::atan2(tx - n.x, tz - n.z)); n.face += clampf(da, -dt * 4.f, dt * 4.f); }
@@ -118,6 +107,12 @@ void tickAttack(Npc& n, float dt, bool vsPlayer, Npc* tn) {
 }
 void aiHuman(Npc& n, float dt, float pd) {
   bool night = clockH > 21.5f || clockH < 5.f; Npc* th = nearestMonster(n, n.role == R_VILL ? 16.f : n.aggro);
+  if (n.angry > 0 && n.angry < 1e8f) n.angry -= dt;
+  { bool wanted = n.role >= R_GUARD && !n.onWall && bounty[natOf(n)] > 12.f && pd < n.aggro; bool inRange = P.hp > 0 && !P.fly && n.interior == CI.in;
+    if (n.panic > 0) { n.panic -= dt; if (n.role == R_VILL && inRange) { float dx = n.x - P.x, dz = n.z - P.z, l = std::sqrt(dx * dx + dz * dz) + 1e-3f; steer(n, n.x + dx / l * 20, n.z + dz / l * 20, n.runSpd, dt); n.state = S_FLEE; n.atkT = -1; return; } }
+    if ((n.angry > 0 || wanted) && !n.onWall && inRange) { huntCount++; float reach = n.atkRange + 0.7f; if (pd > n.aggro * 3.f) { n.angry = 0; n.state = n.role == R_VILL ? S_IDLE : S_RETURN; n.atkT = -1; }
+      else { n.tgtKind = 1; if (pd > reach) { if (n.atkT < 0) steer(n, P.x, P.z, n.runSpd, dt); n.state = S_CHASE; } else { n.moving = 0; faceToward(n, P.x, P.z, dt); if (n.atkT < 0 && n.cd <= 0) { n.atkT = 0; n.hitDone = false; } n.state = S_ATK; } tickAttack(n, dt, true, nullptr); return; } }
+    else if (n.state == S_CHASE && n.tgtKind == 1 && n.angry <= 0) { n.tgtKind = 0; n.state = n.role == R_VILL ? S_IDLE : S_RETURN; } }
   if (n.role == R_VILL) {
     if (th) { n.state = S_FLEE; n.stT = 3; } if (n.state == S_FLEE) { float dx = n.x - th->x, dz = n.z - th->z; if (!th) { n.stT -= dt; if (n.stT < 0) n.state = S_IDLE; } float hx = n.homeX, hz = n.homeZ; steer(n, hx, hz, n.runSpd, dt); if (dist2(n.x, n.z, hx, hz) < 9) { n.state = S_IDLE; } (void)dx; (void)dz; return; }
     if (pd < 4.5f && !night) { faceToward(n, P.x, P.z, dt); n.moving = 0; n.talking = true; return; } n.talking = false;
@@ -165,7 +160,7 @@ bool active() { return on; } float danger() { int c = 0; for (int k = 0; k < nMo
 int poiCount() { return (int)pois.size(); } const char* poiName(int i) { return pois[i].name; } bool poiFound(int i) { return pois[i].found; } void poiPos(int i, float& x, float& z) { x = pois[i].x; z = pois[i].z; }
 void resize(int w, int h) { if (built) xr::resize(w, h); }
 void start() {
-  if (!built) { built = true; generate(7); xr::init();
+  if (!built) { built = true; generate(7); buildEnters(); xr::init();
     memset(WID, 0, sizeof WID); for (int b = 0; b < FMAXB; b++) { float* o = WID + b * 12; o[0] = o[5] = o[10] = 1; }
     static const char* PK[6] = {"polyfork/apothecary", "polyfork/lamplighter", "polyfork/rimebinder", "polyfork/warden", "polyfork/reaver", "polyfork/fletcher"}; for (int i = 0; i < 6; i++) figLoad(polyHeroes[i], PK[i]);
     int v;
@@ -178,21 +173,31 @@ void start() {
     if (!nPoolVill) poolVill[nPoolVill++] = 0; if (!nPoolGuard) poolGuard[nPoolGuard++] = 0; if (!nPoolKnight) poolKnight[nPoolKnight++] = 0; if (!nPoolSold) poolSold[nPoolSold++] = 0; populate(); H.discTotal = (int)pois.size(); }
   on = true; memset(&P, 0, sizeof P); P = PlayerS(); const roster::Hero& hr = roster::at(roster::sel()); P.maxHp = P.hp = hr.hp; P.st = 100; P.dmgMul = hr.dmg;
   { const Settle& s = settles[nations[0].capital >= 0 ? nations[0].capital : 0]; float gx = s.x + s.gateX * 66.f, gz = s.z + s.gateZ * 66.f; P.x = gx; P.z = gz; P.y = height(gx, gz); P.yaw = std::atan2(-s.gateX, -s.gateZ); P.face = P.yaw; }
-  P.view = 1; H = Hud(); H.discTotal = (int)pois.size(); for (const Poi& p : pois) if (p.found) H.disc++; H.view = 1; snprintf(H.hero, sizeof H.hero, "%s", hr.name); clockH = 9.5f; tMul = 1; restT = 0; animPl = FigAnim(); animPl.id = 9999; P.camInit = false; banner("EXPLORER", "A WORLD OF THREE KINGDOMS AWAITS", 5.f);
+  P.view = 1; B = Bow(); B.weapon = hr.style == roster::ST_BOW ? 1 : 0; gold = 0; bounty[0] = bounty[1] = bounty[2] = 0; CI = Cell(); for (Arr& a : ARR) a.on = false; for (Npc& n : npcs) if (n.used && n.interior) n.used = false; H = Hud(); H.discTotal = (int)pois.size(); for (const Poi& p : pois) if (p.found) H.disc++; H.view = 1; snprintf(H.hero, sizeof H.hero, "%s", hr.name); clockH = 9.5f; tMul = 1; restT = 0; animPl = FigAnim(); animPl.id = 9999; P.camInit = false; banner("EXPLORER", "A WORLD OF THREE KINGDOMS AWAITS", 5.f);
 }
 void stop() { on = false; }
 void look(float dx, float dy) { if (H.map) return; const float k = 0.0023f * cfg::S.sens; P.yaw -= dx * k; P.pitch = clampf(P.pitch + (cfg::S.invertY ? 1.f : -1.f) * dy * k * 0.9f, -1.4f, 1.3f); P.pitch = clampf(P.pitch, -1.4f, 1.3f); }
 void scroll(float dy) { P.camDist = clampf(P.camDist - dy * 0.6f, 1.8f, 14.f); }
 void keyPress(int key) {
-  if (key == 27) { if (H.map) { H.map = false; return; } stop(); return; } if (key == 'M') { H.map = !H.map; return; } if (key == 'V') { P.view = P.view ? 0 : 1; H.view = P.view; return; } if (key == 'F') { P.fly = !P.fly; H.fly = P.fly; banner(P.fly ? "FLIGHT MODE" : "WALKING", P.fly ? "W/A/S/D FLY - SHIFT FAST" : "", 2.f); return; }
+  if (key == 27) { if (H.map) { H.map = false; return; } stop(); return; } if (key == 'M') { H.map = !H.map; return; } if (key == 'B' || key == '1' || key == '2') { B.weapon = key == 'B' ? 1 - B.weapon : key == '1' ? 0 : 1; B.draw = 0; banner(B.weapon ? "BOW READY" : "WEAPON DRAWN", B.weapon ? "HOLD LMB TO DRAW - RELEASE TO LOOSE - RMB ZOOM" : "LMB STRIKE - RMB GUARD", 1.8f); return; } if (key == 'V') { P.view = P.view ? 0 : 1; H.view = P.view; return; } if (key == 'F') { P.fly = !P.fly; H.fly = P.fly; banner(P.fly ? "FLIGHT MODE" : "WALKING", P.fly ? "W/A/S/D FLY - SHIFT FAST" : "", 2.f); return; }
   if (key == 'T') { tMul = tMul < 2 ? 40.f : tMul < 100 ? 240.f : 1.f; H.timeMul = tMul; return; } if (key == 'N') { clockH = clockH < 5.5f ? 6.5f : clockH < 11 ? 12.f : clockH < 16 ? 18.3f : clockH < 21 ? 23.5f : 6.5f; return; } if (key == 290 || key == 'H') { H.show = !H.show; return; }
   if (key == ' ') { if (P.fly) return; if (P.ground && !P.swim && P.deadT <= 0) { P.vy = 6.2f; P.ground = false; } return; }
   if (key == 'E') { if (restT > 0 || P.deadT > 0) return; Npc* best = nullptr; float bd = 3.6f * 3.6f; for (Npc& n : npcs) { if (!n.used || !n.alive || n.role >= R_MON) continue; float d = dist2(n.x, n.z, P.x, P.z); if (d < bd) { bd = d; best = &n; } }
     if (best) { const char* line; char who[40]; const RigDef& rd = rigs[best->rig]; snprintf(who, sizeof who, "%s - %s", best->name, rd.title); if (best->role == R_VILL) { int k = (int)(rng() * 13); line = k < 10 ? L_VILL[k] : L_NAT[best->settle >= 0 ? settles[best->settle].nation : 0][k % 2]; } else if (best->role == R_GUARD) line = L_GUARD[(int)(rng() * 6) % 6]; else if (best->role == R_KNIGHT) line = L_KNIGHT[(int)(rng() * 4) % 4]; else line = L_SOLD[(int)(rng() * 3) % 3]; faceToward(*best, P.x, P.z, 1.f); say(who, line); return; }
+    if (CI.stage) return;
+    if (CI.in) { const xi::Def& d = xi::DEFS[CI.idx]; float lx = P.x - d.cx, lz = P.z - d.cz; if (lz > d.hz - 2.1f && std::fabs(lx) < 1.8f) { CI.want = 0; CI.stage = 1; return; }
+      if (d.chestX != 0 && dist2(lx, lz, d.chestX, d.chestZ) < 2.2f * 2.2f) { if (!looted[CI.house]) { looted[CI.house] = 1; int g = 15 + (int)(rng() * 55); gold += g; B.arrows = std::min(40, B.arrows + 10); char sub[40]; snprintf(sub, sizeof sub, "%d GOLD  +10 ARROWS", g); banner("TREASURE", sub, 3.5f); audio::play(S_LEVELUP, 0, 0.6f); } return; }
+      if (CI.idx == 0 && dist2(lx, lz, d.bedX, d.bedZ) < 2.4f * 2.4f) { restT = 3.2f; return; } return; }
+    int ei = nearEnter(); if (ei >= 0) { CI.ox = P.x; CI.oz = P.z; CI.want = ei + 1; CI.stage = 1; return; }
     for (const V3& c : campfires) if (dist2(c.x, c.z, P.x, P.z) < 3.8f * 3.8f) { restT = 3.2f; return; } }
 }
 void debugPlace(float x, float z, float yawDeg, float pitchDeg) { P.x = x; P.z = z; P.y = height(x, z); P.yaw = yawDeg * PI / 180.f; P.face = P.yaw; P.pitch = pitchDeg * PI / 180.f; P.camInit = false; } void debugHour(float h) { clockH = h; } void debugCam(float d) { P.camDist = d; } void debugFly(bool f) { P.fly = f; H.fly = f; } void debugView(int v) { P.view = v; H.view = v; } void debugMap(bool m) { H.map = m; }
 void debugPoi(int i) { if (pois.empty()) return; const Poi& p = pois[((i % (int)pois.size()) + (int)pois.size()) % (int)pois.size()]; float back = p.kind == 3 ? 24.f : p.kind == 0 ? 120.f : p.kind == 4 ? 60.f : 38.f; float a = p.kind == 3 ? 0.f : 0.9f; float x = p.x + std::sin(a) * back, z = p.z + std::cos(a) * back; if (p.kind == 3 && !falls.empty()) { for (const Fall& f : falls) if (std::fabs(f.x - p.x) < 1 && std::fabs(f.z - p.z) < 1) { x = f.x + f.dx * 22.f + f.dz * 6.f; z = f.z + f.dz * 22.f - f.dx * 6.f; } } P.x = x; P.z = z; P.y = height(x, z); P.yaw = std::atan2(p.x - x, p.z - z); P.face = P.yaw; P.pitch = p.kind == 4 ? 0.05f : 0.12f; P.camInit = false; }
+void debugCmd(const char* c) {
+  if (strstr(c, "bow")) B.weapon = 1; if (strstr(c, "melee")) B.weapon = 0; if (strstr(c, "hold")) dbgDrawHold = true; if (strstr(c, "run")) dbgWalk = 2; else if (strstr(c, "walk")) dbgWalk = 1; if (const char* p = strstr(c, "shoot")) dbgShoot = atoi(p + 5) > 0 ? atoi(p + 5) : 30;
+  if (strstr(c, "hostile")) { for (int k = 0; k < 3; k++) bounty[k] = 120; } if (strstr(c, "noai")) for (Npc& n : npcs) if (n.used && n.role >= R_MON && n.role == R_MON) n.used = false;
+  if (const char* p = strstr(c, "enter")) { int want = atoi(p + 5), best = -1; float bd = 1e30f; for (size_t i = 0; i < enters.size(); i++) if (enters[i].idx == want) { float d = dist2(enters[i].x, enters[i].z, P.x, P.z); if (d < bd) { bd = d; best = (int)i; } } if (best >= 0) { CI.ox = enters[best].x + enters[best].R; CI.oz = enters[best].z; doEnter(best); } }
+}
 void debugKillDay() { for (Npc& n : npcs) if (n.used && n.role >= R_MON && n.role == R_MON && n.alive) n.used = false; }
 bool mapToScreen(float wx, float wz, float& sx, float& sy) { if (!H.map) return false; sx = H.mapPx + (wx / 1024.f * 0.5f + 0.5f) * H.mapSize; sy = H.mapPy + (wz / 1024.f * 0.5f + 0.5f) * H.mapSize; return true; }
 
@@ -201,77 +206,91 @@ void update(float dtReal, const pl::Input& in) {
   if (H.bannerT > 0) H.bannerT -= dt; if (H.dlgT > 0) H.dlgT -= dt; if (H.bigT > 0) H.bigT -= dt; H.locT = std::max(0.f, H.locT - dt);
   const roster::Hero& hr = roster::at(roster::sel()); const FigAsset* pa = roster::cur(); float psc = pa ? pa->scale : 1.f;
   // ---- player
-  if (P.deadT > 0) { P.deadT += dt; if (P.deadT > 3.2f) { int best = 0; float bd = 1e30f; for (size_t i = 0; i < settles.size(); i++) if (settles[i].type <= ST_VILLAGE) { float d = dist2(settles[i].x, settles[i].z, P.x, P.z); if (d < bd) { bd = d; best = (int)i; } } const Settle& s = settles[best]; float gx = s.x + s.gateX * (s.type == ST_CAPITAL ? 60.f : 14.f), gz = s.z + s.gateZ * (s.type == ST_CAPITAL ? 60.f : 14.f); P.x = gx; P.z = gz; P.y = height(gx, gz); P.hp = P.maxHp; P.deadT = 0; H.dead = false; banner("YOU WERE RESCUED", s.name, 4.f); P.camInit = false; } }
+  if (P.deadT > 0) { P.deadT += dt; if (P.deadT > 3.2f) { if (CI.in) doExit(); int best = 0; float bd = 1e30f; for (size_t i = 0; i < settles.size(); i++) if (settles[i].type <= ST_VILLAGE) { float d = dist2(settles[i].x, settles[i].z, P.x, P.z); if (d < bd) { bd = d; best = (int)i; } } const Settle& s = settles[best]; float gx = s.x + s.gateX * (s.type == ST_CAPITAL ? 60.f : 14.f), gz = s.z + s.gateZ * (s.type == ST_CAPITAL ? 60.f : 14.f); P.x = gx; P.z = gz; P.y = gH(gx, gz); P.hp = P.maxHp; P.deadT = 0; H.dead = false; banner("YOU WERE RESCUED", s.name, 4.f); P.camInit = false; } }
   else if (restT > 0) { restT -= dt; P.hp = std::min(P.maxHp, P.hp + dt * P.maxHp * 0.4f); if (restT <= 0) { P.hp = P.maxHp; banner("RESTED", "THE NIGHT PASSES BY THE FIRE", 3.f); } }
   else if (!H.map || true) {
-    float sy = std::sin(P.yaw), cy = std::cos(P.yaw); float mx = in.mx, mz = in.mz; if (H.map) { mx = mz = 0; }
-    bool wantSprint = in.sprint && (mx != 0 || mz != 0); if (P.tired && P.st > 30.f) P.tired = false; if (P.st <= 0.5f) P.tired = true; bool sprint = wantSprint && !P.tired && !P.swim; if (P.fly) sprint = in.sprint;
-    P.block = in.rmb && !P.fly && !H.map; if (in.lmb && !H.map && P.atkT < 0 && !P.fly) playerAttack(); if (P.comboT > 0) { P.comboT -= dt; if (P.comboT <= 0) P.combo = 0; }
-    float fwdx = sy, fwdz = cy, rx = -cy, rz = sy; float speed = 3.5f * hr.move * (sprint ? 1.95f : 1.f) * (P.block ? 0.45f : 1.f) * (P.atkT >= 0 ? 0.55f : 1.f);
-    if (P.fly) { float cp = std::cos(P.pitch), sp = std::sin(P.pitch); float fs = sprint ? 130.f : 34.f; float vx = (fwdx * cp * mz + rx * mx) * fs, vz = (fwdz * cp * mz + rz * mx) * fs, vyy = sp * mz * fs; P.x += vx * dt; P.z += vz * dt; P.y += vyy * dt; P.y = std::max(P.y, height(P.x, P.z) + 1.5f); P.vy = 0; P.speed = std::sqrt(vx * vx + vz * vz); P.ground = false; P.swim = false; }
+    float sy = std::sin(P.yaw), cy = std::cos(P.yaw); float mx = in.mx, mz = in.mz; if (H.map || CI.stage == 1) { mx = mz = 0; } if (dbgWalk) { mx = 0; mz = 1; }
+    bool wantSprint = (in.sprint || dbgWalk == 2) && (mx != 0 || mz != 0); if (P.tired && P.st > 30.f) P.tired = false; if (P.st <= 0.5f) P.tired = true; bool sprint = wantSprint && !P.tired && !P.swim; if (P.fly) sprint = in.sprint;
+    P.block = in.rmb && !P.fly && !H.map && B.weapon == 0; if (in.lmb && !H.map && P.atkT < 0 && !P.fly && B.weapon == 0 && CI.stage != 1) playerAttack(); bowUpdate(dt, in); if (dbgShoot >= 0 && ++dbgFrames == dbgShoot) fireArrow(0.9f); if (P.comboT > 0) { P.comboT -= dt; if (P.comboT <= 0) P.combo = 0; }
+    float fwdx = sy, fwdz = cy, rx = -cy, rz = sy; float speed = 3.5f * hr.move * (sprint ? 1.95f : 1.f) * (P.block ? 0.45f : 1.f) * (P.atkT >= 0 ? 0.55f : 1.f) * (B.draw > 0 ? 0.55f : 1.f);
+    if (P.fly) { float cp = std::cos(P.pitch), sp = std::sin(P.pitch); float fs = sprint ? 130.f : 34.f; float vx = (fwdx * cp * mz + rx * mx) * fs, vz = (fwdz * cp * mz + rz * mx) * fs, vyy = sp * mz * fs; P.x += vx * dt; P.z += vz * dt; P.y += vyy * dt; P.y = std::max(P.y, gH(P.x, P.z) + 1.5f); P.vy = 0; P.speed = std::sqrt(vx * vx + vz * vz); P.ground = false; P.swim = false; }
     else {
-      float depth = 0; bool wet = inWater(P.x, P.z, &depth); P.swim = wet && depth > 1.15f; if (wet && !P.swim) speed *= 1.f - 0.3f * clampf(depth, 0, 1.1f); if (P.swim) speed = 2.2f * hr.move;
+      float depth = 0; bool wet = (!CI.in && inWater(P.x, P.z, &depth)); P.swim = wet && depth > 1.15f; if (wet && !P.swim) speed *= 1.f - 0.3f * clampf(depth, 0, 1.1f); if (P.swim) speed = 2.2f * hr.move;
       float tvx = (fwdx * mz + rx * mx), tvz = (fwdz * mz + rz * mx); float l = std::sqrt(tvx * tvx + tvz * tvz); if (l > 1.f) { tvx /= l; tvz /= l; } tvx *= speed; tvz *= speed; float k = std::min(1.f, dt * (P.ground ? 11.f : 3.f)); P.vx += (tvx - P.vx) * k; P.vz += (tvz - P.vz) * k;
-      float nx = P.x + P.vx * dt, nz = P.z + P.vz * dt; collide(nx, nz, 0.42f); float g0 = height(P.x, P.z), g1 = height(nx, nz); bool okStep = !(P.ground && g1 - P.y > 0.55f + 0.0f && (g1 - g0) / std::max(0.05f, std::sqrt(dist2(nx, nz, P.x, P.z))) > 1.15f);
-      if (!okStep) { float tx2 = P.x + P.vx * dt, tz2 = P.z; collide(tx2, tz2, 0.42f); float gx = height(tx2, tz2); if (!(P.ground && gx - P.y > 0.55f && (gx - g0) / std::max(0.05f, std::fabs(tx2 - P.x)) > 1.15f)) { nx = tx2; nz = tz2; } else { float tx3 = P.x, tz3 = P.z + P.vz * dt; collide(tx3, tz3, 0.42f); float gz = height(tx3, tz3); if (!(P.ground && gz - P.y > 0.55f && (gz - g0) / std::max(0.05f, std::fabs(tz3 - P.z)) > 1.15f)) { nx = tx3; nz = tz3; } else { nx = P.x; nz = P.z; P.vx = P.vz = 0; } } }
+      float nx = P.x + P.vx * dt, nz = P.z + P.vz * dt; collideAny(nx, nz, 0.42f); float g0 = gH(P.x, P.z), g1 = gH(nx, nz); bool okStep = !(P.ground && g1 - P.y > 0.55f + 0.0f && (g1 - g0) / std::max(0.05f, std::sqrt(dist2(nx, nz, P.x, P.z))) > 1.15f);
+      if (!okStep) { float tx2 = P.x + P.vx * dt, tz2 = P.z; collideAny(tx2, tz2, 0.42f); float gx = gH(tx2, tz2); if (!(P.ground && gx - P.y > 0.55f && (gx - g0) / std::max(0.05f, std::fabs(tx2 - P.x)) > 1.15f)) { nx = tx2; nz = tz2; } else { float tx3 = P.x, tz3 = P.z + P.vz * dt; collideAny(tx3, tz3, 0.42f); float gz = gH(tx3, tz3); if (!(P.ground && gz - P.y > 0.55f && (gz - g0) / std::max(0.05f, std::fabs(tz3 - P.z)) > 1.15f)) { nx = tx3; nz = tz3; } else { nx = P.x; nz = P.z; P.vx = P.vz = 0; } } }
       P.x = std::max(-HALF + 6, std::min(HALF - 6, nx)); P.z = std::max(-HALF + 6, std::min(HALF - 6, nz)); P.speed = std::sqrt(P.vx * P.vx + P.vz * P.vz);
-      float gnd = height(P.x, P.z); if (P.swim) { float lvl = waterAt(P.x, P.z); float want = lvl - 1.2f + 0.05f * std::sin(tAbs * 2.2f); P.y += (want - P.y) * std::min(1.f, dt * 6.f); P.vy = 0; P.ground = false; }
+      float gnd = gH(P.x, P.z); if (P.swim) { float lvl = waterAt(P.x, P.z); float want = lvl - 1.2f + 0.05f * std::sin(tAbs * 2.2f); P.y += (want - P.y) * std::min(1.f, dt * 6.f); P.vy = 0; P.ground = false; }
       else { if (P.ground) { if (gnd < P.y - 0.02f) { float fall = P.y - gnd; if (fall < 0.7f) P.y = gnd; else { P.ground = false; } } else P.y = gnd; } if (!P.ground) { P.vy -= 15.5f * dt; P.y += P.vy * dt; if (P.y <= gnd) { P.y = gnd; if (P.vy < -14.f) damagePlayer(std::min(40.f, (-P.vy - 14.f) * 4.f), P.x, P.z); P.vy = 0; P.ground = true; } } else if (gnd > P.y) { P.y = gnd; } }
     }
     if (sprint && P.speed > 1.f && !P.fly) P.st = std::max(0.f, P.st - 20.f * dt); else P.st = std::min(100.f, P.st + 16.f * dt);
-    if (P.speed > 0.3f) { float want = std::atan2(P.vx, P.vz); P.face += clampf(angDiff(P.face, want), -dt * 11.f, dt * 11.f); } if (P.view == 0 || P.atkT >= 0 || P.block) P.face += clampf(angDiff(P.face, P.yaw), -dt * 14.f, dt * 14.f);
+    if (P.speed > 0.3f) { float want = std::atan2(P.vx, P.vz); P.face += clampf(angDiff(P.face, want), -dt * 11.f, dt * 11.f); } if (P.view == 0 || P.atkT >= 0 || P.block || B.draw > 0 || B.rel >= 0 || B.zoom > 0.3f) P.face += clampf(angDiff(P.face, P.yaw), -dt * 14.f, dt * 14.f);
     if (P.atkT >= 0) { P.atkT += dt; if (!P.hitDone && P.atkT >= P.atkWind) { P.hitDone = true; playerHit(); } if (P.atkT >= P.atkWind + P.atkRec) P.atkT = -1; }
     P.hurtT = std::max(0.f, P.hurtT - dt); P.stagT = std::max(0.f, P.stagT - dt); if (P.regenWait > 0) P.regenWait -= dt; else P.hp = std::min(P.maxHp, P.hp + dt * 2.5f);
   }
+  arrowsUpdate(dt); cellUpdate(dt); for (int k = 0; k < 3; k++) bounty[k] = std::max(0.f, bounty[k] - dt * (huntCount > 0 ? 0.04f : 0.6f)); { float mb = std::max(bounty[0], std::max(bounty[1], bounty[2])); H.wanted = mb > 12.f ? 1 + (int)(mb / 55.f) : 0; if (H.wanted > 4) H.wanted = 4; } H.weapon = B.weapon; H.draw = B.draw; H.arrows = B.arrows; H.gold = gold; H.inside = CI.in; H.zoom = B.zoom; H.hitT = std::max(0.f, H.hitT - dt);
   H.hp = P.hp; H.maxHp = P.maxHp; H.st = P.st; H.yaw = P.yaw; H.fade = P.deadT > 0 ? std::min(1.f, P.deadT / 1.5f) : 0.f;
   // ---- npcs
-  nMonL = 0; for (int i = 0; i < MAXN; i++) if (npcs[i].used && npcs[i].role >= R_MON) monList[nMonL++] = i; int nCount = 0, mCount = 0;
+  huntCount = 0; nMonL = 0; for (int i = 0; i < MAXN; i++) if (npcs[i].used && npcs[i].role >= R_MON) monList[nMonL++] = i; int nCount = 0, mCount = 0;
   for (int i = 0; i < MAXN; i++) { Npc& n = npcs[i]; if (!n.used) continue; float pd = std::sqrt(dist2(n.x, n.z, P.x, P.z)); n.lastPlayerD = pd; if (n.role >= R_MON) mCount++; else nCount++;
-    if (!n.alive) { n.deadT += dt; if (n.deadT > 7.f) { if (n.role >= R_MON && n.lair) { n.used = false; } else n.used = false; } continue; } if (n.hitT > 0) n.hitT -= dt;
+    if (!n.alive) { n.deadT += dt; if (n.deadT > 7.f) { if (n.role >= R_MON && n.lair) { n.used = false; } else n.used = false; } continue; } if (n.hitT > 0) n.hitT -= dt; if (n.limp > 0) n.limp -= dt;
     if (!n.lair && n.role == R_MON && pd > 280.f) { n.used = false; continue; } if (pd > 320.f) continue;
-    if (n.role >= R_MON) aiMonster(n, dt, pd); else aiHuman(n, dt, pd);
-    float gy = n.onWall ? n.wallY : groundAt(n.x, n.z); float fly = (n.role >= R_MON && gFM[n.mon].flying) ? 1.3f : 0.f; if (n.role < R_MON || !gFM[n.mon].flying) { float dd; if (!n.onWall && inWater(n.x, n.z, &dd) && dd > 0.2f) gy -= std::min(0.5f, dd * 0.5f); } n.y += (gy + fly - n.y) * std::min(1.f, dt * 12.f); }
-  H.nNpc = nCount; H.nMon = mCount; spawner(dt);
+    if (n.stun > 0) { n.stun -= dt; n.moving = 0; n.atkT = -1; } else if (n.role >= R_MON) aiMonster(n, dt, pd); else aiHuman(n, dt, pd);
+    float gy = n.interior ? xi::BASEY : n.onWall ? n.wallY : groundAt(n.x, n.z); float fly = (n.role >= R_MON && gFM[n.mon].flying) ? 1.3f : 0.f; if (n.role < R_MON || !gFM[n.mon].flying) { float dd; if (!n.onWall && !n.interior && inWater(n.x, n.z, &dd) && dd > 0.2f) gy -= std::min(0.5f, dd * 0.5f); } n.y += (gy + fly - n.y) * std::min(1.f, dt * 12.f); }
+  H.nNpc = nCount; H.nMon = mCount; if (!CI.in) spawner(dt);
   // lair respawn when the player is far away
   lairT -= dt; if (lairT <= 0) { lairT = 20.f; for (const Lair& L : lairs) { if (dist2(L.x, L.z, P.x, P.z) < 380.f * 380.f) continue; int c = 0; for (int k = 0; k < nMonL; k++) { const Npc& m = npcs[monList[k]]; if (m.alive && m.lair && dist2(m.homeX, m.homeZ, L.x, L.z) < 2500.f) c++; } if (c < 3) { float a = rng() * 6.28f, d = 4 + rng() * 14; float x = L.x + std::cos(a) * d, z = L.z + std::sin(a) * d; if (validSpot(x, z, 0.9f)) spawnMon(L.kind == 1 ? RUSTBOUND : L.kind == 5 ? CAIRNBACK : L.kind >= 2 ? GLOAMWISP : THORNLING, x, z, true, false); } } }
   // ---- discoveries + place name
   for (size_t i = 0; i < pois.size(); i++) { Poi& p = pois[i]; if (p.found) continue; float d = std::sqrt(dist2(p.x, p.z, P.x, P.z)); if (d < p.r && std::fabs(P.y - p.y) < 90.f) { p.found = true; H.disc++; static const char* KIND[10] = {"CAPITAL DISCOVERED", "SETTLEMENT FOUND", "LAKE DISCOVERED", "WATERFALL DISCOVERED", "SUMMIT REACHED", "FORTRESS SIGHTED", "DANGER: CAMP", "RUINS FOUND", "WONDER DISCOVERED", "BORDER CROSSED"}; char sub[40]; snprintf(sub, sizeof sub, "%s  (%d/%d)", p.name, H.disc, H.discTotal); banner(KIND[p.kind % 10], sub, 5.f); audio::play(S_LEVELUP, 0, 0.7f); } }
-  { int sid = settleNear(P.x, P.z, 6.f); int pid = sid >= 0 ? sid : -1 - nationAt(P.x, P.z) * 100 - (int)(height(P.x, P.z) / 40.f); if (pid != lastPlaceId && sinceStart > 0.5f) { lastPlaceId = pid; if (sid >= 0 && settles[sid].type != ST_BORDER) snprintf(H.place, sizeof H.place, "%s", settles[sid].name); else snprintf(H.place, sizeof H.place, "%s", regionName(P.x, P.z)); snprintf(H.nation, sizeof H.nation, "%s", nations[nationAt(P.x, P.z)].title); H.locT = 4.5f; } if (!H.place[0]) { snprintf(H.place, sizeof H.place, "%s", regionName(P.x, P.z)); snprintf(H.nation, sizeof H.nation, "%s", nations[nationAt(P.x, P.z)].title); } }
+  if (!CI.in) { int sid = settleNear(P.x, P.z, 6.f); int pid = sid >= 0 ? sid : -1 - nationAt(P.x, P.z) * 100 - (int)(height(P.x, P.z) / 40.f); if (pid != lastPlaceId && sinceStart > 0.5f) { lastPlaceId = pid; if (sid >= 0 && settles[sid].type != ST_BORDER) snprintf(H.place, sizeof H.place, "%s", settles[sid].name); else snprintf(H.place, sizeof H.place, "%s", regionName(P.x, P.z)); snprintf(H.nation, sizeof H.nation, "%s", nations[nationAt(P.x, P.z)].title); H.locT = 4.5f; } if (!H.place[0]) { snprintf(H.place, sizeof H.place, "%s", regionName(P.x, P.z)); snprintf(H.nation, sizeof H.nation, "%s", nations[nationAt(P.x, P.z)].title); } }
   // ---- prompt
   H.prompt[0] = 0; if (!H.map && P.deadT <= 0 && restT <= 0) { Npc* best = nullptr; float bd = 3.6f * 3.6f; for (Npc& n : npcs) { if (!n.used || !n.alive || n.role >= R_MON) continue; float d = dist2(n.x, n.z, P.x, P.z); if (d < bd) { bd = d; best = &n; } }
-    if (best) snprintf(H.prompt, sizeof H.prompt, "E  TALK TO %s", best->name); else for (const V3& c : campfires) if (dist2(c.x, c.z, P.x, P.z) < 3.8f * 3.8f) { snprintf(H.prompt, sizeof H.prompt, "E  REST BY THE FIRE"); break; } }
+    if (best) snprintf(H.prompt, sizeof H.prompt, "E  TALK TO %s", best->name); else if (CI.in) { const xi::Def& d = xi::DEFS[CI.idx]; float lx = P.x - d.cx, lz = P.z - d.cz; if (CI.stage == 0) { if (lz > d.hz - 2.1f && std::fabs(lx) < 1.8f) snprintf(H.prompt, sizeof H.prompt, "E  LEAVE"); else if (d.chestX != 0 && dist2(lx, lz, d.chestX, d.chestZ) < 2.2f * 2.2f) snprintf(H.prompt, sizeof H.prompt, "%s", looted[CI.house] ? "CHEST  EMPTY" : "E  OPEN CHEST"); else if (CI.idx == 0 && dist2(lx, lz, d.bedX, d.bedZ) < 2.4f * 2.4f) snprintf(H.prompt, sizeof H.prompt, "E  SLEEP IN BED"); } }
+    else if (CI.stage == 0) { int ei = nearEnter(); if (ei >= 0) snprintf(H.prompt, sizeof H.prompt, "E  ENTER %s", xi::DEFS[enters[ei].idx].name); else for (const V3& c : campfires) if (dist2(c.x, c.z, P.x, P.z) < 3.8f * 3.8f) { snprintf(H.prompt, sizeof H.prompt, "E  REST BY THE FIRE"); break; } } }
   // boss bar
   H.bossHp = -1; for (int k = 0; k < nMonL; k++) { const Npc& m = npcs[monList[k]]; if (m.boss && m.alive && m.lastPlayerD < 60.f) { H.bossHp = m.hp / m.maxHp; snprintf(H.bossName, sizeof H.bossName, "%s", m.name); } }
   // ---- camera
   { float cp = std::cos(P.pitch), sp = std::sin(P.pitch); V3 look{std::sin(P.yaw) * cp, sp, std::cos(P.yaw) * cp}; float head = (pa ? pa->scale : 1.f) * 1.58f; V3 pv{P.x, P.y + head, P.z}; V3 eye, tg; float fov = 1.14f + (P.speed > 5.5f ? 0.07f : 0.f);
     if (P.view == 0 && !P.fly) { eye = pv + look * 0.12f; tg = eye + look * 6.f; fov = 1.22f; }
-    else { float dist = P.camDist * (P.fly ? 1.8f : 1.f); V3 right{-std::cos(P.yaw), 0, std::sin(P.yaw)}; V3 piv = pv + right * (P.fly ? 0.f : 0.55f) + V3{0, 0.1f, 0}; float use = dist; for (float s = 0.5f; s <= dist; s += 0.35f) { V3 p = piv - look * s; float g = height(p.x, p.z) + 0.45f; float wl = waterAt(p.x, p.z); if (wl > -1e8f) g = std::max(g, wl + 0.25f); float cx = p.x, cz = p.z; bool hit = p.y < g; if (!hit && p.y < height(p.x, p.z) + 7.f && collide(cx, cz, 0.3f) && dist2(cx, cz, p.x, p.z) > 0.25f) hit = true; if (hit) { use = std::max(0.9f, s - 0.45f); break; } }
-      eye = piv - look * use; float g = height(eye.x, eye.z) + 0.5f; if (eye.y < g) eye.y = g; tg = piv + look * 10.f; }
-    if (!P.camInit) { P.eye = eye; P.tgt = tg; P.camInit = true; } float k = P.view == 0 ? 1.f : 1.f - std::exp(-dt * 16.f); P.eye = P.eye + (eye - P.eye) * k; P.tgt = P.tgt + (tg - P.tgt) * k; P.fov += (fov - P.fov) * std::min(1.f, dt * 5.f); (void)psc; }
+    else { float dist = (CI.in ? std::min(P.camDist, 2.7f) : P.camDist) * (P.fly ? 1.8f : 1.f); V3 right{-std::cos(P.yaw), 0, std::sin(P.yaw)}; V3 piv = pv + right * (P.fly ? 0.f : 0.55f) + V3{0, 0.1f, 0}; float use = dist; for (float s = 0.5f; s <= dist; s += 0.35f) { V3 p = piv - look * s; float g = gH(p.x, p.z) + 0.45f; float wl = waterAt(p.x, p.z); if (wl > -1e8f) g = std::max(g, wl + 0.25f); float cx = p.x, cz = p.z; bool hit = p.y < g; if (!hit && p.y < gH(p.x, p.z) + 7.f && collideAny(cx, cz, 0.3f) && dist2(cx, cz, p.x, p.z) > 0.25f) hit = true; if (hit) { use = std::max(0.9f, s - 0.45f); break; } }
+      eye = piv - look * use; float g = gH(eye.x, eye.z) + 0.5f; if (eye.y < g) eye.y = g; tg = piv + look * 10.f; if (CI.in) { const xi::Def& d = xi::DEFS[CI.idx]; eye.x = clampf(eye.x, d.cx - d.hx + 0.3f, d.cx + d.hx - 0.3f); eye.z = clampf(eye.z, d.cz - d.hz + 0.3f, d.cz + d.hz - 0.3f); eye.y = std::min(eye.y, xi::BASEY + d.h - 0.25f); } }
+    if (!P.camInit) { P.eye = eye; P.tgt = tg; P.camInit = true; } float k = P.view == 0 ? 1.f : 1.f - std::exp(-dt * 16.f); P.eye = P.eye + (eye - P.eye) * k; P.tgt = P.tgt + (tg - P.tgt) * k; P.fov += (fov * (1.f - 0.4f * B.zoom) - P.fov) * std::min(1.f, dt * 5.f); (void)psc; }
 }
 
 void draw() {
   static FigDraw fd[260]; int nfd = 0; xr::lastDt = 0.016f; const float dtv = 1.f / 60.f; float psc = 1.f; const FigAsset* pa = roster::cur(); if (pa) psc = pa->scale; const roster::Hero& hr = roster::at(roster::sel());
   auto weapon = [&](const FigAsset& rig, const FigAnim& an, bool left, int wp, const M4& um, const float* fl, float dim) { if (wp < 0 || wp >= NWEAP || !gFW[wp].ok || nfd >= 258) return; FigDraw& w = fd[nfd++]; M4 m; figWeaponMat(rig, an, left, wp, um, tAbs, m); w.a = &gFW[wp]; w.model = m; w.mat = WID; w.dissolve = 0; w.disH = 1; w.glow = 1; w.shadow = true; w.dim = dim; w.lantern = true; w.vm = false; for (int k = 0; k < 3; k++) { w.flash[k] = fl[k]; w.disCol[k] = 0; } };
   // player
-  if (pa && pa->ok && (P.view == 1 || P.fly)) { const FigAsset& a = *pa; FigAnim& an = animPl; if (an.id != 9999u) { an = FigAnim(); an.id = 9999u; }
-    int ac = -1; float au = -1; if (P.atkT >= 0) { static const int K3[3] = {A_BASIC, A_BASH, A_CLEAVE}; ac = figActClip(a, K3[P.combo % 3]); if (ac < 0) ac = figActClip(a, A_BASIC); float hit = ac >= 0 && a.clips[ac].hit > 0.01f ? a.clips[ac].hit : 0.5f; if (ac >= 0) au = P.atkT < P.atkWind ? P.atkT / std::max(0.01f, P.atkWind) * hit : std::min(1.f, hit + (P.atkT - P.atkWind) / std::max(0.01f, P.atkRec) * (1 - hit)); }
-    bool combat = P.atkT >= 0 || P.block || P.hurtT > 0; float spd = P.swim ? P.speed * 0.8f : P.speed; figAnimUpdate(an, a, dtv, spd / a.scale, combat, ac, au, P.stagT > 0.1f ? 1.f : 0.f, P.deadT > 0, P.block ? 1.f : 0.f, -1.f, 0.f);
-    if (P.swim) figAddMove(an, a, 0, 0, -0.5f, 0); figAnimPose(an, a); FigDraw& d = fd[nfd++]; d.a = &a; d.mat = an.mat; d.dissolve = 0; d.disH = std::max(1.f, a.height); d.glow = 1; d.shadow = true; d.dim = 1; d.lantern = a.lant; d.vm = false; for (int k = 0; k < 3; k++) d.disCol[k] = a.disCol[k];
-    float fl = P.hurtT > 0 ? P.hurtT * 0.5f : 0.f; d.flash[0] = fl * 1.2f; d.flash[1] = fl * 0.5f; d.flash[2] = fl * 0.3f; float py = P.y - (P.swim ? 0.f : 0.f); d.model = mul(translate(P.x, py, P.z), mul(rotY(P.face), scale4(a.scale, a.scale, a.scale))); weapon(a, an, false, hr.wpR, d.model, d.flash, 1.f); weapon(a, an, true, hr.wpL, d.model, d.flash, 1.f); }
+  bool lampOn = (clockH < 6.2f || clockH > 18.4f) && !CI.in; bool bowEq = B.weapon == 1, showBody = P.view == 1 || P.fly, fpvVM = !showBody; static V3 vmRef[2] = {{0.30f, 1.1f, 0.28f}, {-0.30f, 1.1f, 0.28f}};
+  if (pa && pa->ok && (showBody || fpvVM)) { const FigAsset& a = *pa; FigAnim& an = animPl; if (an.id != 9999u) { an = FigAnim(); an.id = 9999u; }
+    int ac = -1; float au = -1; bool bowAct = bowEq && (B.draw > 0 || B.rel >= 0);
+    if (P.atkT >= 0) { static const int K3[3] = {A_BASIC, A_BASH, A_CLEAVE}; ac = figActClip(a, K3[P.combo % 3]); if (ac < 0) ac = figActClip(a, A_BASIC); float hit = ac >= 0 && a.clips[ac].hit > 0.01f ? a.clips[ac].hit : 0.5f; if (ac >= 0) au = P.atkT < P.atkWind ? P.atkT / std::max(0.01f, P.atkWind) * hit : std::min(1.f, hit + (P.atkT - P.atkWind) / std::max(0.01f, P.atkRec) * (1 - hit)); }
+    else if (bowAct) { ac = figActClip(a, A_AIMED); if (ac >= 0) { float hit = a.clips[ac].hit > 0.01f ? a.clips[ac].hit : 0.5f; au = B.draw > 0 ? B.draw * hit : std::min(1.f, hit + B.rel / 0.4f * (1 - hit)); } }
+    bool combat = P.atkT >= 0 || P.block || P.hurtT > 0 || bowAct || (bowEq && B.zoom > 0.3f); float spd = P.swim ? P.speed * 0.8f : P.speed; figAnimUpdate(an, a, dtv, spd / a.scale, combat, ac, au, P.stagT > 0.1f ? 1.f : 0.f, P.deadT > 0, P.block ? 1.f : 0.f, -1.f, 0.f);
+    if (P.swim) figAddMove(an, a, 0, 0, -0.5f, 0); figAnimPose(an, a); float fl = P.hurtT > 0 ? P.hurtT * 0.5f : 0.f; float flash[3] = {fl * 1.2f, fl * 0.5f, fl * 0.3f}; int wR = bowEq ? -1 : hr.wpR, wL = bowEq ? roster::WP_BOW : hr.wpL;
+    if (showBody) { FigDraw& d = fd[nfd++]; d.a = &a; d.mat = an.mat; d.dissolve = 0; d.disH = std::max(1.f, a.height); d.glow = 1; d.shadow = true; d.dim = 1; d.lantern = a.lant && lampOn; d.vm = false; for (int k = 0; k < 3; k++) d.disCol[k] = a.disCol[k]; for (int k = 0; k < 3; k++) d.flash[k] = flash[k];
+      d.model = mul(translate(P.x, P.y, P.z), mul(rotY(P.face), scale4(a.scale, a.scale, a.scale))); weapon(a, an, false, wR, d.model, d.flash, 1.f); weapon(a, an, true, wL, d.model, d.flash, 1.f); }
+    else {   // first person: the held weapon in the camera frame, driven by the live pose (swing / draw animate for free)
+      V3 look = norm(P.tgt - P.eye), xx = norm(cross(V3{0, 1, 0}, look)), yy = cross(look, xx); M4 cam = ident(); cam.m[0] = xx.x; cam.m[1] = xx.y; cam.m[2] = xx.z; cam.m[4] = yy.x; cam.m[5] = yy.y; cam.m[6] = yy.z; cam.m[8] = look.x; cam.m[9] = look.y; cam.m[10] = look.z; M4 um0 = scale4(a.scale, a.scale, a.scale); bool idle = P.atkT < 0 && !bowAct;
+      auto vmW = [&](bool left, int wp, V3 off) { if (wp < 0 || wp >= NWEAP || !gFW[wp].ok || nfd >= 258) return; M4 m; figWeaponMat(a, an, left, wp, um0, tAbs, m); V3& ref = vmRef[left ? 0 : 1]; V3 cur{m.m[12], m.m[13], m.m[14]}; if (idle) ref = ref + (cur - ref) * 0.15f;
+        V3 anc = P.eye + xx * off.x + yy * off.y + look * off.z; M4 w2 = mul(translate(anc.x, anc.y, anc.z), mul(cam, mul(translate(-ref.x, -ref.y, -ref.z), m))); FigDraw& w = fd[nfd++]; w.a = &gFW[wp]; w.model = w2; w.mat = WID; w.dissolve = 0; w.disH = 1; w.glow = 1; w.shadow = false; w.dim = 1.f; w.lantern = false; w.vm = true; for (int k = 0; k < 3; k++) { w.flash[k] = flash[k]; w.disCol[k] = 0; } };
+      vmW(true, wL, V3{0.24f, -0.3f, 0.62f}); vmW(false, wR, V3{-0.3f, -0.34f, 0.7f}); } }
   // npcs within range (nearest first by cell; capped)
   V3 cf = norm(P.tgt - P.eye); int drawn = 0; for (int pass = 0; pass < 2; pass++) for (int i = 0; i < MAXN && nfd < 230; i++) { Npc& n = npcs[i]; if (!n.used) continue; n.vis = false; float dx = n.x - P.eye.x, dz = n.z - P.eye.z, d2 = dx * dx + dz * dz; float lim = n.role >= R_MON ? 150.f : 125.f; if (n.boss) lim = 320.f; if (d2 > lim * lim) continue; float d = std::sqrt(d2) + 1e-3f; if (d > 12.f && (dx * cf.x + dz * cf.z) / d < -0.05f) continue; if ((pass == 0) != (d < 60.f)) continue; if (drawn > 150) continue; drawn++; n.vis = true;
     const FigAsset* a; int wR = -1, wL = -1; if (n.role >= R_MON) a = &gFM[n.mon]; else { const RigDef& rd = rigs[n.rig]; a = rd.a; wR = rd.wR; wL = rd.wL; } if (!a || !a->ok) continue; FigAnim& an = n.an; int ac = -1; float au = -1;
     if (n.atkT >= 0 && n.alive) { ac = figActClip(*a, n.role >= R_MON ? A_MONATK : A_BASIC); if (ac >= 0) { float hit = a->clips[ac].hit > 0.01f ? a->clips[ac].hit : 0.5f; au = n.atkT < n.atkWind ? n.atkT / std::max(0.01f, n.atkWind) * hit : std::min(1.f, hit + (n.atkT - n.atkWind) / std::max(0.01f, n.atkRec) * (1 - hit)); } }
     bool combat = n.role >= R_MON ? (n.tgtKind != 0 && n.alive) : (n.state == S_CHASE || n.state == S_ATK); float spd = n.alive ? n.moving : 0.f; if (n.role == R_VILL && n.state == S_FLEE) combat = false;
     figAnimUpdate(an, *a, dtv, spd / std::max(0.3f, n.sc / std::max(0.01f, a->scale) * a->scale), combat, ac, au, n.hitT > 0.05f ? 1.f : 0.f, !n.alive, 0.f, -1.f, 0.f); figAnimPose(an, *a);
-    FigDraw& fdd = fd[nfd++]; fdd.a = a; fdd.mat = an.mat; fdd.dissolve = n.alive ? 0.f : clampf((n.deadT - 4.5f) / 2.f, 0, 1); fdd.disH = std::max(1.f, a->height); fdd.glow = n.role >= R_MON ? (n.boss ? 3.f : 2.2f) : 1.f; fdd.shadow = d < 70.f; fdd.dim = 1.f; fdd.lantern = a->lant; fdd.vm = false; for (int k = 0; k < 3; k++) fdd.disCol[k] = a->disCol[k];
+    FigDraw& fdd = fd[nfd++]; fdd.a = a; fdd.mat = an.mat; fdd.dissolve = n.alive ? 0.f : clampf((n.deadT - 4.5f) / 2.f, 0, 1); fdd.disH = std::max(1.f, a->height); fdd.glow = n.role >= R_MON ? (n.boss ? 3.f : 2.2f) : 1.f; fdd.shadow = d < 70.f; fdd.dim = 1.f; fdd.lantern = a->lant && lampOn && ((i & 1) == 0); fdd.vm = false; for (int k = 0; k < 3; k++) fdd.disCol[k] = a->disCol[k];
     float fl = n.hitT * n.hitT * 4.f; fdd.flash[0] = fl * 1.2f; fdd.flash[1] = fl * 0.7f; fdd.flash[2] = fl * 0.4f; float sc = n.sc; fdd.model = mul(translate(n.x, n.y, n.z), mul(rotY(n.face), scale4(sc, sc, sc)));
     if (n.role < R_MON) { weapon(*a, an, false, wR, fdd.model, fdd.flash, 1.f); weapon(*a, an, true, wL, fdd.model, fdd.flash, 1.f); } }
   xr::Frame f; f.eye = P.eye; f.tgt = P.tgt; f.fov = P.fov; f.hour = clockH; f.time = tAbs; f.flash = 0; f.fade = 1.f - H.fade * 0.85f * (P.deadT > 0 ? 1.f : 0.f) - (restT > 0 ? 0.6f * std::sin(clampf(restT / 3.2f, 0, 1) * PI) : 0.f);
+  static xr::Dyn dyn[48]; int nd = buildDyn(dyn, 44); if (B.weapon == 1 && P.view == 0 && !P.fly && !CI.stage && B.arrows > 0 && B.rel < 0.1f) { V3 lk = norm(P.tgt - P.eye); V3 xx = norm(cross(V3{0, 1, 0}, lk)); V3 yy = cross(lk, xx); float zz = 0.34f - 0.14f * B.draw; V3 pos = P.eye + xx * 0.075f + yy * -0.115f + lk * zz; M4 m = ident(); m.m[0] = xx.x; m.m[1] = xx.y; m.m[2] = xx.z; m.m[4] = yy.x; m.m[5] = yy.y; m.m[6] = yy.z; m.m[8] = lk.x; m.m[9] = lk.y; m.m[10] = lk.z; m.m[12] = pos.x; m.m[13] = pos.y; m.m[14] = pos.z; dyn[nd].m = m; dyn[nd].tint[0] = dyn[nd].tint[1] = dyn[nd].tint[2] = 1.f; nd++; }
+  f.dyn = dyn; f.ndyn = nd; f.fade *= 1.f - CI.fade; xr::indoor = CI.in ? 1.f : 0.f;
   xr::render(f, fd, nfd);
   // labels (names / health bars)
-  nLabels = 0; for (int i = 0; i < MAXN && nLabels < 26; i++) { Npc& n = npcs[i]; if (!n.used || !n.alive || !n.vis) continue; bool mon = n.role >= R_MON; float d = n.lastPlayerD; if (mon ? (d > 55.f || (n.role == R_STAG && d > 14.f)) : d > 7.5f) continue; if (mon && n.tgtKind == 0 && n.hp >= n.maxHp && d > 24.f) continue; float sx, sy; const FigAsset* a = mon ? &gFM[n.mon] : rigs[n.rig].a; float hy = a ? a->hpY * n.sc / std::max(0.01f, a->scale) + 0.35f : 2.2f; if (!xr::project(n.x, n.y + hy, n.z, sx, sy)) continue; Label& L = labels[nLabels++]; L.x = sx; L.y = sy; if (mon) { snprintf(L.text, sizeof L.text, "%s", n.name); L.hp = n.hp / n.maxHp; L.col = n.boss ? 0xff8a50 : (n.role == R_MON ? 0xff6a5a : 0xd8d0b0); } else { snprintf(L.text, sizeof L.text, "%s", n.name); L.hp = -1; L.col = n.role == R_VILL ? 0xe8e0c8 : 0x9ac8ff; } }
+  nLabels = 0; for (int i = 0; i < MAXN && nLabels < 22; i++) { Npc& n = npcs[i]; if (!n.used || !n.alive || !n.vis) continue; bool mon = n.role >= R_MON; float d = n.lastPlayerD; if (mon ? (d > 55.f || (n.role == R_STAG && d > 14.f)) : d > 7.5f) continue; if (mon && n.tgtKind == 0 && n.hp >= n.maxHp && d > 24.f) continue; float sx, sy; const FigAsset* a = mon ? &gFM[n.mon] : rigs[n.rig].a; float hy = a ? a->hpY * n.sc / std::max(0.01f, a->scale) + 0.35f : 2.2f; if (!xr::project(n.x, n.y + hy, n.z, sx, sy)) continue; Label& L = labels[nLabels++]; L.x = sx; L.y = sy; if (mon) { snprintf(L.text, sizeof L.text, "%s", n.name); L.hp = n.hp / n.maxHp; L.col = n.boss ? 0xff8a50 : (n.role == R_MON ? 0xff6a5a : 0xd8d0b0); } else { snprintf(L.text, sizeof L.text, "%s", n.name); L.hp = n.hp < n.maxHp ? n.hp / n.maxHp : -1.f; L.col = n.angry > 0 ? 0xff7a6a : n.role == R_VILL ? 0xe8e0c8 : 0x9ac8ff; } }
+  for (DmgTxt& x : DT) { if (x.t < 0) continue; x.t += 1.f / 60.f; if (x.t > 1.1f) { x.t = -1; continue; } float sx, sy; if (nLabels < 42 && xr::project(x.x, x.y + x.t * 0.8f, x.z, sx, sy)) { Label& L = labels[nLabels++]; L.x = sx; L.y = sy - x.t * 8.f; memcpy(L.text, x.txt, sizeof x.txt); L.text[19] = 0; L.hp = -1; L.col = x.col; } }
   float S = std::max(1.f, std::round(gfx::winH / 360.f)); float W = (float)gfx::winW, Hh = (float)gfx::winH;
   if (H.map) { float size = std::min(Hh * 0.86f, W * 0.7f); H.mapSize = size; H.mapPx = (W - size) / 2; H.mapPy = (Hh - size) / 2; xr::MapView mv{0, 0, 1024.f, 0, 1, H.mapPx, H.mapPy, size, P.yaw}; xr::drawMap(mv); float sx, sy; mapToScreen(P.x, P.z, sx, sy); (void)sx; (void)sy; }
   else if (H.show) { float size = 118.f * S; H.mapSize = size; H.mapPx = W - size - 8 * S; H.mapPy = 24 * S; float rot = PI - P.yaw; xr::MapView mv{P.x, P.z, 170.f, rot, 0, H.mapPx, H.mapPy, size, -rot}; xr::drawMap(mv); }

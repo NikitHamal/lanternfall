@@ -26,7 +26,17 @@ static void drawExploreHud() {
   // ---- name plates
   for (int i = 0; i < ex::nLabels; i++) { const ex::Label& L = ex::labels[i]; float a = 0.95f; text(L.text, L.x, L.y - 10 * S, S * 0.75f, hexc(L.col, a), 1); if (L.hp >= 0) bar(L.x - 22 * S, L.y - 1 * S, 44 * S, 3 * S, L.hp, hexc(0xd8503f)); }
   // ---- reticle (first person)
-  if (H.view == 0) { rect(W_ / 2 - 1, H_ / 2 - 1, 2, 2, {1, 1, 1, 0.8f}); }
+  if (H.view == 0 || H.weapon == 1) {
+    float cx = W_ / 2, cy = H_ / 2; float spread = H.weapon == 1 ? (1.f - H.draw) * 14.f * S * (H.zoom > 0.5f ? 0.6f : 1.f) + 3.f * S : 0.f; bool full = H.weapon == 1 && H.draw > 0.92f; Col rc = full ? Col{1.f, 0.82f, 0.3f, 0.95f} : Col{1, 1, 1, 0.8f};
+    rect(cx - 1, cy - 1, 2, 2, rc); if (H.weapon == 1) { float t = std::max(1.f, S * 0.7f); rect(cx - spread - 5 * S, cy - 0.5f * t, 5 * S, t, rc); rect(cx + spread, cy - 0.5f * t, 5 * S, t, rc); rect(cx - 0.5f * t, cy - spread - 5 * S, t, 5 * S, rc); rect(cx - 0.5f * t, cy + spread, t, 5 * S, rc); }
+  }
+  if (H.hitT > 0.01f && !H.map) { float cx = W_ / 2, cy = H_ / 2, a = std::min(1.f, H.hitT * 5.f); Col hc = H.hitKill ? Col{1.f, 0.25f, 0.2f, a} : H.hitZone == 1 ? Col{1.f, 0.82f, 0.25f, a} : Col{1, 1, 1, a}; float o = (H.hitZone == 1 ? 9.f : 6.f) * S, l = 4.f * S, t = std::max(1.f, S * 0.8f);
+    for (int sx = -1; sx <= 1; sx += 2) for (int sy = -1; sy <= 1; sy += 2) for (int k = 0; k < 4; k++) rect(cx + sx * (o + k * 0.7f * S) - t * 0.5f, cy + sy * (o + k * 0.7f * S) - t * 0.5f, t, t, hc); (void)l; }
+  if (H.weapon == 1 && H.draw > 0.01f) { float w = 70 * S, x = W_ / 2 - w / 2, y = H_ * 0.62f; rect(x - 2, y - 2, w + 4, 5 * S + 4, {0, 0, 0, 0.4f}); bar(x, y, w, 5 * S, H.draw, H.draw > 0.92f ? hexc(0xffd25a) : hexc(0xd8c090)); }
+  // ---- weapon / gold / wanted (bottom-left, above vitals)
+  { float x = M, y = H_ - 62 * S; static char wl[40]; static int lw = -1, la = -1, lg = -1; if (lw != H.weapon || la != H.arrows || lg != H.gold) { lw = H.weapon; la = H.arrows; lg = H.gold; if (H.weapon) snprintf(wl, 40, "BOW  %d ARROWS   %d GOLD", H.arrows, H.gold); else snprintf(wl, 40, "BLADE   %d GOLD", H.gold); } text(wl, x, y, S * 0.8f, hexc(H.weapon ? 0xe8d49a : 0xd0c8b8));
+    if (H.wanted > 0) { float p = 0.6f + 0.4f * std::sin(gfx::time_ * 8.f); for (int i = 0; i < H.wanted; i++) text("*", x + i * 9 * S, y - 12 * S, S * 1.8f, hexc(0xff4a3a, p)); text("WANTED", x + (H.wanted * 9 + 4) * S, y - 8 * S, S * 0.8f, hexc(0xff7a5a, p)); } }
+  if (H.inside) { text("INSIDE", H.mapPx + H.mapSize / 2, H.mapPy + H.mapSize + 3 * S, S * 0.9f, hexc(0xe9c98a), 1); }
   // ---- boss bar
   if (H.bossHp >= 0) { float w = 220 * S, x = W_ / 2 - w / 2, y = 26 * S; text(H.bossName, W_ / 2, y - 11 * S, S * 1.1f, hexc(0xffb070), 1); bar(x, y, w, 5 * S, H.bossHp, hexc(0xd8503f)); }
   // ---- banner (discovery / events)
@@ -35,6 +45,6 @@ static void drawExploreHud() {
   if (H.prompt[0]) { float y = H_ * 0.66f; rect(W_ / 2 - 70 * S, y - 3 * S, 140 * S, 14 * S, {0, 0, 0, 0.5f}); frame(W_ / 2 - 70 * S, y - 3 * S, 140 * S, 14 * S, hexc(0x6a5a3c)); text(H.prompt, W_ / 2, y, S * 1.0f, hexc(0xf0dcb0), 1); }
   if (H.dlgT > 0) { float a = std::min(1.f, H.dlgT * 2.f); float w = 330 * S, h = 40 * S, x = W_ / 2 - w / 2, y = H_ - h - 14 * S; rect(x, y, w, h, {0.04f, 0.045f, 0.06f, 0.9f * a}); frame(x, y, w, h, hexc(0x6a5a3c, a)); text(H.dlgName, x + 8 * S, y + 5 * S, S * 1.0f, hexc(0xe9c98a, a)); text(H.dlgText, x + 8 * S, y + 19 * S, S * 0.95f, hexc(0xf0e8d4, a)); }
   // ---- hints (bottom-right)
-  { static const char* hint = "WASD MOVE  SHIFT RUN  SPACE JUMP  LMB ATTACK  RMB GUARD  E TALK/REST  M MAP  V VIEW  T TIME  N SKIP  F FLY  H HUD  ESC EXIT"; if (H.discTotal > 0 && H.hour >= 0) text(hint, W_ - M, H_ - 10 * S, S * 0.62f, hexc(0x7f7866), 2); }
+  { static const char* hint = "WASD MOVE  SHIFT RUN  SPACE JUMP  LMB ATTACK/DRAW  RMB GUARD/ZOOM  B BOW  E USE  M MAP  V VIEW  T TIME  F FLY  H HUD  ESC EXIT"; if (H.discTotal > 0 && H.hour >= 0) text(hint, W_ - M, H_ - 10 * S, S * 0.62f, hexc(0x7f7866), 2); }
   if (H.dead) { rect(0, 0, W_, H_, {0.1f, 0, 0, std::min(0.6f, H.fade * 0.6f)}); text("YOU HAVE FALLEN", W_ / 2, H_ / 2 - 12 * S, S * 3.f, hexc(0xe0a090, std::min(1.f, H.fade)), 1); }
 }

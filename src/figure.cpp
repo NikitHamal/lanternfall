@@ -134,6 +134,8 @@ int figActClip(const FigAsset& a, int kind) {
   if (i < 0) i = a.clipIx("attack");
   return i;
 }
+static bool inSub(const FigAsset& a, int b, int root);
+static void procLoco(FigAnim& an, const FigAsset& a, float dt, float as, float w, float ready); static bool isBiped(const FigAsset& a);
 void figAnimUpdate(FigAnim& an, const FigAsset& a, float dt, float speed, bool combat, int actClip, float actU, float stagV, bool down, float guard, float dodgeU, float hitDir) {
   if (a.nclips <= 0) {
     for (int b = 0; b < a.nb; b++) { float* o = an.pose + b * 7; o[0] = o[1] = o[2] = 0; o[3] = 1; o[4] = a.head[b][0]; o[5] = a.head[b][1]; o[6] = a.head[b][2]; }
@@ -149,7 +151,8 @@ void figAnimUpdate(FigAnim& an, const FigAsset& a, float dt, float speed, bool c
   const FigClip& I = a.clips[ci]; const FigClip& R = a.clips[cr];
   sampleClip(a, I, an.t * (I.frames / std::max(0.1f, I.T)), an.pose);
   if (an.readyW > 0.002f) { sampleClip(a, R, an.t * (R.frames / std::max(0.1f, R.T)), tmp); blendPose(an.pose, tmp, an.readyW, nb); }
-  if (an.moveW > 0.002f && (cw >= 0 || cn >= 0)) {
+  if (an.moveW > 0.002f && gProcGait && isBiped(a)) procLoco(an, a, dt, as, an.moveW, an.readyW);
+  else if (an.moveW > 0.002f && (cw >= 0 || cn >= 0)) {
     float wk = 0; const FigClip *W = nullptr, *N = nullptr;
     if (a.hero) { W = cw >= 0 ? &a.clips[cw] : nullptr; N = cn >= 0 ? &a.clips[cn] : W; if (!W) W = N; wk = smth(1.5f, 3.1f, as); }
     else { N = cn >= 0 ? &a.clips[cn] : &a.clips[cw]; W = cw >= 0 ? &a.clips[cw] : N; wk = smth(N->speed * 0.58f, N->speed * 0.90f, as); }
@@ -252,6 +255,50 @@ void figAddRot(FigAnim& an, const FigAsset& a, int root, float ax, float ay, flo
     float x = p[0], y = p[1], z = p[2], w = p[3]; p[0] = qw * x + qx * w + qy * z - qz * y; p[1] = qw * y - qx * z + qy * w + qz * x; p[2] = qw * z + qx * y - qy * x + qz * w; p[3] = qw * w - qx * x - qy * y - qz * z; }
 }
 void figAddMove(FigAnim& an, const FigAsset& a, int root, float dx, float dy, float dz) { if (root < 0) return; for (int b = 0; b < a.nb; b++) if (inSub(a, b, root)) { an.pose[b * 7 + 4] += dx; an.pose[b * 7 + 5] += dy; an.pose[b * 7 + 6] += dz; } }
+
+// ------------------------------------------------------------------ procedural biped locomotion (foot-planted gait, 2-bone leg IK)
+bool gProcGait = true;
+static inline float smr(float x) { x = sat01(x); return x * x * x * (x * (x * 6 - 15) + 10); }
+static void rotArc(FigAnim& an, const FigAsset& a, int root, V3 pv, V3 from, V3 to) {
+  V3 ax = cross(from, to); float s = len(ax), c = clampf(dot(from, to), -1.f, 1.f); if (s < 1e-6f) return; float ang = std::atan2(s, c); float p[3] = {pv.x, pv.y, pv.z}; figAddRot(an, a, root, ax.x, ax.y, ax.z, ang, p);
+}
+static V3 bpos(const FigAnim& an, int b) { const float* p = an.pose + b * 7 + 4; return {p[0], p[1], p[2]}; }
+static void legIK(FigAnim& an, const FigAsset& a, int t, int s, int f, V3 tgt, float footPitch) {
+  V3 hip = bpos(an, t), knee = bpos(an, s), ank = bpos(an, f); float l1 = len(knee - hip), l2 = len(ank - knee); if (l1 < 1e-3f || l2 < 1e-3f) return;
+  V3 d = tgt - hip; float dl0 = len(d); if (dl0 < 1e-4f) return; V3 dn = d * (1.f / dl0); float dl = clampf(dl0, std::fabs(l1 - l2) + 0.03f, (l1 + l2) * 0.998f);
+  float a1 = std::acos(clampf((l1 * l1 + dl * dl - l2 * l2) / (2 * l1 * dl), -1.f, 1.f)); V3 pole{0, 0, 1}; pole = pole - dn * dot(pole, dn); pole = norm(pole);
+  V3 kneeN = hip + (dn * std::cos(a1) + pole * std::sin(a1)) * l1; V3 ankN = hip + dn * dl;
+  rotArc(an, a, t, hip, norm(knee - hip), norm(kneeN - hip));
+  V3 k2 = bpos(an, s), f2 = bpos(an, f); rotArc(an, a, s, k2, norm(f2 - k2), norm(ankN - k2));
+  // foot: absolute pitch about X (toes down = positive), children keep their bind offsets
+  V3 F = bpos(an, f); float cs = std::cos(footPitch * 0.5f), sn = std::sin(footPitch * 0.5f), ca = std::cos(footPitch), sa = std::sin(footPitch);
+  for (int b = 0; b < a.nb; b++) { if (!inSub(a, b, f)) continue; float* p = an.pose + b * 7; p[0] = sn; p[1] = 0; p[2] = 0; p[3] = cs;
+    if (b != f) { float oy = a.head[b][1] - a.head[f][1], oz = a.head[b][2] - a.head[f][2], ox = a.head[b][0] - a.head[f][0]; p[4] = F.x + ox; p[5] = F.y + oy * ca - oz * sa; p[6] = F.z + oy * sa + oz * ca; } else { p[4] = F.x; p[5] = F.y; p[6] = F.z; } }
+}
+static bool isBiped(const FigAsset& a) { return figBone(a, "lThigh", -1) >= 0 && figBone(a, "rThigh", -1) >= 0 && figBone(a, "lUp", -1) >= 0 && figBone(a, "hips", -1) >= 0 && figBone(a, "lFoot", -1) >= 0 && figBone(a, "lShin", -1) >= 0 && figBone(a, "spine", -1) >= 0 && figBone(a, "head", -1) >= 0; }
+static void procLoco(FigAnim& an, const FigAsset& a, float dt, float as, float w, float ready) {
+  int hips = figBone(a, "hips", -1), spn = figBone(a, "spine", -1), nk = figBone(a, "neck", -1), hd = figBone(a, "head", -1);
+  int arm[2][2] = {{figBone(a, "lUp", -1), figBone(a, "lFore", -1)}, {figBone(a, "rUp", -1), figBone(a, "rFore", -1)}}; int leg[2][3] = {{figBone(a, "lThigh", -1), figBone(a, "lShin", -1), figBone(a, "lFoot", -1)}, {figBone(a, "rThigh", -1), figBone(a, "rShin", -1), figBone(a, "rFoot", -1)}};
+  if (nk < 0) nk = hd; const float side = a.head[leg[0][0]][0] >= 0 ? 1.f : -1.f;   // sign of the left side along X
+  float acc = (as - an.lastAs) / std::max(dt, 1e-3f); an.lastAs = as; an.lean += (clampf(acc * 0.012f, -0.1f, 0.14f) - an.lean) * (1 - std::exp(-dt * 6.f));
+  float run = smr((as - 2.0f) / 2.4f), slow = sat01(0.28f + as / 1.45f); float S0 = lerpf(0.30f, 0.47f, run) * slow; float duty = lerpf(0.64f, 0.40f, run);
+  float rate = as * duty / std::max(0.2f, 2 * S0); rate = std::min(rate, 3.3f); an.ph += rate * dt; an.ph -= std::floor(an.ph); float ph = an.ph;
+  V3 rest[2] = {bpos(an, leg[0][2]), bpos(an, leg[1][2])}; float TAUf = 6.2831853f;
+  float psh = lerpf(0.06f, 0.2f, run), D0 = lerpf(0.04f, 0.10f, run), D1 = lerpf(0.05f, 0.075f, run); float drop = (D0 + D1 * (0.5f + 0.5f * std::cos(2 * TAUf * (ph - psh)))) * w;
+  float fwdL = std::cos(TAUf * ph);   // left leg forward-ness
+  figAddMove(an, a, hips, side * 0.022f * std::sin(TAUf * ph) * (1.f - run * 0.5f) * w, -drop, 0.f);
+  float pyaw = -side * (0.07f + 0.07f * run) * fwdL * w; { V3 hp = bpos(an, hips); float p[3] = {hp.x, hp.y, hp.z}; figAddRot(an, a, hips, 0, 1, 0, pyaw, p); }
+  { V3 sp = bpos(an, spn); float p[3] = {sp.x, sp.y, sp.z}; figAddRot(an, a, spn, 0, 1, 0, -2.5f * pyaw, p); float lean = (0.03f + 0.20f * run + an.lean) * w; figAddRot(an, a, spn, 1, 0, 0, lean, p); figAddRot(an, a, spn, 0, 0, 1, side * 0.025f * std::sin(TAUf * ph + 1.2f) * (1 + run) * w, p);
+    V3 np = bpos(an, nk); float q[3] = {np.x, np.y, np.z}; figAddRot(an, a, nk, 1, 0, 0, -0.65f * lean, q); figAddRot(an, a, nk, 0, 1, 0, 1.7f * pyaw, q); }
+  float aw = (1.f - 0.8f * ready) * w; float swing = (0.30f + 0.45f * run) * aw;
+  for (int sd = 0; sd < 2; sd++) { if (arm[sd][0] < 0 || arm[sd][1] < 0) continue; float f = sd == 0 ? fwdL : -fwdL; float rot = f * swing; V3 up = bpos(an, arm[sd][0]); float p[3] = {up.x, up.y, up.z}; figAddRot(an, a, arm[sd][0], 1, 0, 0, rot, p);
+    figAddRot(an, a, arm[sd][0], 0, 0, 1, (sd == 0 ? side : -side) * -0.06f * w, p); float flex = (0.22f + 0.2f * std::fabs(f) + 1.0f * run) * aw + 0.0f; V3 fo = bpos(an, arm[sd][1]); float q[3] = {fo.x, fo.y, fo.z}; figAddRot(an, a, arm[sd][1], 1, 0, 0, -flex, q); }
+  float rig = std::max(0.5f, a.height > 0.1f ? a.height / 1.9f : 1.f); (void)rig;
+  for (int sd = 0; sd < 2; sd++) { float psi = ph + (sd == 0 ? 0.f : 0.5f); psi -= std::floor(psi); float Sf = S0 * (1.f - 0.25f * run), Sb = S0 * (1.f + 0.2f * run); float z, lift, pitch;
+    if (psi < duty) { float u = psi / duty; z = lerpf(Sf, -Sb, u); lift = 0.012f * run; pitch = lerpf(-0.28f, 0.f, smr(u * 4.f)) + 0.5f * smr((u - 0.72f) / 0.28f) * (0.6f + 0.4f * run); }
+    else { float u = (psi - duty) / (1 - duty); z = lerpf(-Sb, Sf, smr(u)); lift = (0.055f + 0.17f * run) * std::sin(PI * std::pow(u, 0.75f)); pitch = lerpf(0.5f, -0.25f, smr(u * 1.15f)); }
+    float stepX = sd == 0 ? side : -side; (void)stepX; V3 tg = rest[sd] + V3{0, lift, z * w}; V3 cur = bpos(an, leg[sd][2]); tg = cur * (1 - w) + tg * w; legIK(an, a, leg[sd][0], leg[sd][1], leg[sd][2], tg, pitch * w); }
+}
 float figClipU(const FigAsset& a, const char* clip, float u, FigAnim& an, float w) {
   int ci = a.clipIx(clip); if (ci < 0 || w <= 0.001f) return 0; float tmp[FMAXB * 7]; const FigClip& c = a.clips[ci]; sampleClip(a, c, sat01(u) * (c.frames - 1), tmp); blendPose(an.pose, tmp, w > 1 ? 1 : w, a.nb); return c.hit;
 }
