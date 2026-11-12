@@ -203,7 +203,7 @@ void keyPress(int key) {
   if (key == 'Z') { K.spell = (K.spell + 1) % NSPELL; char sub[44]; snprintf(sub, sizeof sub, "MANA COST %d  -  PRESS Q TO CAST", (int)SP_COST[K.spell]); banner(SP_NAMES[K.spell], sub, 2.0f); audio::play(S_CLICK, 0, 0.5f); return; }
   if (key == 'G') { tryEnlistOrGather(); return; }
   if (key == 'X') { K.order = (K.order + 1) % 4; if (K.order == ORD_HOLD) { K.holdX = P.x + std::sin(P.yaw) * 3.5f; K.holdZ = P.z + std::cos(P.yaw) * 3.5f; K.holdYaw = P.yaw; } char sub[44]; snprintf(sub, sizeof sub, "%d SWORN TROOPS  -  %s", K.troops, ORD_NAMES[K.order]); banner("WARBAND COMMAND", sub, 2.2f); audio::play(S_CLICK, 0, 0.7f); return; }
-  if (key == 'K') { if (!CI.in && !P.swim && !P.fly && P.deadT <= 0) { K.mounted = !K.mounted; banner(K.mounted ? "NOBLE HART SUMMONED" : "DISMOUNTED", K.mounted ? "GALLOP ACROSS THE REALM - BOW & SPELLS READY" : "", 2.2f); audio::play(S_LEVELUP, 0, 0.5f); } return; }
+  if (key == 'K') { if (!CI.in && !P.swim && !P.fly && P.deadT <= 0) { K.mounted = !K.mounted; if (K.mounted) rideH = false; banner(K.mounted ? "NOBLE HART SUMMONED" : "DISMOUNTED", K.mounted ? "GALLOP ACROSS THE REALM - BOW & SPELLS READY" : "", 2.2f); audio::play(S_LEVELUP, 0, 0.5f); } return; }
   if (key == 'V') { P.view = P.view ? 0 : 1; H.view = P.view; return; } if (key == 'F') { P.fly = !P.fly; H.fly = P.fly; if (P.fly) K.mounted = false; banner(P.fly ? "FLIGHT MODE" : "WALKING", P.fly ? "W/A/S/D FLY - SHIFT FAST" : "", 2.f); return; }
   if (key == 'T') { tMul = tMul < 2 ? 40.f : tMul < 100 ? 240.f : 1.f; H.timeMul = tMul; return; } if (key == 'N') { clockH = clockH < 5.5f ? 6.5f : clockH < 11 ? 12.f : clockH < 16 ? 18.3f : clockH < 21 ? 23.5f : 6.5f; return; } if (key == 290 || key == 'H') { H.show = !H.show; return; }
   if (key == ' ') { if (P.fly) return; if (P.ground && !P.swim && P.deadT <= 0) { P.vy = K.mounted ? 8.0f : 6.2f; P.ground = false; } return; }
@@ -374,7 +374,7 @@ void update(float dtReal, const pl::Input& in) {
   // boss bar
   H.bossHp = -1; for (int k = 0; k < nMonL; k++) { const Npc& m = npcs[monList[k]]; if (m.boss && m.alive && m.lastPlayerD < 60.f) { H.bossHp = m.hp / m.maxHp; snprintf(H.bossName, sizeof H.bossName, "%s", m.name); } }
   // ---- camera
-  { float cp = std::cos(P.pitch), sp = std::sin(P.pitch); V3 look{std::sin(P.yaw) * cp, sp, std::cos(P.yaw) * cp}; float head = (pa ? pa->scale : 1.f) * 1.58f + (K.mounted ? 1.18f : 0.f); V3 pv{P.x, P.y + head, P.z}; V3 eye, tg; float fov = 1.14f + (P.speed > 5.5f ? 0.07f : 0.f);
+  { float cp = std::cos(P.pitch), sp = std::sin(P.pitch); V3 look{std::sin(P.yaw) * cp, sp, std::cos(P.yaw) * cp}; float head = (pa ? pa->scale : 1.f) * 1.58f + (K.mounted ? (rideH ? 0.85f : 1.18f) : 0.f); V3 pv{P.x, P.y + head, P.z}; V3 eye, tg; float fov = 1.14f + (P.speed > 5.5f ? 0.07f : 0.f);
     if (P.view == 0 && !P.fly) { eye = pv + look * 0.12f; tg = eye + look * 6.f; fov = 1.22f; }
     else { float dist = (CI.in ? std::min(P.camDist, 3.4f) : P.camDist * (K.mounted ? 1.22f : 1.f) * (K.buildMode ? 1.35f : 1.f)) * (P.fly ? 1.8f : 1.f); V3 right{-std::cos(P.yaw), 0, std::sin(P.yaw)}; V3 piv = pv + right * (P.fly ? 0.f : 0.55f) + V3{0, K.buildMode ? 0.65f : 0.1f, 0}; float use = dist; for (float s = 0.5f; s <= dist; s += 0.35f) { V3 p = piv - look * s; float g = gH(p.x, p.z) + 0.45f; float wl = waterAt(p.x, p.z); if (wl > -1e8f) g = std::max(g, wl + 0.25f); float cx = p.x, cz = p.z; bool hit = p.y < g; if (!hit && p.y < gH(p.x, p.z) + 7.f && collideAny(cx, cz, 0.3f) && dist2(cx, cz, p.x, p.z) > 0.25f) hit = true; if (hit) { use = std::max(0.9f, s - 0.45f); break; } }
       eye = piv - look * use; float g = gH(eye.x, eye.z) + 0.5f; if (eye.y < g) eye.y = g; tg = piv + look * 10.f; if (CI.in) { const xi::Def& d = xi::DEFS[CI.idx]; eye.x = clampf(eye.x, d.cx - d.hx + 0.3f, d.cx + d.hx - 0.3f); eye.z = clampf(eye.z, d.cz - d.hz + 0.3f, d.cz + d.hz - 0.3f); eye.y = std::min(eye.y, xi::BASEY + d.h - 0.25f); } }
@@ -399,7 +399,7 @@ void draw() {
       rotB(rt, 1, 0, 0, -0.95f); rotB(rt, 0, 0, 1, -0.32f); rotB(rs2, 1, 0, 0, 0.88f);
     }
     figAnimPose(an, a); float fl = P.hurtT > 0 ? P.hurtT * 0.5f : 0.f; float flash[3] = {fl * 1.2f, fl * 0.5f, fl * 0.3f}; int wR = bowEq ? -1 : hr.wpR, wL = bowEq ? roster::WP_BOW : hr.wpL;
-    if (showBody && K.mounted && !CI.in && gFM[HOLLOWSTAG].ok && nfd < 256) {
+    if (showBody && K.mounted && !rideH && !CI.in && gFM[HOLLOWSTAG].ok && nfd < 256) {
       const FigAsset& ma = gFM[HOLLOWSTAG]; float msc = std::max(1.55f, ma.scale * 0.76f);
       if (K.mountAnim.id != 8888u) { K.mountAnim = FigAnim(); K.mountAnim.id = 8888u; }
       figAnimUpdate(K.mountAnim, ma, dtv, P.speed / std::max(0.8f, msc * 0.65f), false, -1, -1.f, 0.f, false, 0.f, -1.f, 0.f); figAnimPose(K.mountAnim, ma);
@@ -407,7 +407,7 @@ void draw() {
       for (int k = 0; k < 3; k++) { md.disCol[k] = 0; md.flash[k] = flash[k] * 0.5f; }
       md.model = mul(translate(P.x, P.y, P.z), mul(rotY(P.face), scale4(msc, msc, msc)));
     }
-    if (showBody) { float rideBob = (K.mounted && !CI.in) ? (1.18f + 0.045f * std::sin(tAbs * (P.speed > 2.f ? 11.f : 2.f))) : 0.f;
+    if (showBody) { float rideBob = (K.mounted && !CI.in) ? ((rideH ? 0.85f : 1.18f) + 0.045f * std::sin(tAbs * (P.speed > 2.f ? 11.f : 2.f))) : 0.f;
       FigDraw& d = fd[nfd++]; d.a = &a; d.mat = an.mat; d.dissolve = 0; d.disH = std::max(1.f, a.height); d.glow = 1; d.shadow = true; d.dim = 1; d.lantern = a.lant && lampOn; d.vm = false; for (int k = 0; k < 3; k++) d.disCol[k] = a.disCol[k]; for (int k = 0; k < 3; k++) d.flash[k] = flash[k];
       d.model = mul(translate(P.x, P.y + rideBob, P.z), mul(rotY(P.face), scale4(a.scale, a.scale, a.scale))); weapon(a, an, false, wR, d.model, d.flash, 1.f); weapon(a, an, true, wL, d.model, d.flash, 1.f); }
     else {   // first person: camera-space held bow or melee weapon

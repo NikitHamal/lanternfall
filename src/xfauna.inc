@@ -11,7 +11,8 @@ const SpDef SPD[SP_N] = {
   {"COW", K_FA_COW, 1.0f, 1.0f, 0.075f, 0.62f, 0.28f, 0.85f, 0.52f, 0.9f, 3.9f, 5.f, 60, 12, 0.8f, 4, 0xe9e4da, 14},
   {"HORSE", K_FA_HORSE, 1.05f, 1.05f, 0.06f, 0.62f, 0.22f, 0.8f, 0.45f, 1.8f, 8.6f, 11.f, 70, 30, 0.8f, 4, 0xffffff, 10}};
 struct Fauna { bool used = false, alive = true, pet = false; int sp = 0, state = 0; float x = 0, y = 0, z = 0, face = 0, sc = 1, hp = 10, maxHp = 10, homeX = 0, homeZ = 0, tx = 0, tz = 0, t = 0, spd = 0, ph = 0, hitT = 0, deadT = 0, fleeT = 0, biteCd = 0, tint[3] = {1, 1, 1}, ltint[3] = {1, 1, 1}, pitch = 0; };
-constexpr int MAXF = 340; Fauna FA[MAXF]; int nFA = 0;
+constexpr int MAXF = 560; Fauna FA[MAXF]; int nFA = 0;
+bool rideH = false; float rideTint[3] = {1, 1, 1}, rideLeg[3] = {1, 1, 1}, ridePh = 0, rideX = 0, rideZ = 0, rideFace = 0;   // riding a procedural horse (E on a horse)
 struct Bird { float cx = 0, cz = 0, r = 10, alt = 12, ph = 0, spd = 7, dir = 1, gh = 0, sc = 1, tint[3] = {1, 1, 1}; bool crow = false; } BD[56]; int nBD = 0;
 struct Bfly { float x = 0, y = 0, z = 0, ax = 0, az = 0, ph = 0, tint[3] = {1, 1, 1}; bool on = false; } BF[44];
 struct Petal { float x = 0, y = 0, z = 0, ph = 0, fall = 1, spin = 1, sz = 1, tint[3] = {1, 1, 1}; bool on = false; } PT[120];
@@ -33,7 +34,7 @@ Fauna* addFauna(int sp, float x, float z, bool anyGround = false) {
 }
 void faunaInit() {
   nFA = 0; nBD = 0; frng = Rng(4242);
-  for (size_t i = 0; i < settles.size() && nFA < MAXF - 40; i++) { const Settle& s = settles[i]; if (s.type > ST_HAMLET) continue; int hens = s.type == ST_CAPITAL ? 6 : s.type == ST_VILLAGE ? 5 : 3, dogs = s.type == ST_CAPITAL ? 3 : s.type == ST_VILLAGE ? 2 : 1, cats = s.type == ST_CAPITAL ? 3 : s.type == ST_VILLAGE ? 2 : 1;
+  for (size_t i = 0; i < settles.size() && nFA < MAXF - 130; i++) { const Settle& s = settles[i]; if (s.type > ST_HAMLET) continue; int hens = s.type == ST_CAPITAL ? 6 : s.type == ST_VILLAGE ? 5 : 3, dogs = s.type == ST_CAPITAL ? 3 : s.type == ST_VILLAGE ? 2 : 1, cats = s.type == ST_CAPITAL ? 3 : s.type == ST_VILLAGE ? 2 : 1;
     int sheep = s.type == ST_CAPITAL ? 5 : s.type == ST_VILLAGE ? 4 : 3, cows = s.type == ST_CAPITAL ? 2 : s.type == ST_VILLAGE ? 3 : 2, horses = s.type == ST_CAPITAL ? 3 : s.type == ST_VILLAGE ? 2 : 1;
     auto scatter = [&](int sp, int n, float r0, float r1) { for (int k = 0, tries = 0; k < n && tries < n * 14; tries++) { float a = fr01() * TAU, r = r0 + (r1 - r0) * fr01(); if (addFauna(sp, s.x + std::cos(a) * r, s.z + std::sin(a) * r)) k++; } };
     scatter(SP_HEN, hens, 4.f, s.r * 0.75f); scatter(SP_DOG, dogs, 4.f, s.r * 0.8f); scatter(SP_CAT, cats, 4.f, s.r * 0.8f);
@@ -80,18 +81,23 @@ bool faunaMelee(float dmg, float reach, float ox, float oy, float oz, float fx, 
 }
 int faunaNear(float r) { int best = -1; float bd = r * r; for (int i = 0; i < nFA; i++) { const Fauna& f = FA[i]; if (!f.used || !f.alive) continue; float d = dist2(f.x, f.z, P.x, P.z); if (d < bd) { bd = d; best = i; } } return best; }
 void faunaPrompt() {
-  if (CI.in) return; int i = faunaNear(2.3f); if (i < 0) return; const Fauna& f = FA[i]; static const char* PR[SP_N] = {"E  BEFRIEND THE DOG", "E  PET THE CAT", "E  SHOO THE HEN", "E  PET THE SHEEP", "E  PET THE COW", "E  CALM THE HORSE"};
+  if (CI.in || K.mounted) return; int i = faunaNear(2.3f); if (i < 0) return; const Fauna& f = FA[i]; static const char* PR[SP_N] = {"E  BEFRIEND THE DOG", "E  PET THE CAT", "E  SHOO THE HEN", "E  PET THE SHEEP", "E  PET THE COW", "E  MOUNT THE HORSE"};
   snprintf(H.prompt, sizeof H.prompt, "%s", f.sp == SP_DOG && f.pet ? "E  PRAISE YOUR DOG" : PR[f.sp]);
 }
 bool faunaInteract() {
-  if (CI.in) return false; for (const Npc& n : npcs) if (n.used && n.alive && n.role < R_MON && !n.interior && dist2(n.x, n.z, P.x, P.z) < 2.6f * 2.6f) return false;
+  if (CI.in || K.mounted) return false; for (const Npc& n : npcs) if (n.used && n.alive && n.role < R_MON && !n.interior && dist2(n.x, n.z, P.x, P.z) < 2.6f * 2.6f) return false;
   int i = faunaNear(2.3f); if (i < 0) return false; Fauna& f = FA[i];
   if (f.sp == SP_DOG) { if (!f.pet) { for (int k = 0; k < nFA; k++) FA[k].pet = false; f.pet = true; f.state = 0; banner("A NEW COMPANION", "YOUR DOG WILL FOLLOW YOU AND BITE MONSTERS", 3.5f); } else say("DOG", "Woof! Woof! (it wags its tail)"); }
   else if (f.sp == SP_CAT) say("CAT", "Mrrow. (purrs and rubs against your leg)"); else if (f.sp == SP_HEN) { say("HEN", "Bawk bawk BAWK!"); f.fleeT = 3.f; f.state = 2; }
-  else if (f.sp == SP_SHEEP) say("SHEEP", "Baaaa."); else if (f.sp == SP_COW) say("COW", "Mooo."); else say("HORSE", "It nickers softly and nudges your shoulder.");
+  else if (f.sp == SP_SHEEP) say("SHEEP", "Baaaa."); else if (f.sp == SP_COW) say("COW", "Mooo."); else if (!P.swim && !P.fly) { rideH = true; K.mounted = true; for (int k = 0; k < 3; k++) { rideTint[k] = f.tint[k]; rideLeg[k] = f.ltint[k]; } rideX = f.x; rideZ = f.z; f.used = false; P.x = f.x; P.z = f.z; banner("MOUNTED", "K TO DISMOUNT - GALLOP, SHOOT, CAST", 2.6f); }
   audio::play(S_CLICK, 0, 0.4f); return true;
 }
+void faunaDismount() {
+  rideH = false; Fauna* slot = nullptr; for (int i = 0; i < nFA; i++) if (!FA[i].used) { slot = &FA[i]; break; } if (!slot && nFA < MAXF) slot = &FA[nFA++]; if (!slot) return;
+  float x = rideX - std::sin(rideFace) * 1.6f, z = rideZ - std::cos(rideFace) * 1.6f; collideAny(x, z, 0.6f); *slot = Fauna(); slot->used = true; slot->sp = SP_HORSE; slot->x = slot->homeX = slot->tx = x; slot->z = slot->homeZ = slot->tz = z; slot->y = height(x, z); slot->face = rideFace; slot->sc = 1.f; slot->maxHp = slot->hp = (float)SPD[SP_HORSE].hp; slot->t = 3.f;
+  for (int k = 0; k < 3; k++) { slot->tint[k] = rideTint[k]; slot->ltint[k] = rideLeg[k]; } }
 void faunaUpdate(float dt) {
+  if (rideH) { if (!K.mounted) faunaDismount(); else if (!CI.in) { ridePh += dt * (P.speed / 1.05f) * 1.9f; rideX = P.x; rideZ = P.z; rideFace = P.face; } }
   if (CI.in) return; bool day = clockH > 5.4f && clockH < 19.6f; (void)day;
   Npc* mon = nullptr;
   for (int i = 0; i < nFA; i++) { Fauna& f = FA[i]; if (!f.used) continue; float pd2 = dist2(f.x, f.z, P.x, P.z);
@@ -133,12 +139,15 @@ void faunaUpdate(float dt) {
 }
 int appendFaunaDyn(xr::Dyn* out, int k, int cap) {
   if (CI.in) return k; auto put = [&](int kind, const M4& m, float r, float g, float b) { if (k >= cap) return; xr::Dyn& o = out[k++]; o.kind = kind; o.m = m; o.mode = 0.f; o.tint[0] = r; o.tint[1] = g; o.tint[2] = b; };
+  if (rideH && K.mounted && P.view != 0 && k < cap - 8) { const SpDef& sd = SPD[SP_HORSE]; float sp = P.speed, amp = clampf(sp / sd.walk, 0.f, 1.f) * (sp > sd.walk * 2.2f ? 0.85f : 0.55f); float bob = std::fabs(std::sin(ridePh)) * 0.03f * std::min(1.f, sp / 3.f); const float rs = 1.0f;
+    M4 base = mul(translate(P.x, P.y + bob, P.z), mul(rotY(P.face), scale4(rs, rs, rs))); float pit = sp > 4.f ? -0.05f * std::sin(ridePh) : 0.f; M4 bm = mul(base, mul(translate(0, sd.hipY, 0), mul(rotX(pit), translate(0, -sd.hipY, 0)))); put(K_FA_HORSE, bm, rideTint[0], rideTint[1], rideTint[2]);
+    for (int l = 0; l < 4; l++) { float side = (l & 1) ? 1.f : -1.f, zz = l < 2 ? sd.legZ : -sd.legZ; float phase = (l == 0 || l == 3) ? ridePh : ridePh + PI; M4 lm = mul(base, mul(translate(side * sd.legX, sd.hipY, zz), mul(rotX(std::sin(phase) * amp), scale4(sd.legW, sd.legLen, sd.legW)))); put(K_FA_LEG, lm, rideLeg[0], rideLeg[1], rideLeg[2]); } }
   for (int i = 0; i < nFA; i++) { const Fauna& f = FA[i]; if (!f.used) continue; float d2 = dist2(f.x, f.z, P.x, P.z); if (d2 > 150.f * 150.f || k > cap - 8) continue; const SpDef& sd = SPD[f.sp]; float hit = f.hitT > 0 ? f.hitT * 2.4f : 0.f;
     float tr = f.tint[0] * (1.f + hit), tg = f.tint[1] * (1.f - hit * 0.3f), tb = f.tint[2] * (1.f - hit * 0.3f), lr = f.ltint[0] * (1.f + hit), lg = f.ltint[1] * (1.f - hit * 0.3f), lb = f.ltint[2] * (1.f - hit * 0.3f);
     float dead = f.alive ? 0.f : smooth(0.f, 0.45f, f.deadT), sink = f.alive ? 0.f : smooth(36.f, 45.f, f.deadT) * 0.6f; float bob = f.alive && f.spd > 0.2f ? std::fabs(std::sin(f.ph)) * 0.025f * f.sc * std::min(1.f, f.spd / 3.f) : 0.f;
     bool curl = f.alive && f.sp == SP_CAT && f.state == 0 && f.spd < 0.1f && f.fleeT <= 0 && f.t > 1.2f; float fold = curl ? 0.28f : 1.f; float sq = curl ? 0.78f : 1.f;
     M4 base = mul(translate(f.x, f.y + bob - sink, f.z), mul(rotY(f.face), mul(rotZ(dead * 1.5708f), scale4(f.sc, f.sc, f.sc)))); if (dead > 0) base = mul(translate(0, 0, 0), base);
-    if (!f.alive) { float lift = sd.hipY * f.sc * 0.5f * dead; base = mul(translate(0, lift * 0.0f, 0), base); base.m[13] += sd.hipY * f.sc * 0.18f * dead; }
+    if (!f.alive) { float lift = sd.hipY * f.sc * 0.5f * dead; base = mul(translate(0, lift * 0.0f, 0), base); base.m[13] += sd.hipY * f.sc * 0.34f * dead; }
     M4 pit = mul(translate(0, sd.hipY, 0), mul(rotX(f.pitch), translate(0, -sd.hipY, 0))); M4 bm = mul(base, mul(pit, scale4(1.f, sq, 1.f))); put(sd.body, bm, tr, tg, tb);
     int nl = sd.nLegs; for (int l = 0; l < nl; l++) { float side = (l & 1) ? 1.f : -1.f; float zz = nl == 2 ? sd.legZ : (l < 2 ? sd.legZ : -sd.legZ); float phase = (l == 0 || l == 3 || nl == 2) ? f.ph : f.ph + PI; if (nl == 2 && l == 1) phase = f.ph + PI;
       float amp = f.alive ? clampf(f.spd / std::max(0.5f, sd.walk), 0.f, 1.f) * (f.spd > sd.walk * 1.8f ? 0.85f : 0.55f) : 0.15f; float sw = std::sin(phase) * amp; if (!f.alive) sw = (l & 1) ? 0.35f : -0.25f;
