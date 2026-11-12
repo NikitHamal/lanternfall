@@ -67,7 +67,8 @@ THEME = {
 }
 BUILD = ['stone', 'stone2', 'lichen', 'woodDk', 'wood', 'leatherDk', 'woolBrown', 'buff', 'rope', 'iron', 'peat', 'lantern']
 for k in MAN:
-    if k.startswith('b_'): THEME[k] = BUILD
+    if MAN[k].get('theme'): THEME[k] = MAN[k]['theme']
+    elif k.startswith('b_'): THEME[k] = BUILD
 HERO = dict(scale=1.0, radius=0.4, hpY=1.8, height=2.55, death='fall', H=1.82)
 CFG = {k: dict(HERO) for k in ('warden', 'reaver', 'fletcher', 'lamplighter', 'apothecary', 'rimebinder')}
 CFG['lamplighter']['height'] = 1.88
