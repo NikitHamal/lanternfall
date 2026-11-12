@@ -201,14 +201,12 @@ static void drawTitle() {
   float cx = SW / 2.f, cy = SH / 2.f; rect(0, 0, (float)SW, SH * 0.16f, {0, 0, 0, 0.35f}); rect(0, SH * 0.84f, (float)SW, SH * 0.16f, {0, 0, 0, 0.45f});
   float sc = S * 5; const char* t = "LANTERNFALL"; float pulse = 0.85f + 0.15f * std::sin(gfx::time_ * 1.7f);
   text(t, cx + 0, SH * 0.12f, sc, {0.9f, 0.55f, 0.2f, 0.18f * pulse}, 1, false); text(t, cx, SH * 0.115f, sc, hexc(0xf1dfb6), 1);
-  text("A LANTERN-LIT ROAD, AN OLD BOW, AND THE DARK BEYOND", cx, SH * 0.115f + 10 * sc, S, hexc(0xb3a88e), 1);
-  { float bw_ = 98 * S, bh = 28 * S, gap = 5 * S, x0 = cx - (5 * bw_ + 4 * gap) / 2, y0 = SH * 0.64f; const char* lb[5] = {"EXPLORE", "STEWARD", "PRACTICE RANGE", "WAVE HUNT", "DUEL"}; const char* sb[5] = {"[ENTER] OPEN WORLD - DAY/NIGHT", "[1] PARTY AUTO-BATTLE", "[2] TRAIN YOUR HERO", "[3] SURVIVE THE WAVES", "[5] BEST OF 3 VS RIVAL"};
-    for (int i = 0; i < 5; i++) { float x = x0 + i * (bw_ + gap); bool rec = i == 0 || i == 4; rect(x, y0, bw_, bh, rec ? Col{0.2f, 0.14f, 0.07f, 1} : Col{0.1f, 0.1f, 0.12f, 1}); frame(x, y0, bw_, bh, rec ? hexc(0xe0a33c) : hexc(0x6a5a3c)); frame(x - 2, y0 - 2, bw_ + 4, bh + 4, {0, 0, 0, 1});
-      text(lb[i], x + bw_ / 2, y0 + 5 * S, S * 1.0f, hexc(0xf0dcb0), 1); text(sb[i], x + bw_ / 2, y0 + bh - 9 * S, S * 0.52f, hexc(0x9a917c), 1); addBtn(x, y0, bw_, bh, i == 0 ? 104 : 100 + i - 1); } }
-  { float bw_ = 100 * S, bh = 18 * S, y1 = SH * 0.64f + 28 * S + 6 * S; button(cx - bw_ - 3 * S, y1, bw_, bh, "CHOOSE HERO", nullptr, false, false, 502); button(cx + 3 * S, y1, bw_, bh, "OPTIONS", nullptr, false, false, 500);
+  text("A FANTASY KINGDOM TO EXPLORE, DEFEND AND RECLAIM", cx, SH * 0.115f + 10 * sc, S, hexc(0xb3a88e), 1);
+  { float bw_ = 190 * S, bh = 34 * S, x0 = cx - bw_ / 2, y0 = SH * 0.64f; rect(x0, y0, bw_, bh, Col{0.2f, 0.14f, 0.07f, 1}); frame(x0, y0, bw_, bh, hexc(0xe0a33c)); frame(x0 - 2, y0 - 2, bw_ + 4, bh + 4, {0, 0, 0, 1});
+    text("ENTER THE REALM", x0 + bw_ / 2, y0 + 6 * S, S * 1.25f, hexc(0xf0dcb0), 1); text("[ENTER] OPEN WORLD - DAYLIGHT, VILLAGES, WILDS AND WAR", x0 + bw_ / 2, y0 + bh - 10 * S, S * 0.55f, hexc(0x9a917c), 1); addBtn(x0, y0, bw_, bh, 104); }
+  { float bw_ = 100 * S, bh = 18 * S, y1 = SH * 0.64f + 34 * S + 6 * S; button(cx - bw_ - 3 * S, y1, bw_, bh, "CHOOSE HERO", nullptr, false, false, 502); button(cx + 3 * S, y1, bw_, bh, "OPTIONS", nullptr, false, false, 500);
     static char hl[64]; static int hk = -1; if (hk != roster::sel()) { hk = roster::sel(); snprintf(hl, 64, "%s  -  %s  -  %s", roster::at(hk).name, roster::at(hk).role, roster::styleName(roster::at(hk).style)); } text(hl, cx, y1 + bh + 5 * S, S * 0.85f, hexc(0xc8bea4), 1); }
-  char b[96]; if (G.P.bestStage > 0) { snprintf(b, 96, "BEST WAYLIGHT %d   LEVEL %d   EMBERS %d", G.P.bestStage, G.P.bestLevel, G.P.embers); text(b, cx, SH * 0.64f + 70 * S, S * 0.9f, hexc(0x8f8672), 1); }
-  text("WASD MOVE  LMB ATTACK  RMB GUARD  SPACE ROLL  F LOCK-ON  E ABILITY  V VIEW  Q QUALITY  F11 FULLSCREEN  ESC QUIT", cx, SH * 0.93f, S * 0.8f, hexc(0x8f8672), 1); (void)cy;
+  text("WASD MOVE  LMB ATTACK / DRAW BOW  RMB GUARD / ZOOM  E INTERACT  B BOW  K MOUNT  C BUILD  V VIEW  F11 FULLSCREEN  ESC QUIT", cx, SH * 0.93f, S * 0.8f, hexc(0x8f8672), 1); (void)cy;
 }
 #include "ui_explore.inc"
 static void drawHud() {
@@ -293,7 +291,7 @@ bool captureKey(int k) { if (rebind < 0) return false; if (k != 256) { for (int 
 bool optionsOpen() { return optOpen; } void closeOptions() { optOpen = false; rebind = -1; persist(); }
 bool key(int c) {
   if (optOpen) return true;
-  if (G.state == S_TITLE) { if (c == 13 || c == ' ' || c == '6') { ex::pending = true; return true; } if (c == '1') { G.beginRun(false); return true; } if (c == '2') { pl::pendingMode = pl::M_RANGE; return true; } if (c == '3') { pl::pendingMode = pl::M_WAVES; return true; } if (c == '4') { pl::pendingMode = pl::M_SELECT; return true; } if (c == '5') { pl::pendingMode = pl::M_DUEL; return true; } if (c == 'O') { optOpen = true; return true; } return false; }
+  if (G.state == S_TITLE) { if (c == 13 || c == ' ' || c == '6') { ex::pending = true; return true; } if (c == '4' || c == 'H') { pl::pendingMode = pl::M_SELECT; return true; } if (c == 'O') { optOpen = true; return true; } return false; }
   switch (G.panel) {
     case P_CARDS: if (c >= '1' && c <= '3') { act(200 + c - '1'); return true; } return true;
     case P_CHOICE: if (c == '1') { act(210); return true; } if (c == '2') { act(211); return true; } return true;
