@@ -72,15 +72,15 @@ void hurtNpc(Npc& t, float d, float fx, float fz, bool byPlayer, int zone = Z_TO
   bool kill = t.hp <= 0;
   if (byPlayer) { addDmgText(t, d, zone, kill); H.hitT = 0.3f; H.hitZone = zone; H.hitKill = kill; }
   if (byPlayer && t.role < R_MON && !kill) { if (t.role == R_VILL) { if (t.brave && t.hp > t.maxHp * 0.45f) t.angry = 18.f; else t.panic = 10.f; } else { t.angry = 30.f; t.state = S_CHASE; } crime(t, false); }
-  if (kill) { t.alive = false; t.deadT = 0; t.atkT = -1; audio::play(t.boss ? S_DIEBIG : S_DIE, 0, 0.8f); if (byPlayer && t.role >= R_MON) { H.kills++; if (t.boss) banner("BOSS SLAIN", t.name, 5.f); } if (byPlayer && t.role < R_MON) { crime(t, true); H.murders++; } else if (byPlayer) gold += t.boss ? 120 : 6 + (int)(t.maxHp * 0.08f); }
+  if (kill) { t.alive = false; t.deadT = 0; t.atkT = -1; audio::play(t.boss ? S_DIEBIG : S_DIE, 0, 0.8f); if (byPlayer && t.role >= R_MON) { H.kills++; townOnKill(t); if (t.boss) banner("BOSS SLAIN", t.name, 5.f); } if (byPlayer && t.role < R_MON) { crime(t, true); H.murders++; } else if (byPlayer) gold += t.boss ? 120 : 6 + (int)(t.maxHp * 0.08f); }
 }
 void playerAttack() {
   if (P.atkT >= 0 || P.deadT > 0 || P.fly) return; P.atkT = 0; P.hitDone = false; P.comboT = 1.2f; P.combo = (P.combo + 1) % 3; P.atkWind = 0.30f - 0.03f * P.combo; P.atkRec = 0.36f; audio::play(S_SWING, 0, 0.6f);
 }
 void playerHit() {
-  const roster::Hero& hr = roster::at(roster::sel()); const FigAsset* pa = roster::cur(); float psc = pa ? pa->scale : 1.f; float dmg = 24.f * hr.dmg * (P.combo == 0 ? 1.3f : 1.f) * (P.speed > 5.f ? 1.2f : 1.f); float reach = 3.2f; bool hit = false;
+  const roster::Hero& hr = roster::at(roster::sel()); const FigAsset* pa = roster::cur(); float psc = pa ? pa->scale : 1.f; float dmg = 24.f * hr.dmg * (P.combo == 0 ? 1.3f : 1.f) * (P.speed > 5.f ? 1.2f : 1.f) * (1.f + 0.25f * (float)wpnTier); float reach = 3.2f; bool hit = false;
   float pit = P.combo == 2 ? 0.42f : P.combo == 1 ? -0.38f : clampf(P.pitch * 0.9f, -0.3f, 0.4f); V3 org{P.x, P.y + 1.3f * psc, P.z}; float fx = std::sin(P.face), fz = std::cos(P.face);
-  for (int i = 0; i < MAXN; i++) { Npc& n = npcs[i]; if (!n.used || !n.alive) continue; float dx = n.x - P.x, dz = n.z - P.z, d = std::sqrt(dx * dx + dz * dz); if (d > reach + n.sc * 0.6f || (dx * fx + dz * fz) / (d + 1e-4f) < 0.15f) continue;
+  for (int i = 0; i < MAXN; i++) { Npc& n = npcs[i]; if (!n.used || !n.alive || n.asleep) continue; float dx = n.x - P.x, dz = n.z - P.z, d = std::sqrt(dx * dx + dz * dz); if (d > reach + n.sc * 0.6f || (dx * fx + dz * fz) / (d + 1e-4f) < 0.15f) continue;
     bool got = false; int zone = Z_TORSO; for (int k = -2; k <= 2 && !got; k++) { float yw = P.face + k * 0.24f; V3 dir{std::sin(yw) * std::cos(pit), std::sin(pit), std::cos(yw) * std::cos(pit)}; float s; int z; if (hitNpc(n, org, org + dir * (reach + 0.7f), 0.1f, s, z)) { got = true; zone = z; } }
     if (!got) { got = true; zone = Z_TORSO; } hurtNpc(n, dmg, P.x, P.z, true, zone); hit = true; }
   if (faunaMelee(dmg, reach, P.x, P.y + 1.0f * psc, P.z, fx, fz)) hit = true;
@@ -98,11 +98,11 @@ void fireArrow(float draw) {
   float cp = std::cos(P.pitch), sp = std::sin(P.pitch); V3 look{std::sin(P.yaw) * cp, sp, std::cos(P.yaw) * cp}; V3 eye = P.eye; float t0 = P.view == 0 ? 0.6f : P.camDist * 0.9f + 0.5f, tmax = t0 + 110.f, bestT = tmax;
   for (float t = t0; t < tmax; t += 1.2f) { V3 q = eye + look * t; if (q.y < gH(q.x, q.z)) { bestT = t; break; } if (CI.in) { const xi::Def& d = xi::DEFS[CI.idx]; if (std::fabs(q.x - d.cx) > d.hx || std::fabs(q.z - d.cz) > d.hz || q.y > xi::BASEY + d.h) { bestT = t; break; } } }
   V3 a0 = eye + look * t0, a1 = eye + look * bestT;
-  for (int i = 0; i < MAXN; i++) { Npc& n = npcs[i]; if (!n.used || !n.alive || dist2(n.x, n.z, P.x, P.z) > 130.f * 130.f) continue; float s; int z; if (hitNpc(n, a0, a1, 0.05f, s, z)) { float t = t0 + s * (bestT - t0); if (t < bestT) { bestT = t; a1 = eye + look * bestT; } } }
+  for (int i = 0; i < MAXN; i++) { Npc& n = npcs[i]; if (!n.used || !n.alive || n.asleep || dist2(n.x, n.z, P.x, P.z) > 130.f * 130.f) continue; float s; int z; if (hitNpc(n, a0, a1, 0.05f, s, z)) { float t = t0 + s * (bestT - t0); if (t < bestT) { bestT = t; a1 = eye + look * bestT; } } }
   V3 tgt = eye + look * bestT, right{-std::cos(P.yaw), 0, std::sin(P.yaw)}; V3 org = P.view == 0 ? eye + look * 0.5f + right * 0.12f + V3{0, -0.14f, 0} : V3{P.x, P.y + 1.45f * psc, P.z} + right * 0.25f + V3{std::sin(P.yaw) * 0.5f, 0, std::cos(P.yaw) * 0.5f};
   V3 dir = norm(tgt - org); if (bestT < 3.f) dir = look; float spread = (1.f - draw) * 0.05f + std::min(0.04f, P.speed * 0.004f); dir = norm(dir + V3{(rng() - 0.5f) * spread, (rng() - 0.5f) * spread, (rng() - 0.5f) * spread});
   float speed = 26.f + 38.f * std::pow(draw, 1.3f);
-  for (Arr& a : ARR) if (!a.on) { a.on = true; a.stuck = false; a.p = org; a.v = dir * speed; a.dir = dir; a.life = 6.f; a.dmg = 20.f * hr.dmg * (0.3f + 0.9f * draw) * (hr.style == roster::ST_BOW ? 1.25f : 1.f); a.npc = -1; break; }
+  for (Arr& a : ARR) if (!a.on) { a.on = true; a.stuck = false; a.p = org; a.v = dir * speed; a.dir = dir; a.life = 6.f; a.dmg = 20.f * hr.dmg * (0.3f + 0.9f * draw) * (hr.style == roster::ST_BOW ? 1.25f : 1.f) * (1.f + 0.25f * (float)wpnTier); a.npc = -1; break; }
   B.arrows--; B.rel = 0; audio::play(draw > 0.8f ? S_BOWHEAVY : S_BOW, 0, 0.7f);
 }
 void bowUpdate(float dt, const pl::Input& in) {
@@ -117,7 +117,7 @@ void arrowsUpdate(float dt) {
   for (Arr& a : ARR) { if (!a.on) continue; a.life -= dt; if (a.life <= 0) { a.on = false; continue; }
     if (a.stuck) { if (a.npc >= 0) { const Npc& n = npcs[a.npc]; if (!n.used) { a.on = false; continue; } a.p = V3{n.x, n.y, n.z} + a.off; } continue; }
     for (int s = 0; s < 2 && !a.stuck; s++) { float h = dt * 0.5f; V3 p0 = a.p; a.v.y -= 12.f * h; V3 p1 = p0 + a.v * h; if (len(a.v) > 0.1f) a.dir = norm(a.v);
-      float bs = 2.f; int bi = -1, bz = 0; for (int i = 0; i < MAXN; i++) { Npc& n = npcs[i]; if (!n.used || !n.alive) continue; if (std::fabs(n.x - p1.x) > 7.f || std::fabs(n.z - p1.z) > 7.f) continue; float sp; int z; if (hitNpc(n, p0, p1, 0.02f, sp, z) && sp < bs) { bs = sp; bi = i; bz = z; } }
+      float bs = 2.f; int bi = -1, bz = 0; for (int i = 0; i < MAXN; i++) { Npc& n = npcs[i]; if (!n.used || !n.alive || n.asleep) continue; if (std::fabs(n.x - p1.x) > 7.f || std::fabs(n.z - p1.z) > 7.f) continue; float sp; int z; if (hitNpc(n, p0, p1, 0.02f, sp, z) && sp < bs) { bs = sp; bi = i; bz = z; } }
       if (bi >= 0) { V3 hp = p0 + (p1 - p0) * bs; Npc& n = npcs[bi]; a.stuck = true; a.npc = bi; a.off = hp - V3{n.x, n.y, n.z}; a.p = hp; a.life = 14.f; audio::play(S_ARROWHIT, 0, 0.7f); hurtNpc(n, a.dmg, n.x - a.v.x, n.z - a.v.z, true, bz); a.v = V3{}; break; }
       if (faunaArrow(a, p0, p1)) break;
       float g = gH(p1.x, p1.z); bool wall = false; if (CI.in) { const xi::Def& d = xi::DEFS[CI.idx]; wall = std::fabs(p1.x - d.cx) > d.hx - 0.1f || std::fabs(p1.z - d.cz) > d.hz - 0.1f || p1.y > xi::BASEY + d.h - 0.1f; for (int i = 0; i < d.nc && !wall; i++) { float dx = p1.x - (d.cx + d.c[i].x), dz = p1.z - (d.cz + d.c[i].z); if (dx * dx + dz * dz < d.c[i].r * d.c[i].r * 0.5f && p1.y < xi::BASEY + 1.1f) wall = true; } }

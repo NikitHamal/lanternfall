@@ -59,8 +59,8 @@ void faunaHurt(int i, float dmg, int zone, float fx, float fz, bool byPlayer) {
   bool kill = f.hp <= 0; if (byPlayer) { static const char* ZT[4] = {"%d", "%d HEADSHOT", "%d LEG", "%d LEG"}; char b[20]; snprintf(b, sizeof b, ZT[zone & 3], (int)(dmg + 0.5f)); faunaDmgText(f.x, f.y + sd.hipY * f.sc * (zone == Z_HEAD ? 1.5f : 1.f), f.z, b, kill ? 0xff6a50 : zone == Z_HEAD ? 0xffd040 : 0xffffff); H.hitT = 0.3f; H.hitZone = zone; H.hitKill = kill; }
   if (!kill && f.sp == SP_DOG && f.pet) { f.state = 3; }
   if (kill) { f.alive = false; f.deadT = 0; f.pet = f.pet && false; audio::play(S_DIE, 0, 0.45f);
-    if (byPlayer) { if (sd.meat > 0) { H.food += sd.meat; char b[20]; snprintf(b, sizeof b, "+%d FOOD", sd.meat); faunaDmgText(f.x, f.y + 0.9f, f.z, b, 0xa8e07a); }
-      for (int k = 0; k < MAXN; k++) { Npc& n = npcs[k]; if (!n.used || !n.alive || n.role != R_VILL || n.interior) continue; if (dist2(n.x, n.z, f.x, f.z) < 20.f * 20.f && (f.sp == SP_DOG || f.sp == SP_CAT || f.sp == SP_HORSE)) n.panic = std::max(n.panic, 6.f); } } }
+    if (byPlayer) { townOnAnimal(); if (sd.meat > 0) { H.food += sd.meat; char b[20]; snprintf(b, sizeof b, "+%d FOOD", sd.meat); faunaDmgText(f.x, f.y + 0.9f, f.z, b, 0xa8e07a); }
+      for (int k = 0; k < MAXN; k++) { Npc& n = npcs[k]; if (!n.used || !n.alive || n.asleep || n.role != R_VILL || n.interior) continue; if (dist2(n.x, n.z, f.x, f.z) < 20.f * 20.f && (f.sp == SP_DOG || f.sp == SP_CAT || f.sp == SP_HORSE)) n.panic = std::max(n.panic, 6.f); } } }
 }
 void capsuleOf(const Fauna& f, V3& a, V3& b, float& r) { const SpDef& d = SPD[f.sp]; float sn = std::sin(f.face), cs = std::cos(f.face); float yy = d.hipY * f.sc * (d.nLegs == 2 ? 1.f : 1.05f) + (d.nLegs == 2 ? 0.f : 0.08f * f.sc) + (f.sp == SP_COW ? 0.18f * f.sc : f.sp == SP_HORSE ? 0.28f * f.sc : f.sp == SP_SHEEP ? 0.2f * f.sc : 0.f);
   a = V3{f.x - sn * d.halfLen * f.sc, f.y + yy, f.z - cs * d.halfLen * f.sc}; b = V3{f.x + sn * d.halfLen * f.sc, f.y + yy, f.z + cs * d.halfLen * f.sc}; r = d.rad * f.sc; }

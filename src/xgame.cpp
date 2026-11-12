@@ -12,10 +12,18 @@
 #include <cstring>
 #include <cmath>
 #include <algorithm>
+#ifdef _WIN32
+#include <direct.h>
+#define TMKDIR(p) _mkdir(p)
+#else
+#include <sys/stat.h>
+#define TMKDIR(p) mkdir(p, 0755)
+#endif
 namespace ex {
 Hud H; Label labels[44]; int nLabels = 0; bool pending = false;
 namespace {
 using namespace xw;
+static int wpnTier = 0, armorTier = 0, potions = 0;
 static int dayIdx = 0; static int wxForce = 0; static float wxW = 0.f, lightT = 0.f; static float hfr(int n) { float v = std::sin((float)n * 12.9898f + 78.233f) * 43758.5453f; return v - std::floor(v); }
 static void weatherUpdate(float dt);
 bool on = false, built = false; Rng rng(77); float clockH = 9.5f, tMul = 1.f, tAbs = 0, sinceStart = 0;
@@ -24,7 +32,7 @@ enum St { S_IDLE, S_WALK, S_PATROL, S_CHASE, S_ATK, S_FLEE, S_RETURN };
 constexpr int MAXN = 520;
 struct RigDef { const FigAsset* a; int wR, wL; float scale; const char* title; bool own; };
 struct Npc {
-  bool used = false, alive = true, hitDone = false, lair = false, boss = false, onWall = false, vis = false, talking = false; int role = 0, rig = 0, mon = 0, state = 0, post = -1, road = -1, dir = 1, tgtKind = 0, tgtIdx = -1, settle = -1;
+  bool used = false, alive = true, hitDone = false, lair = false, boss = false, onWall = false, vis = false, talking = false, asleep = false; int role = 0, rig = 0, mon = 0, state = 0, post = -1, road = -1, dir = 1, tgtKind = 0, tgtIdx = -1, settle = -1;
   float x = 0, y = 0, z = 0, face = 0, vx = 0, vz = 0, sc = 1, hp = 50, maxHp = 50, dmg = 10, spd = 1.5f, runSpd = 3.4f, hitT = 0, deadT = 0, cd = 0, atkT = -1, atkWind = 0.4f, atkRec = 0.5f, atkRange = 2.f, stT = 0, homeX = 0, homeZ = 0, tx = 0, tz = 0, aggro = 20, pathD = 0, wallY = 0, ax = 0, az = 0, bx = 0, bz = 0, moving = 0, ph = 0, look = 0, wander = 14, lastPlayerD = 99, angry = 0, limp = 0, panic = 0, stun = 0; bool brave = false, interior = false; char name[22] = {0}; FigAnim an;
 };
 Npc npcs[MAXN]; int monList[MAXN], nMonL = 0; RigDef rigs[40]; int nRigs = 0; int poolVill[10], nPoolVill = 0, poolGuard[4], nPoolGuard = 0, poolKnight[4], nPoolKnight = 0, poolSold[4], nPoolSold = 0;
@@ -49,6 +57,7 @@ int addRig(const FigAsset* a, int wR, int wL, float sc, const char* title) { if 
 float groundAt(float x, float z) { return height(x, z); }
 bool badStep(float x, float z, float fromY) { float d; if (inWater(x, z, &d) && d > 0.75f) return true; float g = height(x, z); return g - fromY > 0.7f && slopeAt(x, z) > 1.1f; }
 void onNewNpcSlot(int i);
+struct Npc; void townOnKill(const Npc& t); void townOnAnimal();
 Npc* newNpc() { for (int i = 0; i < MAXN; i++) if (!npcs[i].used) { Npc& n = npcs[i]; n = Npc(); n.used = true; n.an = FigAnim(); n.an.id = (uint32_t)i; n.an.t = rng() * 20.f; n.ph = rng() * 6.28f; onNewNpcSlot(i); return &n; } return nullptr; }
 void setName(Npc& n, const char* s) { snprintf(n.name, sizeof n.name, "%s", s); }
 
@@ -92,6 +101,7 @@ void populate() {
 void say(const char* who, const char* text) { snprintf(H.dlgName, sizeof H.dlgName, "%s", who); snprintf(H.dlgText, sizeof H.dlgText, "%s", text); H.dlgT = 5.5f; audio::play(S_CLICK, 0, 0.5f); }
 void banner(const char* a, const char* b, float t = 4.f) { snprintf(H.banner, sizeof H.banner, "%s", a); snprintf(H.bannerSub, sizeof H.bannerSub, "%s", b); H.bannerT = t; }
 void damagePlayer(float d, float fx, float fz) {
+  d *= 1.f - 0.12f * (float)armorTier;
   if (P.deadT > 0 || P.hp <= 0) return; bool front = true; { float dx = fx - P.x, dz = fz - P.z, l = std::sqrt(dx * dx + dz * dz) + 1e-4f; front = (dx * std::sin(P.face) + dz * std::cos(P.face)) / l > 0.1f; }
   if (P.block && front) { d *= 0.25f; audio::play(S_HITSHIELD, 0, 0.8f); } else audio::play(S_HITSOFT, 0, 0.8f); P.hp -= d; P.hurtT = 0.4f; P.stagT = 0.25f; hurtFlash = std::min(1.f, hurtFlash + 0.5f); P.regenWait = 6.f;
   if (P.hp <= 0) { P.hp = 0; P.deadT = 0.01f; H.dead = true; }
@@ -111,9 +121,11 @@ void tickAttack(Npc& n, float dt, bool vsPlayer, Npc* tn) {
 }
 #include "xkingdom.inc"
 #include "xfauna.inc"
-void onNewNpcSlot(int i) { KEX[i] = NpcK(); }
+#include "xtown.inc"
+void onNewNpcSlot(int i) { KEX[i] = NpcK(); SCH[i] = Sch(); }
 void aiHuman(Npc& n, float dt, float pd) {
   int nIdx = (int)(&n - npcs);
+  if (n.asleep && townSleepTick(n)) return;
   if (aiSwornHuman(n, nIdx, dt, pd)) return;
   bool night = clockH > 21.5f || clockH < 5.f; Npc* th = nearestMonster(n, n.role == R_VILL ? 16.f : n.aggro);
   if (n.angry > 0 && n.angry < 1e8f) n.angry -= dt;
@@ -124,7 +136,8 @@ void aiHuman(Npc& n, float dt, float pd) {
     else if (n.state == S_CHASE && n.tgtKind == 1 && n.angry <= 0) { n.tgtKind = 0; n.state = n.role == R_VILL ? S_IDLE : S_RETURN; } }
   if (n.role == R_VILL) {
     if (th) { n.state = S_FLEE; n.stT = 3; } if (n.state == S_FLEE) { float dx = n.x - th->x, dz = n.z - th->z; if (!th) { n.stT -= dt; if (n.stT < 0) n.state = S_IDLE; } float hx = n.homeX, hz = n.homeZ; steer(n, hx, hz, n.runSpd, dt); if (dist2(n.x, n.z, hx, hz) < 9) { n.state = S_IDLE; } (void)dx; (void)dz; return; }
-    if (pd < 4.5f && !night) { faceToward(n, P.x, P.z, dt); n.moving = 0; n.talking = true; return; } n.talking = false;
+    if ((pd < 4.5f && !night) || (TM.open && TM.npc == nIdx)) { faceToward(n, P.x, P.z, dt); n.moving = 0; n.talking = true; return; } n.talking = false;
+    if (townSchedule(n, nIdx, dt)) return;
     if (n.state == S_IDLE) { n.moving = 0; n.stT -= dt; if (n.stT <= 0) { float a = rng() * 6.28f, d = rng() * n.wander; float tx = n.homeX + std::cos(a) * d, tz = n.homeZ + std::sin(a) * d; if (night) { tx = n.homeX; tz = n.homeZ; } n.tx = tx; n.tz = tz; n.state = S_WALK; n.stT = 14; } }
     else if (n.state == S_WALK) { n.stT -= dt; float d = steer(n, n.tx, n.tz, n.spd, dt); if (d < 0.6f || n.stT <= 0) { n.state = S_IDLE; n.moving = 0; n.stT = 3 + rng() * 9; } } return; }
   // armed humans
@@ -190,15 +203,17 @@ void start() {
   { const Settle& s = settles[nations[0].capital >= 0 ? nations[0].capital : 0]; float gx = s.x + s.gateX * 66.f, gz = s.z + s.gateZ * 66.f; P.x = gx; P.z = gz; P.y = height(gx, gz); P.yaw = std::atan2(-s.gateX, -s.gateZ); P.face = P.yaw; }
   P.view = 1; B = Bow(); B.weapon = hr.style == roster::ST_BOW ? 1 : 0; bounty[0] = bounty[1] = bounty[2] = 0; CI = Cell(); for (Arr& a : ARR) a.on = false; for (Npc& n : npcs) if (n.used && n.interior) n.used = false;
   resetKingdomSession();
-  H = Hud(); H.discTotal = (int)pois.size(); for (const Poi& p : pois) if (p.found) H.disc++; H.view = 1; snprintf(H.hero, sizeof H.hero, "%s", hr.name); clockH = 9.5f; tMul = 1; restT = 0; animPl = FigAnim(); animPl.id = 9999; P.camInit = false; banner("EMBERVALE REALM", "BUILD YOUR KINGDOM - COMMAND TROOPS - SURVIVE THE NIGHT", 5.f);
+  H = Hud(); H.discTotal = (int)pois.size(); for (const Poi& p : pois) if (p.found) H.disc++; H.view = 1; snprintf(H.hero, sizeof H.hero, "%s", hr.name); clockH = 9.5f; tMul = 1; restT = 0; animPl = FigAnim(); animPl.id = 9999; P.camInit = false; banner("EMBERVALE REALM", "BUILD YOUR KINGDOM - COMMAND TROOPS - SURVIVE THE NIGHT", 5.f); townStart();
 }
-void stop() { on = false; }
+void stop() { townSave(); on = false; }
 void look(float dx, float dy) { if (H.map) return; const float k = 0.0023f * cfg::S.sens; P.yaw -= dx * k; P.pitch = clampf(P.pitch + (cfg::S.invertY ? 1.f : -1.f) * dy * k * 0.9f, -1.4f, 1.3f); P.pitch = clampf(P.pitch, -1.4f, 1.3f); }
 void scroll(float dy) {
   if (K.buildMode) { K.bsel = (K.bsel + (dy > 0 ? -1 : 1) + NBT) % NBT; return; }
   P.camDist = clampf(P.camDist - dy * 0.6f, 1.8f, 14.f);
 }
 void keyPress(int key) {
+  if (TM.open && townKey(key)) return;
+  if (key == 'U') { townDraught(); return; }
   if (key == 27) { if (H.map) { H.map = false; return; } if (K.buildMode) { K.buildMode = false; return; } stop(); return; }
   if (key == 'M') { H.map = !H.map; return; }
   if (key == 'C' && !CI.in) { K.buildMode = !K.buildMode; B.draw = 0; if (K.buildMode) banner("KINGDOM BUILD MODE", "1-6 SELECT  R ROTATE  LMB BUILD  RMB REPAIR  C EXIT", 2.8f); return; }
@@ -218,7 +233,7 @@ void keyPress(int key) {
     int ri = nearestRift(4.5f, true); if (ri >= 0 && tryPurifyRift(ri)) return;
     if (!CI.in && nearestBarracks(5.5f) >= 0 && tryEnlistOrGather()) return;
     Npc* best = nullptr; float bd = 3.6f * 3.6f; for (Npc& n : npcs) { if (!n.used || !n.alive || n.role >= R_MON) continue; float d = dist2(n.x, n.z, P.x, P.z); if (d < bd) { bd = d; best = &n; } }
-    if (best) { const char* line; char who[40]; const RigDef& rd = rigs[best->rig]; snprintf(who, sizeof who, "%s - %s", best->name, rd.title); if (best->role == R_VILL) { int k = (int)(rng() * 13); line = k < 10 ? L_VILL[k] : L_NAT[best->settle >= 0 ? settles[best->settle].nation : 0][k % 2]; } else if (best->role == R_GUARD) line = L_GUARD[(int)(rng() * 6) % 6]; else if (best->role == R_KNIGHT) line = L_KNIGHT[(int)(rng() * 4) % 4]; else line = L_SOLD[(int)(rng() * 3) % 3]; faceToward(*best, P.x, P.z, 1.f); say(who, line); return; }
+    if (best) { const char* line; char who[40]; const RigDef& rd = rigs[best->rig]; snprintf(who, sizeof who, "%s - %s", best->name, rd.title); if (best->role == R_VILL) { int k = (int)(rng() * 13); line = k < 10 ? L_VILL[k] : L_NAT[best->settle >= 0 ? settles[best->settle].nation : 0][k % 2]; } else if (best->role == R_GUARD) line = L_GUARD[(int)(rng() * 6) % 6]; else if (best->role == R_KNIGHT) line = L_KNIGHT[(int)(rng() * 4) % 4]; else line = L_SOLD[(int)(rng() * 3) % 3]; faceToward(*best, P.x, P.z, 1.f); if (townOpen(*best, (int)(best - npcs), who, line)) return; say(who, line); return; }
     if (CI.stage) return;
     if (CI.in) { const xi::Def& d = xi::DEFS[CI.idx]; float lx = P.x - d.cx, lz = P.z - d.cz; if (lz > d.hz - 2.1f && std::fabs(lx) < 1.8f) { CI.want = 0; CI.stage = 1; return; }
       if (d.chestX != 0 && dist2(lx, lz, d.chestX, d.chestZ) < 2.2f * 2.2f) { if (!looted[CI.house]) { looted[CI.house] = 1; int g = 15 + (int)(rng() * 55); gold += g; B.arrows = std::min(40, B.arrows + 10); char sub[40]; snprintf(sub, sizeof sub, "%d GOLD  +10 ARROWS", g); banner("TREASURE", sub, 3.5f); audio::play(S_LEVELUP, 0, 0.6f); } return; }
@@ -304,7 +319,8 @@ void debugCmd(const char* c) { if (strstr(c, "rain")) { wxForce = 1; wxW = 1.f; 
 void debugKillDay() { for (Npc& n : npcs) if (n.used && n.role >= R_MON && n.role == R_MON && n.alive) n.used = false; }
 bool mapToScreen(float wx, float wz, float& sx, float& sy) { if (!H.map) return false; sx = H.mapPx + (wx / 1024.f * 0.5f + 0.5f) * H.mapSize; sy = H.mapPy + (wz / 1024.f * 0.5f + 0.5f) * H.mapSize; return true; }
 
-void update(float dtReal, const pl::Input& in) {
+void update(float dtReal, const pl::Input& inRaw) {
+  pl::Input in = inRaw; if (TM.open) { in.lmb = in.rmb = false; in.mx = in.mz = 0; in.sprint = false; }
   float dt = std::min(dtReal, 0.05f); tAbs += dt; sinceStart += dt; clockH += dt * tMul / 60.f; if (restT > 0) { clockH += dt * 2.f; } if (clockH >= 24.f) { clockH -= 24.f; dayIdx++; } H.hour = clockH; weatherUpdate(dt); H.hurt = hurtFlash; hurtFlash = std::max(0.f, hurtFlash - dt * 1.4f);
   if (H.bannerT > 0) H.bannerT -= dt; if (H.dlgT > 0) H.dlgT -= dt; if (H.bigT > 0) H.bigT -= dt; H.locT = std::max(0.f, H.locT - dt);
   const roster::Hero& hr = roster::at(roster::sel()); const FigAsset* pa = roster::cur(); float psc = pa ? pa->scale : 1.f;
@@ -337,7 +353,7 @@ void update(float dtReal, const pl::Input& in) {
     P.hurtT = std::max(0.f, P.hurtT - dt); P.stagT = std::max(0.f, P.stagT - dt); if (P.regenWait > 0) P.regenWait -= dt; else P.hp = std::min(P.maxHp, P.hp + dt * 2.5f);
   }
   if (!CI.in && prevHour < 20.f && clockH >= 20.f && clockH < 21.f) startKingdomSiege(false);
-  prevHour = clockH; arrowsUpdate(dt); cellUpdate(dt); updateKingdom(dt, in); faunaUpdate(dt);
+  prevHour = clockH; arrowsUpdate(dt); cellUpdate(dt); updateKingdom(dt, in); faunaUpdate(dt); townTick(dt);
   for (int k = 0; k < 3; k++) bounty[k] = std::max(0.f, bounty[k] - dt * (huntCount > 0 ? 0.04f : 0.6f));
   { float mb = std::max(bounty[0], std::max(bounty[1], bounty[2])); H.wanted = mb > 12.f ? 1 + (int)(mb / 55.f) : 0; if (H.wanted > 4) H.wanted = 4; }
   H.weapon = B.weapon; H.draw = B.draw; H.arrows = B.arrows; H.gold = gold; H.inside = CI.in; H.zoom = B.zoom; H.hitT = std::max(0.f, H.hitT - dt);
@@ -439,7 +455,7 @@ void draw() {
       }
     } }
   // npcs within range (nearest first by cell; capped)
-  V3 cf = norm(P.tgt - P.eye); int drawn = 0; for (int pass = 0; pass < 2; pass++) for (int i = 0; i < MAXN && nfd < 230; i++) { Npc& n = npcs[i]; if (!n.used) continue; n.vis = false; float dx = n.x - P.eye.x, dz = n.z - P.eye.z, d2 = dx * dx + dz * dz; float lim = n.role >= R_MON ? 150.f : 125.f; if (n.boss) lim = 320.f; if (d2 > lim * lim) continue; float d = std::sqrt(d2) + 1e-3f; if (d > 12.f && (dx * cf.x + dz * cf.z) / d < -0.05f) continue; if ((pass == 0) != (d < 60.f)) continue; if (drawn > 150) continue; drawn++; n.vis = true;
+  V3 cf = norm(P.tgt - P.eye); int drawn = 0; for (int pass = 0; pass < 2; pass++) for (int i = 0; i < MAXN && nfd < 230; i++) { Npc& n = npcs[i]; if (!n.used) continue; n.vis = false; if (n.asleep) continue; float dx = n.x - P.eye.x, dz = n.z - P.eye.z, d2 = dx * dx + dz * dz; float lim = n.role >= R_MON ? 150.f : 125.f; if (n.boss) lim = 320.f; if (d2 > lim * lim) continue; float d = std::sqrt(d2) + 1e-3f; if (d > 12.f && (dx * cf.x + dz * cf.z) / d < -0.05f) continue; if ((pass == 0) != (d < 60.f)) continue; if (drawn > 150) continue; drawn++; n.vis = true;
     const FigAsset* a; int wR = -1, wL = -1; if (n.role >= R_MON) a = &gFM[n.mon]; else { const RigDef& rd = rigs[n.rig]; a = rd.a; wR = rd.wR; wL = rd.wL; } if (!a || !a->ok) continue; FigAnim& an = n.an; int ac = -1; float au = -1;
     if (n.atkT >= 0 && n.alive) { ac = figActClip(*a, n.role >= R_MON ? A_MONATK : A_BASIC); if (ac >= 0) { float hit = a->clips[ac].hit > 0.01f ? a->clips[ac].hit : 0.5f; au = n.atkT < n.atkWind ? n.atkT / std::max(0.01f, n.atkWind) * hit : std::min(1.f, hit + (n.atkT - n.atkWind) / std::max(0.01f, n.atkRec) * (1 - hit)); } }
     bool combat = n.role >= R_MON ? (n.tgtKind != 0 && n.alive) : (n.state == S_CHASE || n.state == S_ATK); float spd = n.alive ? n.moving : 0.f; if (n.role == R_VILL && n.state == S_FLEE) combat = false;

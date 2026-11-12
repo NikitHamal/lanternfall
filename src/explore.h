@@ -11,6 +11,8 @@ struct Hud {
   int wood = 90, stone = 95, food = 40, spell = 0, bsel = 0, troops = 0, order = 0, siegeLeft = 0, nightWave = 0, reclaimed = 0, totalRifts = 0;
   bool buildMode = false, ghostOk = false, mounted = false;
   int kills = 0, disc = 0, discTotal = 0, view = 1, nNpc = 0, nMon = 0; bool map = false, fly = false, show = true, dead = false;
+  bool talkOpen = false; int talkN = 0, potions = 0, wpnTier = 0, armorTier = 0, qN = 0; bool talkOk[8] = {0}, qReady[3] = {0};
+  char talkName[44] = {0}, talkLine[140] = {0}, talkOpt[8][56] = {{0}}, qTitle[3][40] = {{0}}, qProg[3][56] = {{0}};
   char place[48] = {0}, nation[34] = {0}, banner[48] = {0}, bannerSub[68] = {0}, prompt[52] = {0}, dlgName[40] = {0}, dlgText[110] = {0}, hero[28] = {0}, bossName[28] = {0}, big[40] = {0};
 };
 extern Hud H; extern Label labels[44]; extern int nLabels; extern bool pending;

@@ -188,7 +188,7 @@ bool harvestNode(GNode* g, bool swingAnim) {
 Npc* recruitableNpc(float maxR) {
   Npc* best = nullptr; float bd = maxR * maxR;
   for (int i = 0; i < MAXN; i++) {
-    Npc& n = npcs[i]; if (!n.used || !n.alive || n.role >= R_MON || n.onWall || n.interior != CI.in || KEX[i].sworn || n.angry > 0) continue;
+    Npc& n = npcs[i]; if (!n.used || !n.alive || n.asleep || n.role >= R_MON || n.onWall || n.interior != CI.in || KEX[i].sworn || n.angry > 0) continue;
     float d2 = dist2(n.x, n.z, P.x, P.z); if (d2 < bd) { bd = d2; best = &n; }
   }
   return best;
@@ -392,7 +392,7 @@ void castSpell() {
       }
     }
     for (int i = 0; i < MAXN; i++) {
-      Npc& n = npcs[i]; if (!n.used || !n.alive) continue;
+      Npc& n = npcs[i]; if (!n.used || !n.alive || n.asleep) continue;
       bool foe = n.role >= R_MON || n.angry > 0;
       if (!foe) continue;
       if (dist2(n.x, n.z, P.x, P.z) < 8.2f * 8.2f) {
@@ -406,7 +406,7 @@ void castSpell() {
     // Solar Aegis: heal player, heal sworn/allied NPCs, buff warband, mend nearby fortifications!
     P.hp = std::min(P.maxHp, P.hp + 45.f); K.aegisT = 10.f;
     for (int i = 0; i < MAXN; i++) {
-      Npc& n = npcs[i]; if (!n.used || !n.alive || n.role >= R_MON) continue;
+      Npc& n = npcs[i]; if (!n.used || !n.alive || n.asleep || n.role >= R_MON) continue;
       if (dist2(n.x, n.z, P.x, P.z) < 20.f * 20.f) { n.hp = std::min(n.maxHp, n.hp + 70.f); KEX[i].boostT = 10.f; }
     }
     for (int i = 0; i < MAXB; i++) if (builds[i].used && dist2(builds[i].x, builds[i].z, P.x, P.z) < 22.f * 22.f) {
@@ -650,7 +650,7 @@ void updateKingdom(float dt, const pl::Input& in) {
 
     int hitI = -1, hitZ = Z_TORSO; float bestS = 2.f;
     for (int i = 0; i < MAXN; i++) {
-      Npc& n = npcs[i]; if (!n.used || !n.alive || i == s.lastHit) continue;
+      Npc& n = npcs[i]; if (!n.used || !n.alive || n.asleep || i == s.lastHit) continue;
       if (KEX[i].sworn) continue;
       if (std::fabs(n.x - p1.x) > 6.f || std::fabs(n.z - p1.z) > 6.f) continue;
       float sp; int z;
@@ -663,7 +663,7 @@ void updateKingdom(float dt, const pl::Input& in) {
       if (s.sp == SP_FIREBALL) {
         // Fiery AoE detonation!
         for (int i = 0; i < MAXN; i++) {
-          Npc& n = npcs[i]; if (!n.used || !n.alive || KEX[i].sworn) continue;
+          Npc& n = npcs[i]; if (!n.used || !n.alive || n.asleep || KEX[i].sworn) continue;
           if (n.role < R_MON && i != hitI && n.angry <= 0) continue;
           float d2 = dist2(n.x, n.z, hp.x, hp.z);
           if (d2 < 5.2f * 5.2f) {

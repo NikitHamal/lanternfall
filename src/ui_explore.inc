@@ -53,7 +53,7 @@ static void drawExploreHud() {
     static const char* SPN[4] = {"FIREBALL", "FROST NOVA", "SOLAR AEGIS", "STORM LANCE"};
     static const char* ORDN[4] = {"FOLLOW", "HOLD LINE", "CHARGE", "GARRISON"};
     static char wl[64]; static int lw = -1, la = -1, lsp = -1;
-    if (lw != H.weapon || la != H.arrows || lsp != H.spell) { lw = H.weapon; la = H.arrows; lsp = H.spell; if (H.weapon) snprintf(wl, 64, "BOW (%d)   [Q] %s", H.arrows, SPN[H.spell & 3]); else snprintf(wl, 64, "BLADE   [Q] %s", SPN[H.spell & 3]); }
+    static int lpo = -1, lwt = -1, lat = -1; if (lw != H.weapon || la != H.arrows || lsp != H.spell || lpo != H.potions || lwt != H.wpnTier || lat != H.armorTier) { lw = H.weapon; la = H.arrows; lsp = H.spell; lpo = H.potions; lwt = H.wpnTier; lat = H.armorTier; if (H.weapon) snprintf(wl, 64, "BOW (%d) [Q] %s [U] DRAUGHT %d  W%d A%d", H.arrows, SPN[H.spell & 3], H.potions, H.wpnTier, H.armorTier); else snprintf(wl, 64, "BLADE [Q] %s [U] DRAUGHT %d  W%d A%d", SPN[H.spell & 3], H.potions, H.wpnTier, H.armorTier); }
     text(wl, x, y, S * 0.76f, hexc(H.weapon ? 0xe8d49a : 0xd8e6ff));
     static char wb[64]; static int ltr = -1, lor = -1, lmt = -1;
     if (ltr != H.troops || lor != H.order || lmt != (int)H.mounted) { ltr = H.troops; lor = H.order; lmt = (int)H.mounted; snprintf(wb, 64, "WARBAND %d [%s]  %s", H.troops, ORDN[H.order & 3], H.mounted ? "HART MOUNTED" : "[K] MOUNT"); }
@@ -84,6 +84,15 @@ static void drawExploreHud() {
   }
   // ---- banner (discovery / events)
   if (H.bannerT > 0) { float a = std::min(1.f, std::min(H.bannerT * 1.2f, (5.f - H.bannerT + 0.3f) * 2.f)); a = std::max(0.f, std::min(1.f, a)); float y = H_ * 0.2f; rect(W_ / 2 - 150 * S, y - 3 * S, 300 * S, 1, {0.88f, 0.64f, 0.24f, a * 0.8f}); text(H.banner, W_ / 2, y, S * 2.4f, hexc(0xf6d58a, a), 1); text(H.bannerSub, W_ / 2, y + 22 * S, S * 1.1f, hexc(0xe9ddc0, a), 1); rect(W_ / 2 - 150 * S, y + 34 * S, 300 * S, 1, {0.88f, 0.64f, 0.24f, a * 0.8f}); }
+  // ---- quest journal tracker (below the minimap)
+  if (H.qN > 0 && !H.talkOpen) { float w = 214 * S, x = W_ - w - M, y = H.mapPy + H.mapSize + 8 * S, h = (12 + H.qN * 24) * S; rect(x, y, w, h, {0.03f, 0.035f, 0.05f, 0.55f}); frame(x, y, w, h, hexc(0x6a5a3c, 0.8f)); text("JOURNAL", x + 6 * S, y + 2 * S, S * 0.66f, hexc(0xb3a88e));
+    for (int i = 0; i < H.qN; i++) { float yy = y + (11 + i * 24) * S; text(H.qTitle[i], x + 6 * S, yy, S * 0.78f, hexc(H.qReady[i] ? 0x9ae07a : 0xe9c98a)); text(H.qProg[i], x + 6 * S, yy + 10 * S, S * 0.64f, hexc(H.qReady[i] ? 0xb8f0a0 : 0xcfc6ae)); } }
+  // ---- talk menu (E): dialogue + options
+  if (H.talkOpen) { float w = 470 * S, rowH = 13 * S; char l1[80], l2[80]; { const char* t = H.talkLine; size_t L = std::strlen(t); size_t cut = L; if (L > 64) { cut = 64; while (cut > 20 && t[cut] != ' ') cut--; } snprintf(l1, sizeof l1, "%.*s", (int)cut, t); snprintf(l2, sizeof l2, "%.76s", t + std::min(L, cut + (t[cut] == ' ' ? 1 : 0))); }
+    float h = (50 + H.talkN * 13.5f) * S, x = W_ / 2 - w / 2, y = H_ - h - 16 * S; rect(x, y, w, h, {0.035f, 0.04f, 0.055f, 0.93f}); frame(x, y, w, h, hexc(0x8a7447), 2); rect(x, y, w, 15 * S, {0.20f, 0.16f, 0.09f, 0.9f}); text(H.talkName, x + 8 * S, y + 3 * S, S * 1.0f, hexc(0xf1dfb6));
+    text(l1, x + 10 * S, y + 19 * S, S * 0.92f, hexc(0xf0e8d4)); text(l2, x + 10 * S, y + 30 * S, S * 0.92f, hexc(0xf0e8d4));
+    for (int i = 0; i < H.talkN; i++) { float yy = y + 46 * S + i * 13.5f * S; char k[4] = {'[', (char)('1' + i), ']', 0}; text(k, x + 12 * S, yy, S * 0.88f, hexc(0xe9c98a)); text(H.talkOpt[i], x + 36 * S, yy, S * 0.88f, hexc(H.talkOk[i] ? 0xf4ead0 : 0x8a826e)); }
+    text("ESC / E TO LEAVE", x + w - 8 * S, y + 3 * S, S * 0.62f, hexc(0xb3a88e), 2); (void)rowH; }
   // ---- interaction prompt + dialogue
   if (H.prompt[0]) { float y = H_ * 0.66f, pw = std::max(140.f * S, ((float)std::strlen(H.prompt) * 6.2f + 22.f) * S); rect(W_ / 2 - pw * 0.5f, y - 3 * S, pw, 14 * S, {0, 0, 0, 0.58f}); frame(W_ / 2 - pw * 0.5f, y - 3 * S, pw, 14 * S, hexc(0x6a5a3c)); text(H.prompt, W_ / 2, y, S * 1.0f, hexc(0xf0dcb0), 1); }
   if (H.dlgT > 0) { float a = std::min(1.f, H.dlgT * 2.f); float w = 330 * S, h = 40 * S, x = W_ / 2 - w / 2, y = H_ - h - 14 * S; rect(x, y, w, h, {0.04f, 0.045f, 0.06f, 0.9f * a}); frame(x, y, w, h, hexc(0x6a5a3c, a)); text(H.dlgName, x + 8 * S, y + 5 * S, S * 1.0f, hexc(0xe9c98a, a)); text(H.dlgText, x + 8 * S, y + 19 * S, S * 0.95f, hexc(0xf0e8d4, a)); }
