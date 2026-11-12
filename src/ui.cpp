@@ -113,7 +113,7 @@ static void drawSelect() {
   text("CHOOSE YOUR HERO", M, M, S * 1.5f, hexc(0xf1dfb6)); snprintf(b, 64, "%d / %d", roster::sel() + 1, roster::N); text(b, W_ - M, M, S * 1.1f, hexc(0xb3a88e), 2);
   float t = std::fmod(selT, 8.f); const char* ph = t < 2.2f ? "PREVIEW  IDLE" : t < 4.7f ? (roster::at(roster::sel()).style == roster::ST_BOW ? "PREVIEW  DRAW AND RELEASE" : "PREVIEW  COMBAT STANCE") : t < 7.3f ? "PREVIEW  VICTORY" : "PREVIEW  IDLE"; { static const char* BN[3] = {"ASHEN MOOR", "PINE HIGHLANDS", "DROWNED FEN"}; text(BN[pl::biome() % 3], W_ / 2, M + 12 * S, S * 0.9f, hexc(0xe9c98a), 1); } text(ph, W_ / 2, M + 2 * S, S * 0.8f, hexc(0x8f8672), 1);
   float lx = M, ly = SH * 0.30f; text(hr.name, lx, ly, S * 2.4f, hexc(0xf1dfb6)); text(hr.role, lx, ly + 20 * S, S * 1.1f, hexc(0xe0a33c)); text(hr.weapon, lx, ly + 31 * S, S * 0.8f, hexc(0x9a917c));
-  float sy = ly + 50 * S, sw = 150 * S; const bool bowS = hr.style == roster::ST_BOW; statBar(lx, sy, sw, bowS ? "DRAW SPEED" : "ATTACK SPEED", (hr.draw - 0.6f) / 0.7f); statBar(lx, sy + 9 * S, sw, bowS ? "STABILITY" : "POISE", (hr.stab - 0.7f) / 0.7f); statBar(lx, sy + 18 * S, sw, bowS ? "ARROW DAMAGE" : "POWER", (hr.dmg - 0.7f) / 0.8f); statBar(lx, sy + 27 * S, sw, "MOVE SPEED", (hr.move - 0.78f) / 0.4f); { static const float RCH[6] = {0, 0.25f, 0.4f, 0.85f, 0.65f, 0.9f}; statBar(lx, sy + 36 * S, sw, bowS ? "QUIVER" : "REACH", bowS ? hr.quiver / 20.f : RCH[hr.style % 6]); } statBar(lx, sy + 45 * S, sw, "HEALTH", (hr.hp - 70.f) / 120.f);
+  float sy = ly + 50 * S, sw = 150 * S; const bool bowS = hr.style == roster::ST_BOW; statBar(lx, sy, sw, bowS ? "DRAW SPEED" : "ATTACK SPEED", (hr.draw - 0.6f) / 0.7f); statBar(lx, sy + 9 * S, sw, bowS ? "STABILITY" : "POISE", (hr.stab - 0.7f) / 0.7f); statBar(lx, sy + 18 * S, sw, bowS ? "ARROW DAMAGE" : "POWER", (hr.dmg - 0.7f) / 0.8f); statBar(lx, sy + 27 * S, sw, "MOVE SPEED", (hr.move - 0.78f) / 0.4f); { static const float RCH[7] = {0, 0.25f, 0.4f, 0.85f, 0.65f, 0.9f, 0.55f}; statBar(lx, sy + 36 * S, sw, bowS ? "QUIVER" : "REACH", bowS ? hr.quiver / 20.f : RCH[hr.style % 7]); } statBar(lx, sy + 45 * S, sw, "HEALTH", (hr.hp - 70.f) / 120.f);
   float rx = W_ - M, ry = SH * 0.30f; text("ACTIVE  [E]", rx, ry, S * 0.8f, hexc(0x9a917c), 2); text(hr.active, rx, ry + 9 * S, S * 1.5f, hexc(0xffd24a), 2); text(hr.activeDesc, rx, ry + 24 * S, S * 0.75f, hexc(0xc8bea4), 2); snprintf(b, 64, "COOLDOWN %d S", (int)hr.cd); text(b, rx, ry + 33 * S, S * 0.7f, hexc(0x8f8672), 2);
   text("PASSIVE", rx, ry + 52 * S, S * 0.8f, hexc(0x9a917c), 2); text(hr.passive, rx, ry + 61 * S, S * 1.5f, hexc(0xe9c98a), 2); text(hr.passiveDesc, rx, ry + 76 * S, S * 0.75f, hexc(0xc8bea4), 2);
   float by = SH - 14 * U, bw = 8 * U, bh = 5 * U, cx = SW / 2.f; button(cx - 20 * U - bw / 2, by, bw, bh, "<", nullptr, false, false, 510); button(cx + 20 * U - bw / 2, by, bw, bh, ">", nullptr, false, false, 511); button(cx - 11 * U, by, 22 * U, bh, "SELECT", nullptr, true, false, 512);
@@ -136,23 +136,34 @@ static void drawPlayHud() {
   using namespace pl; if (mode_() == M_SELECT) { drawSelect(); return; }
   const Player& p = P; float W_ = (float)SW, cx = SW / 2.f, cy = SH / 2.f; const float U = 4 * S, M = std::round(SW * 0.03f / U) * U; bool fp = H.view == VW_FIRST, tp = H.view == VW_THIRD, free_ = H.view == VW_FREE;
   if (p.vig > 0.02f) { float a = p.vig * 0.38f, t = 22 * S; rect(0, 0, W_, t, {0.7f, 0.05f, 0.03f, a}); rect(0, SH - t, W_, t, {0.7f, 0.05f, 0.03f, a}); rect(0, 0, t, (float)SH, {0.7f, 0.05f, 0.03f, a}); rect(W_ - t, 0, t, (float)SH, {0.7f, 0.05f, 0.03f, a}); }
-  if (p.hitK > 0.05f && mode_() == 2) for (int i = -3; i <= 3; i++) { float g = p.hitDir + i * 0.09f, R = 74 * S, x = cx + std::sin(g) * -R, y = cy - std::cos(g) * R; rect(x - 2 * S, y - 2 * S, 4 * S, 4 * S, {1, 0.2f, 0.12f, p.hitK * (1 - std::fabs((float)i) * 0.2f)}); }
+  if (p.hp / p.maxHp < 0.3f && !p.down) { float a2 = (0.3f - p.hp / p.maxHp) / 0.3f * (0.16f + 0.07f * std::sin(gfx::time_ * 7.f)), t2 = 18 * S; rect(0, 0, W_, t2, {0.6f, 0.04f, 0.03f, a2}); rect(0, SH - t2, W_, t2, {0.6f, 0.04f, 0.03f, a2}); rect(0, 0, t2, (float)SH, {0.6f, 0.04f, 0.03f, a2}); rect(W_ - t2, 0, t2, (float)SH, {0.6f, 0.04f, 0.03f, a2}); }
+  if (p.hitK > 0.05f && (mode_() == 2 || mode_() == 4)) for (int i = -3; i <= 3; i++) { float g = p.hitDir + i * 0.09f, R = 74 * S, x = cx + std::sin(g) * -R, y = cy - std::cos(g) * R; rect(x - 2 * S, y - 2 * S, 4 * S, 4 * S, {1, 0.2f, 0.12f, p.hitK * (1 - std::fabs((float)i) * 0.2f)}); }
   if (!free_ && !p.down) {
     drawReticle(cx, cy, p);
     if (p.hmT > 0) { float k = p.hmT / 0.25f, d0 = (7 + (1 - k) * 4) * S; Col hc = p.hmKind > 1.5f ? Col{1, 0.25f, 0.2f, k} : p.hmKind > 0.5f ? Col{1, 0.82f, 0.25f, k} : Col{1, 1, 1, k}; for (int sx = -1; sx <= 1; sx += 2) for (int sy = -1; sy <= 1; sy += 2) for (int i = 0; i < 4; i++) { float d = d0 + i * 2.2f * S; rect(cx + sx * d - S, cy + sy * d - S, 2 * S, 2 * S, hc); } }
+    if (p.charging && p.style != roster::ST_BOW) { static const float CMn[7] = {9, 9, 0.35f, 0.35f, 0.3f, 0.3f, 0.4f}, CFl[7] = {9, 9, 1.f, 0.9f, 0.8f, 1.f, 0.9f}; float w = 20 * U, h = 2 * S, x = cx - w / 2, y = SH - 7 * U, cf = p.style == roster::ST_SPEAR ? clampf((p.chargeT - 0.3f) / 0.6f, 0, 1) : clampf(p.chargeT / CFl[p.style % 7], 0, 1); bool full = cf >= 0.99f;
+      rect(x - 1, y - 1, w + 2, h + 2, {0, 0, 0, 0.5f}); rect(x, y, w, h, {0.2f, 0.19f, 0.17f, 0.6f}); rect(x, y, w * cf, h, full ? hexc(0xffd27a) : hexc(0xe0b878)); if (full) text(p.style == roster::ST_SPEAR ? "THROW" : p.style == roster::ST_HEAVY ? "SLAM" : "RELEASE", cx, y - 8 * S, S * 0.75f, hexc(0xffd27a), 1); }
     if (p.drawing) {   // draw strength: slim bar at the bottom centre, away from the reticle and the view
       float w = 24 * U, h = 2 * S, x = cx - w / 2, y = SH - 7 * U; bool sw = H.sweet > 0.5f, ov = p.holdT > 0.9f, cb = cfg::S.colorblind; float f = curve(p.draw), nt = curve(SWEET0);
       Col fc = sw ? (cb ? Col{0.35f, 0.75f, 1, 1} : Col{1, 0.82f, 0.25f, 1}) : ov ? (cb ? Col{1, 0.62f, 0, 1} : Col{1, 0.5f, 0.2f, 1}) : Col{0.93f, 0.85f, 0.66f, 0.95f};
       rect(x - 1, y - 1, w + 2, h + 2, {0, 0, 0, 0.5f}); rect(x, y, w, h, {0.2f, 0.19f, 0.17f, 0.6f}); rect(x, y, w * f, h, fc); rect(x + w * nt - 1, y - S, 2, h + 2 * S, {1, 0.9f, 0.6f, 0.9f});
       if (sw || ov) text(sw ? "RELEASE" : "STEADY", cx, y - 8 * S, S * 0.75f, sw ? fc : hexc(0xff8a4a), 1); }
   }
-  if (!free_) {   // vitals: health, stamina, quiver pips, ability
-    float bx = M, by = SH - M - 6 * U, bw = (fp ? 20 : 24) * U; rect(bx, by, bw, 3 * S, {0.1f, 0.1f, 0.1f, 0.7f}); float hf = clampf(p.hp / p.maxHp, 0, 1); rect(bx, by, bw * hf, 3 * S, hf < 0.33f ? hexc(0xd0483a) : hexc(0x8fc06a));
-    rect(bx, by + 2 * U, bw, 2 * S, {0.1f, 0.1f, 0.1f, 0.7f}); rect(bx, by + 2 * U, bw * clampf(p.st / 100.f, 0, 1), 2 * S, hexc(0xe0c060));
-    int nq = p.style == roster::ST_BOW ? std::min(p.quiverMax, 24) : 0; if (nq == 0) { rect(bx, by + 4 * U, bw, 3 * S, {0.1f, 0.1f, 0.1f, 0.7f}); rect(bx, by + 4 * U, bw * clampf(p.chargeT, 0, 1), 3 * S, p.chargeT >= 0.35f ? hexc(0xffd27a) : hexc(0xc89a5a)); } float pw_ = std::min(4.f * S, bw / nq - S); for (int i = 0; i < nq; i++) rect(bx + i * (pw_ + S), by + 4 * U, pw_, 3 * S, i < p.quiver ? hexc(0xe2c88a) : Col{0.25f, 0.23f, 0.2f, 0.7f});
+  if (!free_) {   // vitals: health (with trailing damage), stamina, style resource, ability
+    const float bx = M, bw = (fp ? 30 : 36) * U, bh = 5 * S, by = SH - M - 24 * S; const roster::Hero& hh = roster::at(roster::sel());
+    static int lh = -1, lm = -1; static char hs[24]; int ih = (int)std::ceil(p.hp), im = (int)p.maxHp; if (ih != lh || im != lm) { lh = ih; lm = im; snprintf(hs, 24, "%d / %d", ih, im); }
+    static float gh = 1.f; float hf = clampf(p.hp / p.maxHp, 0, 1); if (gh < hf) gh = hf; else gh += (hf - gh) * 0.04f; bool low = hf < 0.33f; float pul = low ? 0.75f + 0.25f * std::sin(gfx::time_ * 9.f) : 1.f;
+    rect(bx - 4 * S, by - 11 * S, bw + 8 * S, 42 * S, {0.03f, 0.03f, 0.04f, 0.5f}); frame(bx - 4 * S, by - 11 * S, bw + 8 * S, 42 * S, {0.42f, 0.35f, 0.24f, 0.8f});
+    text(hh.name, bx, by - 9 * S, S * 0.75f, hexc(0xc8bea4)); text(hs, bx + bw, by - 9 * S, S * 0.75f, low ? hexc(0xff8a7a) : hexc(0xe0d8c0), 2);
+    rect(bx, by, bw, bh, {0.1f, 0.05f, 0.05f, 0.9f}); rect(bx, by, bw * gh, bh, {0.95f, 0.8f, 0.6f, 0.55f}); rect(bx, by, bw * hf, bh, low ? Col{0.85f * pul, 0.2f, 0.16f, 1} : hexc(0x8fc06a)); rect(bx, by, bw * hf, bh * 0.4f, {1, 1, 1, 0.16f});
+    for (int i = 1; i * 25 < (int)p.maxHp; i++) rect(bx + bw * (i * 25.f / p.maxHp), by, 1, bh, {0, 0, 0, 0.55f});
+    float sy2 = by + bh + 2 * S; bool stl = p.st < 20; rect(bx, sy2, bw, 2.5f * S, {0.12f, 0.1f, 0.05f, 0.85f}); rect(bx, sy2, bw * clampf(p.st / 100.f, 0, 1), 2.5f * S, stl ? hexc(0xd07a40) : hexc(0xe6c862));
+    float ry = sy2 + 5 * S; static const float CMn[7] = {9, 9, 0.35f, 0.35f, 0.3f, 0.3f, 0.4f}, CFl[7] = {9, 9, 1.f, 0.9f, 0.8f, 1.f, 0.9f};
+    if (p.style == roster::ST_BOW) { int nq = std::min(p.quiverMax, 24); float pw_ = std::min(4.f * S, bw / std::max(1, nq) - S); for (int i = 0; i < nq; i++) rect(bx + i * (pw_ + S), ry, pw_, 3 * S, i < p.quiver ? hexc(0xe2c88a) : Col{0.25f, 0.23f, 0.2f, 0.7f}); }
+    else { float cf = p.style == roster::ST_SPEAR ? clampf((p.chargeT - 0.3f) / 0.6f, 0, 1) : clampf(p.chargeT / CFl[p.style % 7], 0, 1), mk = CMn[p.style % 7] / CFl[p.style % 7]; rect(bx, ry, bw, 3 * S, {0.1f, 0.1f, 0.1f, 0.7f}); rect(bx, ry, bw * cf, 3 * S, (p.style == roster::ST_SPEAR ? cf > 0.99f : cf >= mk) ? hexc(0xffd27a) : hexc(0xc89a5a)); if (p.style != roster::ST_SPEAR && p.style != roster::ST_SWORD) rect(bx + bw * mk, ry - S, 1, 5 * S, {1, 0.9f, 0.6f, 0.8f}); }
     { float rdy = p.abilMax > 0 ? 1.f - p.abilCd / p.abilMax : 1.f; bool on = p.abilT > 0, rd = p.abilCd <= 0; static int lastH = -1; static char ab[64]; if (lastH != roster::sel()) { lastH = roster::sel(); snprintf(ab, 64, "E  %s", roster::at(lastH).active); }
-      text(ab, bx, by + 5 * U + 3 * S, S * 0.75f, on ? hexc(0xffd24a) : rd ? hexc(0xe9c98a) : hexc(0x7a7262)); rect(bx, by + 7 * U + 2 * S, bw, S, {0.1f, 0.1f, 0.1f, 0.7f}); rect(bx, by + 7 * U + 2 * S, bw * rdy, S, rd ? hexc(0xe0b060) : hexc(0x8a7a5a)); }
-    if (mode_() == 2) for (int i = 0; i < 3; i++) { bool on = i < p.lives + 1; rect(bx + bw + 2 * U + i * 2 * U, by, U, 2 * U, on ? hexc(0xffa24a) : Col{0.2f, 0.18f, 0.16f, 1}); }
+      float ay = ry + 6 * S; float rp = rd ? 0.8f + 0.2f * std::sin(gfx::time_ * 6.f) : 1.f; text(ab, bx, ay, S * 0.75f, on ? hexc(0xffd24a) : rd ? hexc(0xe9c98a, rp) : hexc(0x7a7262)); rect(bx, ay + 8 * S, bw, 1.5f * S, {0.1f, 0.1f, 0.1f, 0.7f}); rect(bx, ay + 8 * S, bw * rdy, 1.5f * S, rd ? hexc(0xffc860) : hexc(0x8a7a5a)); }
+    if (mode_() == 2) for (int i = 0; i < 3; i++) { bool on = i < p.lives + 1; rect(bx + bw + 8 * S + i * 2 * U, by, U, 2 * U, on ? hexc(0xffa24a) : Col{0.2f, 0.18f, 0.16f, 1}); }
   }
   if (tp) {   // compass strip (third person density)
     float cw = 30 * U, y = M + 4 * U; static const char* CN[8] = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"}; float hd = std::fmod(p.yaw * 57.2958f + 3600.f, 360.f);
@@ -160,18 +171,29 @@ static void drawPlayHud() {
     for (int d = -60; d <= 60; d += 15) { float ang = std::fmod(std::round(hd / 15.f) * 15.f + d + 720.f, 360.f), off = (std::round(hd / 15.f) * 15.f + d - hd) / 60.f * (cw / 2); int ci = (int)std::round(ang / 45.f) & 7; bool card = std::fmod(ang, 45.f) < 1.f; float a = 1 - std::fabs(off) / (cw / 2) * 0.8f;
       rect(cx + off - 0.5f, y + (card ? 2.f * U : 2.6f * U), 1, card ? U : 0.5f * U, {0.9f, 0.85f, 0.7f, a}); if (card) text(CN[ci], cx + off, y - 2 * S, S * 0.75f, hexc(ci == 0 ? 0xe0685a : 0xc8bea4, a), 1); }
   }
-  if (!fp && !free_) { text(mode_() == 2 ? H.waveS : "PRACTICE RANGE", M, M, S, hexc(0xe9c98a)); text(H.scoreS, cx, M - 2 * S, S * 1.5f, hexc(0xf0dcb0), 1); if (H.combo > 1) text(H.comboS, cx + 28 * U, M, S * 1.1f, hexc(0xffa24a)); text(H.accS, W_ - M, M, S * 0.9f, hexc(0xb3a88e), 2); }
-  if (fp) { text(H.scoreS, cx, M - 2 * S, S * 1.1f, hexc(0xf0dcb0, 0.85f), 1); if (H.combo > 1) text(H.comboS, cx + 14 * U, M, S * 0.9f, hexc(0xffa24a)); }
+  if (!fp && !free_ && mode_() != 4) { text(mode_() == 2 ? H.waveS : "PRACTICE RANGE", M, M, S, hexc(0xe9c98a)); text(H.scoreS, cx, M - 2 * S, S * 1.5f, hexc(0xf0dcb0), 1); if (H.combo > 1) text(H.comboS, cx + 28 * U, M, S * 1.1f, hexc(0xffa24a)); text(H.accS, W_ - M, M, S * 0.9f, hexc(0xb3a88e), 2); }
+  if (fp && mode_() != 4) { text(H.scoreS, cx, M - 2 * S, S * 1.1f, hexc(0xf0dcb0, 0.85f), 1); if (H.combo > 1) text(H.comboS, cx + 14 * U, M, S * 0.9f, hexc(0xffa24a)); }
   if (mode_() == 2 && !free_) { text("FOES", M, M + 4 * U, S * 0.8f, hexc(0x9a917c)); for (int i = 0; i < std::min(H.foesLeft, 24); i++) rect(M + 24 * S + i * 3.2f * S, M + 4 * U + S, 2.2f * S, 6 * S, hexc(0xc0483a)); }
   if (!free_ && cfg::S.subtitles) for (int i = 0; i < 4; i++) { const Feed& f = H.feed[i]; if (f.t <= 0 || !f.s[0]) continue; text(f.s, W_ - M, M + 4 * U + i * 2.5f * U, S * 0.85f, hexc(f.col, std::min(1.f, f.t * 1.5f)), 2); }
-  for (const Foe& f : foes) { const Unit& u = f.u; if (!u.used || u.hp <= 0 || free_) continue; float sx, sy; if (u.boss) continue; if (std::hypot(u.x - p.x, u.z - p.z) > 48) continue; if (!gfx::project(u.x, terrH(u.x, u.z) + f.headY + 0.3f, u.z, sx, sy)) continue; float w = (13 + u.radius * 24) * S * 0.8f; bar(sx - w / 2, sy, w, 3 * S, u.hp / u.maxHp, u.elite ? hexc(0xe0a33c) : hexc(0xc0483a)); }
+  for (int i = 0; i < MAXFOE; i++) { const Foe& f = foes[i]; const Unit& u = f.u; if (!u.used || u.hp <= 0 || free_ || u.boss) continue; if (std::hypot(u.x - p.x, u.z - p.z) > 48) continue; float sx, sy; if (!gfx::project(u.x, terrH(u.x, u.z) + f.headY + 0.3f, u.z, sx, sy)) continue;
+    float w = (13 + u.radius * 24) * S * 0.8f; if (f.rival >= 0) w = 44 * S; bar(sx - w / 2, sy, w, 3 * S, u.hp / u.maxHp, f.rival >= 0 ? hexc(0xd0602a) : u.elite ? hexc(0xe0a33c) : hexc(0xc0483a));
+    if (u.guardT > 0) text("GUARD", sx, sy - 7 * S, S * 0.65f, hexc(0xd8e8ff), 1); else if (u.act.on && u.act.t < u.act.wind && u.act.kind != A_NONE) text("!", sx, sy - 8 * S, S * 1.3f, hexc(0xff8a4a), 1);
+    if (p.lock == i) { float cxm, cym; if (gfx::project(u.x, terrH(u.x, u.z) + f.headY * 0.55f, u.z, cxm, cym)) { float rr = (12 + 1.5f * std::sin(gfx::time_ * 6.f)) * S, t = std::max(1.f, S * 0.8f), l = 4 * S; Col lc = hexc(0xffd24a);
+        for (int sx2 = -1; sx2 <= 1; sx2 += 2) for (int sy2 = -1; sy2 <= 1; sy2 += 2) { float x = cxm + sx2 * rr, y = cym + sy2 * rr; rect(sx2 > 0 ? x - l : x, sy2 > 0 ? y - t : y, l, t, lc); rect(sx2 > 0 ? x - t : x, sy2 > 0 ? y - l : y, t, l, lc); } } } }
+  if (mode_() == M_DUEL && !free_) { const Foe* rf = rivalFoe(); float bw3 = 62 * U, y3 = M + 6 * S, gap = 8 * U, h3 = 6 * S; float pf = clampf(p.hp / p.maxHp, 0, 1), rfh = rf ? clampf(rf->u.hp / rf->u.maxHp, 0, 1) : 0.f;
+    rect(cx - gap - bw3 - 1, y3 - 1, bw3 + 2, h3 + 2, {0, 0, 0, 0.8f}); rect(cx - gap - bw3, y3, bw3, h3, {0.1f, 0.1f, 0.1f, 0.85f}); rect(cx - gap - bw3 * pf, y3, bw3 * pf, h3, pf < 0.33f ? hexc(0xd0483a) : hexc(0x8fc06a));
+    rect(cx + gap - 1, y3 - 1, bw3 + 2, h3 + 2, {0, 0, 0, 0.8f}); rect(cx + gap, y3, bw3, h3, {0.1f, 0.1f, 0.1f, 0.85f}); rect(cx + gap, y3, bw3 * rfh, h3, hexc(0xd0602a));
+    text(roster::at(roster::sel()).name, cx - gap - bw3, y3 - 8 * S, S * 0.85f, hexc(0xf0dcb0)); text(H.rivalName, cx + gap + bw3, y3 - 8 * S, S * 0.85f, hexc(0xf0b890), 2);
+    static char rt[16]; static int lr = -1; if (lr != H.round) { lr = H.round; snprintf(rt, 16, "ROUND %d", H.round); } text(rt, cx, y3 - 7 * S, S * 0.9f, hexc(0xe9c98a), 1); text("VS", cx, y3 + S, S * 0.9f, hexc(0xb3a88e), 1);
+    for (int i = 0; i < 2; i++) { rect(cx - gap - 3 * S - i * 6 * S - 3 * S, y3 + h3 + 3 * S, 4 * S, 4 * S, i < H.pw ? hexc(0xffd24a) : Col{0.2f, 0.18f, 0.16f, 1}); rect(cx + gap + 3 * S + i * 6 * S, y3 + h3 + 3 * S, 4 * S, 4 * S, i < H.rw ? hexc(0xff7a4a) : Col{0.2f, 0.18f, 0.16f, 1}); }
+    if (H.duelState == 0) { static const char* CD[4] = {"GO", "1", "2", "3"}; text(CD[std::min(3, (int)std::ceil(H.duelT))], cx, SH * 0.32f, S * 5.f, hexc(0xf1dfb6), 1); } }
   for (const Foe& f : foes) if (f.u.used && f.u.hp > 0 && f.u.boss && !free_) { float bw2 = 220 * S; text(MON[f.u.cls].name, W_ / 2, M + 8 * U, S * 1.2f, hexc(0xf0c890), 1); bar(W_ / 2 - bw2 / 2, M + 12 * U, bw2, 5 * S, f.u.hp / f.u.maxHp, hexc(0xb83a30)); break; }
   for (const FloatText& f : fx.ft) if (f.on) { float sx, sy; if (!gfx::project(f.x, f.y, f.z, sx, sy)) continue; float u = f.t / f.dur, a = u < 0.1f ? u / 0.1f : 1 - std::pow(std::max(0.f, (u - 0.5f) / 0.5f), 2.f); text(f.s, sx, sy, S * f.size / 11.f * 0.95f, hexc(f.col, a), 1); }
   if (H.bannerT > 0 || H.ended) { float a = H.ended ? 1.f : std::min(1.f, H.bannerT * 1.5f); text(H.banner, cx, SH * 0.2f, S * 2.4f, hexc(0xf1dfb6, a), 1); text(H.sub, cx, SH * 0.2f + 26 * S, S * 0.9f, hexc(0xb3a88e, a), 1); }
-  if (p.down && !p.over) { rect(0, 0, W_, (float)SH, {0.2f, 0.01f, 0.01f, 0.35f}); text("DOWNED", cx, SH * 0.4f, S * 3.f, hexc(0xe0685a), 1); bar(cx - 50 * S, SH * 0.4f + 36 * S, 100 * S, 4 * S, p.downT / 4.2f, hexc(0xffa24a)); }
+  if (p.down && !p.over && mode_() != 4) { rect(0, 0, W_, (float)SH, {0.2f, 0.01f, 0.01f, 0.35f}); text("DOWNED", cx, SH * 0.4f, S * 3.f, hexc(0xe0685a), 1); bar(cx - 50 * S, SH * 0.4f + 36 * S, 100 * S, 4 * S, p.downT / 4.2f, hexc(0xffa24a)); }
   if (p.over) { rect(0, 0, W_, (float)SH, {0, 0, 0, 0.6f}); text("SCORE", cx, SH * 0.42f, S * 1.2f, hexc(0xb3a88e), 1); text(H.scoreS, cx, SH * 0.42f + 14 * S, S * 3.f, hexc(0xf0dcb0), 1); text(H.accS, cx, SH * 0.42f + 44 * S, S, hexc(0xb3a88e), 1); }
   if (free_) { text("INSPECT", M, M, S * 1.1f, hexc(0xe9c98a)); text(roster::at(roster::sel()).name, M, M + 5 * U, S * 0.9f, hexc(0xb3a88e)); text("MOUSE ORBITS   WHEEL ZOOMS   V NEXT VIEW", cx, SH - M, S * 0.8f, hexc(0x8f8672), 1); }
-  else if (tp) { static char vh[64]; static int vk = -1; if (vk != cfg::S.key[cfg::ACT_VIEW]) { vk = cfg::S.key[cfg::ACT_VIEW]; char kn[16]; cfg::keyName(vk, kn, 16); snprintf(vh, 64, "[%s] VIEW    [E] ABILITY    [T] WORLD    [B] AUTO-PLAY%s", kn, ""); }
+  else if (tp) { static char vh[64]; static int vk = -1; if (vk != cfg::S.key[cfg::ACT_VIEW]) { vk = cfg::S.key[cfg::ACT_VIEW]; char kn[16]; cfg::keyName(vk, kn, 16); snprintf(vh, 64, "[%s] VIEW  [E] ABILITY  [F] LOCK-ON  [T] WORLD  [B] AUTO%s", kn, ""); }
     text(vh, W_ - M, SH - M - 2 * U, S * 0.7f, hexc(0x8f8672), 2); text(roster::styleHint(p.style), W_ - M, SH - M + 2 * S, S * 0.65f, hexc(0x6a6252), 2); }
 }
 static void drawTitle() {
@@ -179,13 +201,13 @@ static void drawTitle() {
   float sc = S * 5; const char* t = "LANTERNFALL"; float pulse = 0.85f + 0.15f * std::sin(gfx::time_ * 1.7f);
   text(t, cx + 0, SH * 0.12f, sc, {0.9f, 0.55f, 0.2f, 0.18f * pulse}, 1, false); text(t, cx, SH * 0.115f, sc, hexc(0xf1dfb6), 1);
   text("A LANTERN-LIT ROAD, AN OLD BOW, AND THE DARK BEYOND", cx, SH * 0.115f + 10 * sc, S, hexc(0xb3a88e), 1);
-  { float bw_ = 132 * S, bh = 28 * S, gap = 6 * S, x0 = cx - (3 * bw_ + 2 * gap) / 2, y0 = SH * 0.64f; const char* lb[3] = {"STEWARD", "PRACTICE RANGE", "WAVE HUNT"}; const char* sb[3] = {"[1] THE PARTY FIGHTS ALONE", "[2] TRAIN WITH YOUR HERO", "[3] FIRST / THIRD PERSON"};
-    for (int i = 0; i < 3; i++) { float x = x0 + i * (bw_ + gap); bool rec = i == 1; rect(x, y0, bw_, bh, rec ? Col{0.2f, 0.14f, 0.07f, 1} : Col{0.1f, 0.1f, 0.12f, 1}); frame(x, y0, bw_, bh, rec ? hexc(0xe0a33c) : hexc(0x6a5a3c)); frame(x - 2, y0 - 2, bw_ + 4, bh + 4, {0, 0, 0, 1});
+  { float bw_ = 112 * S, bh = 28 * S, gap = 6 * S, x0 = cx - (4 * bw_ + 3 * gap) / 2, y0 = SH * 0.64f; const char* lb[4] = {"STEWARD", "PRACTICE RANGE", "WAVE HUNT", "DUEL"}; const char* sb[4] = {"[1] PARTY AUTO-BATTLE", "[2] TRAIN YOUR HERO", "[3] SURVIVE THE WAVES", "[5] BEST OF 3 VS RIVAL"};
+    for (int i = 0; i < 4; i++) { float x = x0 + i * (bw_ + gap); bool rec = i == 1 || i == 3; rect(x, y0, bw_, bh, rec ? Col{0.2f, 0.14f, 0.07f, 1} : Col{0.1f, 0.1f, 0.12f, 1}); frame(x, y0, bw_, bh, rec ? hexc(0xe0a33c) : hexc(0x6a5a3c)); frame(x - 2, y0 - 2, bw_ + 4, bh + 4, {0, 0, 0, 1});
       text(lb[i], x + bw_ / 2, y0 + 5 * S, S * 1.2f, hexc(0xf0dcb0), 1); text(sb[i], x + bw_ / 2, y0 + bh - 9 * S, S * 0.58f, hexc(0x9a917c), 1); addBtn(x, y0, bw_, bh, 100 + i); } }
   { float bw_ = 100 * S, bh = 18 * S, y1 = SH * 0.64f + 28 * S + 6 * S; button(cx - bw_ - 3 * S, y1, bw_, bh, "CHOOSE HERO", nullptr, false, false, 502); button(cx + 3 * S, y1, bw_, bh, "OPTIONS", nullptr, false, false, 500);
     static char hl[64]; static int hk = -1; if (hk != roster::sel()) { hk = roster::sel(); snprintf(hl, 64, "%s  -  %s  -  %s", roster::at(hk).name, roster::at(hk).role, roster::styleName(roster::at(hk).style)); } text(hl, cx, y1 + bh + 5 * S, S * 0.85f, hexc(0xc8bea4), 1); }
   char b[96]; if (G.P.bestStage > 0) { snprintf(b, 96, "BEST WAYLIGHT %d   LEVEL %d   EMBERS %d", G.P.bestStage, G.P.bestLevel, G.P.embers); text(b, cx, SH * 0.64f + 70 * S, S * 0.9f, hexc(0x8f8672), 1); }
-  text("WASD MOVE  LMB ATTACK  RMB GUARD  SPACE ROLL  E ABILITY  V VIEW  G ARC  Q QUALITY  F11 FULLSCREEN  ESC QUIT", cx, SH * 0.93f, S * 0.8f, hexc(0x8f8672), 1); (void)cy;
+  text("WASD MOVE  LMB ATTACK  RMB GUARD  SPACE ROLL  F LOCK-ON  E ABILITY  V VIEW  Q QUALITY  F11 FULLSCREEN  ESC QUIT", cx, SH * 0.93f, S * 0.8f, hexc(0x8f8672), 1); (void)cy;
 }
 static void drawHud() {
   const Run& r = G.run; float W_ = (float)SW; char b[96], b2[48];
@@ -253,7 +275,7 @@ static void drawPanels() {
 static void act(int id) {
   G.panelTimer = G.panelTimer && false; Run& r = G.run;
   if (id >= 200 && id < 203) { int i = id - 200; if (i < G.nOffer) { int c = G.offer[i]; G.panel = P_NONE; G.takeCard(c); char b[64]; snprintf(b, 64, "%s", CARDS[c].name); G.toast(b, 0x8fd98a); if (G.pending) G.openPending(); } }
-  else if (id == 100) G.beginRun(false); else if (id == 101) pl::pendingMode = pl::M_RANGE; else if (id == 102) pl::pendingMode = pl::M_WAVES;
+  else if (id == 100) G.beginRun(false); else if (id == 101) pl::pendingMode = pl::M_RANGE; else if (id == 102) pl::pendingMode = pl::M_WAVES; else if (id == 103) pl::pendingMode = pl::M_DUEL;
   else if (id == 500) optOpen = true; else if (id == 501) { optOpen = false; rebind = -1; persist(); } else if (id == 502) pl::pendingMode = pl::M_SELECT; else if (id == 503) { cfg::defaults(); persist(); }
   else if (id == 510) pl::heroStep(-1); else if (id == 511) pl::heroStep(1); else if (id == 512) { pl::stop(); persist(); }
   else if (id >= 600 && id < 622) optAdj((id - 600) / 2, (id & 1) ? 1 : -1); else if (id >= 700 && id < 700 + cfg::ACT_COUNT) rebind = id - 700;
@@ -269,7 +291,7 @@ bool captureKey(int k) { if (rebind < 0) return false; if (k != 256) { for (int 
 bool optionsOpen() { return optOpen; } void closeOptions() { optOpen = false; rebind = -1; persist(); }
 bool key(int c) {
   if (optOpen) return true;
-  if (G.state == S_TITLE) { if (c == 13 || c == ' ' || c == '1') { G.beginRun(false); return true; } if (c == '2') { pl::pendingMode = pl::M_RANGE; return true; } if (c == '3') { pl::pendingMode = pl::M_WAVES; return true; } if (c == '4') { pl::pendingMode = pl::M_SELECT; return true; } if (c == 'O') { optOpen = true; return true; } return false; }
+  if (G.state == S_TITLE) { if (c == 13 || c == ' ' || c == '1') { G.beginRun(false); return true; } if (c == '2') { pl::pendingMode = pl::M_RANGE; return true; } if (c == '3') { pl::pendingMode = pl::M_WAVES; return true; } if (c == '4') { pl::pendingMode = pl::M_SELECT; return true; } if (c == '5') { pl::pendingMode = pl::M_DUEL; return true; } if (c == 'O') { optOpen = true; return true; } return false; }
   switch (G.panel) {
     case P_CARDS: if (c >= '1' && c <= '3') { act(200 + c - '1'); return true; } return true;
     case P_CHOICE: if (c == '1') { act(210); return true; } if (c == '2') { act(211); return true; } return true;
