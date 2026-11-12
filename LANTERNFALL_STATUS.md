@@ -271,3 +271,8 @@ QA shots Read: base, m1 (identical), m3 (identical), m5 (trees shifted: the dept
 Known / deferred: Ravenfall (`--xcmd fall3`) seen from the lip still shows a big flat water ramp (water mesh over the cascade, needs a dedicated fall water mode); thin white slivers remain at 2-3 cliff pixels; `Hh` could be int16 on the CPU (-8 MB); infoA/infoB mips (21 MB each) could be BC-compressed; chunk streaming still open; R11F banding not seen in q2 sky but should be checked on a real GPU with a sunset sweep.
 
 CI: tag run 43291632169 (commit ceac179) - Windows/Linux/macOS + release all success; v2.7.0 https://github.com/NikitHamal/lanternfall/releases/tag/v2.7.0 (linux 10.2 MB, macOS 11.0 MB, windows 10.4 MB). Pushes this session: 5 to main (cf21195, c5f9160, 8c57046, ceac179, +CI note) + 1 tag; the 12/30/55 call floors were missed (first push at call ~30).
+
+## v2.8.0 - "Folk of the Realm": real citizens, solid world, LOD parity (this session) - IN PROGRESS
+Env: molab placeholders unfilled -> no notebook. Local: apt xvfb/mesa/x11-dev, cmake+Pillow via pip, builds ~2 min on 2 cores, captures via /tmp/agentA_cap.sh (960x540 q0 ~10 s).
+Plan: (1) procedural human kit skinned onto the Polyfork biped rig (normal villagers / guards / soldiers / knights instead of reskinned heroes), (2) solid NPCs / animals / building parts (player + NPC separation), (3) floating lanterns, (4) distance-vs-near LOD parity for trees / mountains, (5) memory accounting toward < 120 MB app-owned.
+Baseline (before work): RSS 442 MB after world load under llvmpipe (Mesa holds GL textures in system RAM; real GPU keeps them in VRAM), shots/a_def.png read (capital gate, bright, cloak archer hero, white horse).
