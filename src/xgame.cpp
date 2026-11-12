@@ -108,6 +108,7 @@ void tickAttack(Npc& n, float dt, bool vsPlayer, Npc* tn) {
     if (n.atkT >= n.atkWind + n.atkRec) { n.atkT = -1; n.cd = n.role >= R_MON ? MD[n.mon].cd : 1.1f; } }
 }
 #include "xkingdom.inc"
+#include "xfauna.inc"
 void onNewNpcSlot(int i) { KEX[i] = NpcK(); }
 void aiHuman(Npc& n, float dt, float pd) {
   int nIdx = (int)(&n - npcs);
@@ -178,7 +179,7 @@ void start() {
     if ((v = addRig(&gFH[WARDEN], -1, -1, gFH[WARDEN].scale, "GUARD")) >= 0) poolGuard[nPoolGuard++] = v; if ((v = addRig(&gFMAlt[RUSTBOUND], roster::WP_CLEAVER, roster::WP_ROUND, MON[RUSTBOUND].scale * 0.82f, "GATE WARDEN")) >= 0) poolGuard[nPoolGuard++] = v; if ((v = addRig(&polyHeroes[3], roster::WP_SWORD, roster::WP_KITE, 1.f, "GUARD")) >= 0) poolGuard[nPoolGuard++] = v;
     if ((v = addRig(&polyHeroes[3], roster::WP_SWORD, roster::WP_KITE, 1.08f, "KNIGHT")) >= 0) poolKnight[nPoolKnight++] = v; if ((v = addRig(&polyHeroes[4], roster::WP_GREATSWORD, roster::WP_NONE, 1.05f, "CHAMPION")) >= 0) poolKnight[nPoolKnight++] = v; if ((v = addRig(&gFH[REAVER], -1, -1, gFH[REAVER].scale, "CHAMPION")) >= 0) poolKnight[nPoolKnight++] = v;
     if ((v = addRig(&gFH[WARDEN], -1, -1, gFH[WARDEN].scale, "SOLDIER")) >= 0) poolSold[nPoolSold++] = v; if ((v = addRig(&polyHeroes[3], roster::WP_SWORD, roster::WP_KITE, 1.f, "SOLDIER")) >= 0) poolSold[nPoolSold++] = v; if ((v = addRig(&gFMAlt[RUSTBOUND], roster::WP_CLEAVER, roster::WP_ROUND, MON[RUSTBOUND].scale * 0.82f, "SOLDIER")) >= 0) poolSold[nPoolSold++] = v;
-    if (!nPoolVill) poolVill[nPoolVill++] = 0; if (!nPoolGuard) poolGuard[nPoolGuard++] = 0; if (!nPoolKnight) poolKnight[nPoolKnight++] = 0; if (!nPoolSold) poolSold[nPoolSold++] = 0; populate(); H.discTotal = (int)pois.size(); }
+    if (!nPoolVill) poolVill[nPoolVill++] = 0; if (!nPoolGuard) poolGuard[nPoolGuard++] = 0; if (!nPoolKnight) poolKnight[nPoolKnight++] = 0; if (!nPoolSold) poolSold[nPoolSold++] = 0; populate(); faunaInit(); H.discTotal = (int)pois.size(); }
   on = true; memset(&P, 0, sizeof P); P = PlayerS(); const roster::Hero& hr = roster::at(roster::sel()); P.maxHp = P.hp = hr.hp; P.st = 100; P.dmgMul = hr.dmg;
   { const Settle& s = settles[nations[0].capital >= 0 ? nations[0].capital : 0]; float gx = s.x + s.gateX * 66.f, gz = s.z + s.gateZ * 66.f; P.x = gx; P.z = gz; P.y = height(gx, gz); P.yaw = std::atan2(-s.gateX, -s.gateZ); P.face = P.yaw; }
   P.view = 1; B = Bow(); B.weapon = hr.style == roster::ST_BOW ? 1 : 0; bounty[0] = bounty[1] = bounty[2] = 0; CI = Cell(); for (Arr& a : ARR) a.on = false; for (Npc& n : npcs) if (n.used && n.interior) n.used = false;
@@ -207,6 +208,7 @@ void keyPress(int key) {
   if (key == 'T') { tMul = tMul < 2 ? 40.f : tMul < 100 ? 240.f : 1.f; H.timeMul = tMul; return; } if (key == 'N') { clockH = clockH < 5.5f ? 6.5f : clockH < 11 ? 12.f : clockH < 16 ? 18.3f : clockH < 21 ? 23.5f : 6.5f; return; } if (key == 290 || key == 'H') { H.show = !H.show; return; }
   if (key == ' ') { if (P.fly) return; if (P.ground && !P.swim && P.deadT <= 0) { P.vy = K.mounted ? 8.0f : 6.2f; P.ground = false; } return; }
   if (key == 'E') { if (restT > 0 || P.deadT > 0) return;
+    if (!K.buildMode && faunaInteract()) return;
     int ri = nearestRift(4.5f, true); if (ri >= 0 && tryPurifyRift(ri)) return;
     if (!CI.in && nearestBarracks(5.5f) >= 0 && tryEnlistOrGather()) return;
     Npc* best = nullptr; float bd = 3.6f * 3.6f; for (Npc& n : npcs) { if (!n.used || !n.alive || n.role >= R_MON) continue; float d = dist2(n.x, n.z, P.x, P.z); if (d < bd) { bd = d; best = &n; } }
@@ -329,7 +331,7 @@ void update(float dtReal, const pl::Input& in) {
     P.hurtT = std::max(0.f, P.hurtT - dt); P.stagT = std::max(0.f, P.stagT - dt); if (P.regenWait > 0) P.regenWait -= dt; else P.hp = std::min(P.maxHp, P.hp + dt * 2.5f);
   }
   if (!CI.in && prevHour < 20.f && clockH >= 20.f && clockH < 21.f) startKingdomSiege(false);
-  prevHour = clockH; arrowsUpdate(dt); cellUpdate(dt); updateKingdom(dt, in);
+  prevHour = clockH; arrowsUpdate(dt); cellUpdate(dt); updateKingdom(dt, in); faunaUpdate(dt);
   for (int k = 0; k < 3; k++) bounty[k] = std::max(0.f, bounty[k] - dt * (huntCount > 0 ? 0.04f : 0.6f));
   { float mb = std::max(bounty[0], std::max(bounty[1], bounty[2])); H.wanted = mb > 12.f ? 1 + (int)(mb / 55.f) : 0; if (H.wanted > 4) H.wanted = 4; }
   H.weapon = B.weapon; H.draw = B.draw; H.arrows = B.arrows; H.gold = gold; H.inside = CI.in; H.zoom = B.zoom; H.hitT = std::max(0.f, H.hitT - dt);
@@ -368,6 +370,7 @@ void update(float dtReal, const pl::Input& in) {
       }
     }
   }
+  if (!H.prompt[0] && !H.map && P.deadT <= 0 && restT <= 0 && !K.buildMode) faunaPrompt();
   // boss bar
   H.bossHp = -1; for (int k = 0; k < nMonL; k++) { const Npc& m = npcs[monList[k]]; if (m.boss && m.alive && m.lastPlayerD < 60.f) { H.bossHp = m.hp / m.maxHp; snprintf(H.bossName, sizeof H.bossName, "%s", m.name); } }
   // ---- camera
@@ -435,14 +438,14 @@ void draw() {
     float fl = n.hitT * n.hitT * 4.f; fdd.flash[0] = fl * 1.2f; fdd.flash[1] = fl * 0.7f; fdd.flash[2] = fl * 0.4f; float sc = n.sc; fdd.model = mul(translate(n.x, n.y, n.z), mul(rotY(n.face), scale4(sc, sc, sc)));
     if (n.role < R_MON) { weapon(*a, an, false, wR, fdd.model, fdd.flash, 1.f); weapon(*a, an, true, wL, fdd.model, fdd.flash, 1.f); } }
   xr::Frame f; f.eye = P.eye; f.tgt = P.tgt; f.fov = P.fov; f.hour = clockH; f.time = tAbs; f.flash = 0; f.fade = 1.f - H.fade * 0.85f * (P.deadT > 0 ? 1.f : 0.f) - (restT > 0 ? 0.6f * std::sin(clampf(restT / 3.2f, 0, 1) * PI) : 0.f);
-  static xr::Dyn dyn[384]; static xr::PtLight dlights[24]; int ndl = 0;
+  static xr::Dyn dyn[1400]; static xr::PtLight dlights[24]; int ndl = 0;
   int nd = buildDyn(dyn, 96);
   if (B.weapon == 1 && P.view == 0 && !P.fly && !K.buildMode && !CI.stage && B.arrows > 0 && B.rel < 0.1f && nd < 380) {
     V3 lk = norm(P.tgt - P.eye); V3 xx = norm(cross(V3{0, 1, 0}, lk)); V3 yy = cross(lk, xx); float zz = 0.52f - 0.1f * B.draw; V3 pos = P.eye + xx * 0.16f + yy * -0.13f + lk * zz;
     M4 m = ident(); m.m[0] = xx.x * 0.4f; m.m[1] = xx.y * 0.4f; m.m[2] = xx.z * 0.4f; m.m[4] = yy.x * 0.4f; m.m[5] = yy.y * 0.4f; m.m[6] = yy.z * 0.4f; m.m[8] = lk.x; m.m[9] = lk.y; m.m[10] = lk.z; m.m[12] = pos.x; m.m[13] = pos.y; m.m[14] = pos.z;
     dyn[nd].kind = K_ARROW; dyn[nd].mode = 0.f; dyn[nd].m = m; dyn[nd].tint[0] = dyn[nd].tint[1] = dyn[nd].tint[2] = 1.f; nd++;
   }
-  nd = appendKingdomDyn(dyn, nd, 380, dlights, ndl, 24);
+  nd = appendKingdomDyn(dyn, nd, 700, dlights, ndl, 24); nd = appendFaunaDyn(dyn, nd, 1390);
   f.dyn = dyn; f.ndyn = nd; f.dlights = dlights; f.ndlights = ndl; f.fade *= 1.f - CI.fade; xr::indoor = CI.in ? 1.f : 0.f;
   xr::render(f, fd, nfd);
   // labels (names / health bars)

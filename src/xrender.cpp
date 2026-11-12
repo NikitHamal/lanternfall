@@ -29,7 +29,11 @@ const KindDef KD[NK] = {
   {"polyfork/p_cemetery_gate", -1, 260, 0, true},
   {nullptr, -1, 600, 0, true}, {nullptr, -1, 800, 0, true}, {nullptr, -1, 800, 0, true}, {nullptr, -1, 1400, 0, true}, {nullptr, -1, 420, 0, true}, {nullptr, -1, 460, 0, true}, {nullptr, -1, 360, 0, false}, {nullptr, -1, 600, 0, true},
   {nullptr, -1, 320, 0, true}, {nullptr, -1, 260, 0, false}, {nullptr, -1, 700, 0, true}, {nullptr, -1, 480, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 1000, 0, true}, {nullptr, -1, 700, 0, true}, {nullptr, -1, 300, 0, false}, {nullptr, -1, 260, 0, true}, {nullptr, -1, 260, 0, true}, {nullptr, -1, 260, 0, true},
-  {nullptr, -1, 340, 0, true}, {nullptr, -1, 560, 0, true}, {nullptr, -1, 560, 0, true}, {nullptr, -1, 260, 0, false}, {nullptr, -1, 260, 0, false}};
+  {nullptr, -1, 340, 0, true}, {nullptr, -1, 560, 0, true}, {nullptr, -1, 560, 0, true}, {nullptr, -1, 260, 0, false}, {nullptr, -1, 260, 0, false},
+  // v1.9 flora: birch, cherry, jungle, willow, palm, fern, mushroom, reeds, lily, spire, flowering bush
+  {nullptr, -1, 520, 0, true}, {nullptr, -1, 560, 0, true}, {nullptr, -1, 600, 0, true}, {nullptr, -1, 520, 0, true}, {nullptr, -1, 480, 0, true}, {nullptr, -1, 90, 0, false}, {nullptr, -1, 80, 0, false}, {nullptr, -1, 150, 0, false}, {nullptr, -1, 130, 0, false}, {nullptr, -1, 900, 0, true}, {nullptr, -1, 160, 0, false},
+  // fauna: dog, cat, hen, sheep, cow, horse, bird, leg, wing, petal
+  {nullptr, -1, 260, 0, true}, {nullptr, -1, 200, 0, true}, {nullptr, -1, 160, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 340, 0, true}, {nullptr, -1, 360, 0, true}, {nullptr, -1, 420, 0, false}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 420, 0, false}, {nullptr, -1, 60, 0, false}};
 static_assert(sizeof(KD) / sizeof(KD[0]) == NK, "kind table size");
 PMesh pm[NSLOT]; FigAsset propAsset[NK]; std::vector<IData> data[NK]; std::vector<int> cellStart[NK]; std::vector<IData> stage[NSLOT]; int stageN[NSLOT];
 GLuint pTerr, pWater, pSky, pProp, pPropShadow, pGrass, pFall, pMist, pFogP, pDownP, pFinalP, pMapP, pFigX, vaoEmpty;
@@ -266,7 +270,7 @@ bool init() {
   for (int k = 0; k < NK; k++) { cellStart[k].assign(NC * NC + 1, 0); std::vector<int>& L = per[k]; auto cellId = [&](const Obj& o) { int cx = std::min(NC - 1, std::max(0, (int)((o.x + HALF) / CELL))), cz = std::min(NC - 1, std::max(0, (int)((o.z + HALF) / CELL))); return cz * NC + cx; };
     for (int id : L) cellStart[k][cellId(objs[id]) + 1]++; for (int c = 0; c < NC * NC; c++) cellStart[k][c + 1] += cellStart[k][c]; data[k].resize(L.size()); std::vector<int> fill(cellStart[k].begin(), cellStart[k].end() - 1);
     for (int id : L) { const Obj& o = objs[id]; M4 m = mul(translate(o.x, o.y, o.z), mul(rotY(o.ry), scale4(o.sx, o.sy, o.sz))); IData& d = data[k][fill[cellId(o)]++]; memcpy(d.m, m.m, 64); d.tint[0] = o.r / 128.f; d.tint[1] = o.g / 128.f; d.tint[2] = o.b / 128.f; d.tint[3] = o.sway ? 1.f : 0.f; } }
-  for (int s = 0; s < NSLOT; s++) { if (!pm[s].ok) continue; int cap = s < NK ? std::min<int>(7200, std::max<int>(160, (int)data[s].size() + 160)) : 14000; stage[s].resize(cap); setupInstVao(pm[s], cap); }
+  for (int s = 0; s < NSLOT; s++) { if (!pm[s].ok) continue; int cap = s < NK ? std::min<int>(7200, std::max<int>(s >= (int)K_FA_DOG ? 1000 : 160, (int)data[s].size() + 160)) : 14000; stage[s].resize(cap); setupInstVao(pm[s], cap); }
   // grass clump (5 blades x 7 verts) and flower meshes
   { std::vector<float> v; std::vector<uint16_t> ix; for (int b = 0; b < 5; b++) { int base = (int)v.size() / 4; for (int r = 0; r < 3; r++) { float y = r / 3.f; for (int sd = -1; sd <= 1; sd += 2) { v.push_back((float)sd); v.push_back(y); v.push_back(0); v.push_back((float)b); } } v.push_back(0); v.push_back(1); v.push_back(0); v.push_back((float)b);
       uint16_t t[15] = {0, 1, 2, 1, 3, 2, 2, 3, 4, 3, 5, 4, 4, 5, 6}; for (int k = 0; k < 15; k++) ix.push_back((uint16_t)(base + t[k])); }

@@ -50,9 +50,11 @@ Sty glowS(uint32_t hex, float g) { return {C(hex), 10, 0.6f, 0, g, 1, 3.f}; }
 Sty metal(uint32_t hex) { return {C(hex), 5, 0.5f, 0.7f, 0, 0.8f, 3.f}; }
 void merlonsLine(MB& b, float x0, float x1, float z, float y, int n, float hw, float hh, float hd, const Sty& s) { for (int k = 0; k < n; k++) { float x = x0 + (x1 - x0) * (k + 0.5f) / n; box(b, x, y + hh, z, hw, hh, hd, s); } }
 #include "xmesh_in.inc"
+#include "xmesh_new.inc"
 void arrowMesh(MB& b) { Sty sh = wood(0x8a6a3c, 0.9f), hd = metal(0x9aa0a6), fl = cloth(0xe8e0cc), fl2 = cloth(0xa83030); box(b, 0, 0, 0, 0.011f, 0.011f, 0.46f, sh); box(b, 0, 0, 0.5f, 0.016f, 0.016f, 0.06f, hd); box(b, 0, 0, 0.56f, 0.008f, 0.008f, 0.03f, hd); for (int k = 0; k < 3; k++) { float a = k * 2.0944f; boxR(b, 0.f, 0.f, -0.38f, 0.002f + 0.0f, 0.03f, 0.1f, 0, k == 0 ? fl2 : fl); (void)a; } box(b, 0, 0, -0.38f, 0.03f, 0.002f, 0.1f, fl); }
 void build(int kind, MB& b) {
   if (kind == xw::K_INHOME || kind == xw::K_INHALL || kind == xw::K_INCHAPEL) { buildInterior(kind, b); return; } if (kind == xw::K_ARROW) { arrowMesh(b); return; }
+  if (kind >= xw::K_BIRCH && kind <= xw::K_FBUSH) { buildFlora(kind, b); return; } if (kind >= xw::K_FA_DOG && kind <= xw::K_PETAL) { buildFauna(kind, b); return; }
   switch (kind) {
     case xw::K_WALL: { Sty s = stone(0x76726a), s2 = stone(0x6a665e, 0.7f); box(b, 0, 1.75f, 0, 2.55f, 4.25f, 1.2f, s); box(b, 0, 5.55f, 0.1f, 2.55f, 0.35f, 1.35f, s2); merlonsLine(b, -2.55f, 2.55f, 1.0f, 6.0f, 3, 0.55f, 0.55f, 0.28f, s); box(b, 0, 6.12f, -1.0f, 2.55f, 0.12f, 0.16f, s2);
       Sty slit = {C(0x15110e), 8, 1, 0, 0, 1, 3}; box(b, 0, 3.4f, 1.22f, 0.12f, 0.6f, 0.05f, slit); box(b, -1.7f, 1.1f, 1.21f, 0.5f, 0.12f, 0.06f, stone(0x5a564f, 0.6f)); box(b, 1.7f, 2.5f, 1.21f, 0.6f, 0.1f, 0.06f, stone(0x8a857a, 0.8f)); break; }

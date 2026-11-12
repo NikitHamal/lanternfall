@@ -40,6 +40,13 @@ float highestPoint(float* hx, float* hz) { float best = -1e9f; int bi = 0; for (
 static float forestMask(float x, float z, float h) {
   float f = fb(x * 0.0045f + 10, z * 0.0045f, 4, SEED + 40); float m = smooth(0.46f, 0.60f, f); m *= 1.f - smooth(85.f, 118.f, h); m = std::max(m, 0.03f + 0.1f * smooth(0.38f, 0.46f, f)); return h < 1.5f ? 0.f : m;
 }
+void zones(float x, float z, float h, float& ch, float& jg, float& bi, float& au) {
+  float q = fb(x * 0.0022f + 50, z * 0.0022f, 3, SEED + 41); float low = smooth(60.f, 28.f, h);
+  ch = (1.f - smooth(0.27f, 0.36f, q)) * low; au = smooth(0.30f, 0.34f, q) * (1.f - smooth(0.40f, 0.44f, q));
+  jg = smooth(0.57f, 0.67f, fb(x * 0.0019f - 60, z * 0.0019f + 90, 3, SEED + 82)) * smooth(36.f, 14.f, h) * smooth(-120.f, 160.f, z) * (1.f - ch);
+  bi = smooth(0.50f, 0.60f, fb(x * 0.0023f + 7, z * 0.0023f + 300, 3, SEED + 83)) * low * (1.f - ch) * (1.f - jg);
+}
+float forestAt(float x, float z) { return forestMask(x, z, height(x, z)); }
 const char* regionName(float x, float z) {
   float h = height(x, z); int n = nationAt(x, z); float fm = forestMask(x, z, h); float q = fb(x * 0.0022f + 50, z * 0.0022f, 3, SEED + 41);
   static char b[48]; const char* nm = nations[n].name;
@@ -53,6 +60,7 @@ static void addCircle(float x, float z, float r) { cols.push_back({x, z, r}); }
 static void addLocal(float cx, float cz, float ry, float lx, float lz, float r, float s = 1) { float c = std::cos(ry), sn = std::sin(ry); addCircle(cx + (lx * c + lz * sn) * s, cz + (-lx * sn + lz * c) * s, r * s); }
 static void addCollider(int k, float x, float z, float ry, float sx) {
   switch (k) {
+    case K_BIRCH: addCircle(x, z, 0.3f * sx); break; case K_CHERRY: addCircle(x, z, 0.4f * sx); break; case K_JUNGLE: addCircle(x, z, 0.9f * sx); break; case K_WILLOW: addCircle(x, z, 0.55f * sx); break; case K_PALM: addCircle(x, z, 0.25f * sx); break; case K_SPIRE: addCircle(x, z, 1.1f * sx); break;
     case K_PINE: addCircle(x, z, 0.5f * sx); break; case K_PINEY: addCircle(x, z, 0.3f * sx); break; case K_OAK: addCircle(x, z, 0.55f * sx); break; case K_DEAD: addCircle(x, z, 0.4f * sx); break;
     case K_BOULDER: addCircle(x, z, 1.0f * sx); break; case K_BIGROCK: addCircle(x, z, 0.85f * sx); break; case K_CAIRN: addCircle(x, z, 0.6f * sx); break; case K_WELL: addCircle(x, z, 1.0f * sx); break;
     case K_STALL: addLocal(x, z, ry, 0, 0, 0.8f); break; case K_BRAZIER: addCircle(x, z, 0.4f); break; case K_LAMP: addCircle(x, z, 0.22f); break; case K_POLE: case K_FLAGPOLE: addCircle(x, z, 0.4f); break;
@@ -142,7 +150,7 @@ static struct Circ { float x, z, r; } dummyC; static std::vector<Circ> placed;
 static void addLight(float x, float y, float z, float r, float g, float b, float range) { lights.push_back({x, y, z, r, g, b, range}); }
 static Obj* put(int kind, float x, float z, float ry, float s, float tr = 1, float tg = 1, float tb = 1, float yOff = 0, bool sink = false, float sy = 0) {
   Obj o; o.kind = (uint8_t)kind; o.x = x; o.z = z; o.y = height(x, z) + yOff - (sink ? 0.25f : 0.f); o.ry = ry; o.sx = s; o.sz = s; o.sy = sy > 0 ? sy : s; o.r = (uint8_t)clampf(tr * 128.f, 0, 255); o.g = (uint8_t)clampf(tg * 128.f, 0, 255); o.b = (uint8_t)clampf(tb * 128.f, 0, 255); o.sway = 0;
-  if (kind == K_PINE || kind == K_PINEY || kind == K_OAK || kind == K_BUSH) o.sway = 1; objs.push_back(o); addCollider(kind, x, z, ry, s);
+  if (kind == K_PINE || kind == K_PINEY || kind == K_OAK || kind == K_BUSH || (kind >= K_BIRCH && kind <= K_REEDS) || kind == K_FBUSH) o.sway = 1; objs.push_back(o); addCollider(kind, x, z, ry, s);
   if (kind == K_LAMP) addLight(x, o.y + 2.3f, z, 1.0f, 0.62f, 0.30f, 20.f); else if (kind == K_BRAZIER) addLight(x, o.y + 1.2f, z, 1.4f, 0.65f, 0.25f, 24.f); else if (kind == K_CAMP) addLight(x, o.y + 0.9f, z, 1.3f, 0.6f, 0.25f, 22.f); else if (kind == K_TORCH) addLight(x, o.y + 0.8f, z, 0.9f, 0.5f, 0.2f, 12.f);
   return &objs.back();
 }
@@ -306,6 +314,20 @@ static void connect() {
     for (size_t i = 1; i < r.pts.size(); i++) { int nn = nationAt(r.pts[i].x, r.pts[i].z); if (nn != na) { float dx = r.pts[i].x - r.pts[i - 1].x, dz = r.pts[i].z - r.pts[i - 1].z, L = std::sqrt(dx * dx + dz * dz) + 1e-4f; if (inWater(r.pts[i].x, r.pts[i].z)) break;
         Settle s; s.type = ST_BORDER; s.nation = na; s.poi = nn; s.x = r.pts[i].x; s.z = r.pts[i].z; s.y = height(s.x, s.z); s.r = 36.f; s.gateX = dx / L; s.gateZ = dz / L; snprintf(s.name, 28, "%s-%s Border", nations[na].name, nations[nn].name); s.poi = nn; settles.push_back(s); break; } } }
 }
+static void biomeTree(float x, float z, float zc, float zj) {
+  float pr = rng(), s = 0.8f + rng() * 0.6f; float ry = rng() * TAU;
+  if (zj > zc) {
+    if (pr < 0.46f) put(K_JUNGLE, x, z, ry, s, 0.9f + rng() * 0.25f, 0.95f + rng() * 0.2f, 0.9f + rng() * 0.2f, 0, true, s * (0.9f + rng() * 0.5f));
+    else if (pr < 0.74f) put(K_FERN, x, z, ry, 0.9f + rng() * 0.9f, 0.9f + rng() * 0.3f, 1.f, 0.9f, 0, false);
+    else if (pr < 0.88f) put(K_FBUSH, x, z, ry, 0.9f + rng() * 0.7f, 1.f + rng() * 0.6f, 0.8f + rng() * 0.5f, 0.6f + rng() * 0.8f, 0, true);
+    else put(K_PALM, x, z, ry, 0.9f + rng() * 0.4f, 1, 1, 1, 0, true, 0.95f + rng() * 0.5f);
+  } else {
+    if (pr < 0.60f) put(K_CHERRY, x, z, ry, s, 0.95f + rng() * 0.25f, 0.88f + rng() * 0.2f, 0.95f + rng() * 0.25f, 0, true, s * (0.9f + rng() * 0.35f));
+    else if (pr < 0.76f) put(K_FBUSH, x, z, ry, 0.9f + rng() * 0.6f, 1.2f, 0.9f, 1.1f, 0, true);
+    else if (pr < 0.90f) put(K_BIRCH, x, z, ry, 0.8f + rng() * 0.5f, 1, 1, 1, 0, true, 0.9f + rng() * 0.4f);
+    else put(K_OAK, x, z, ry, 0.8f + rng() * 0.6f, 1.8f, 0.85f, 1.1f, 0, true);
+  }
+}
 void generate(uint32_t seed) {
   if (done) return; done = true; SEED = seed; rng = Rng(seed * 9301u + 7u);
   Hh.assign(GS * GS, 0); Wl.assign(GS * GS, -1e9f); flowX.assign(GS * GS, 0); flowZ.assign(GS * GS, 0); roadD.assign(GS * GS, 99.f); gradeW.assign(GS * GS, 0); gradeY.assign(GS * GS, 0); fieldK.assign(GS * GS, 0); fieldA.assign(GS * GS, 0);
@@ -342,7 +364,9 @@ void generate(uint32_t seed) {
     float sl = slopeAt(x, z); float fm = forestMask(x, z, h); float q = fb(x * 0.0022f + 50, z * 0.0022f, 3, SEED + 41); float r1 = rng();
     if (sl > 0.95f) { if (r1 < 0.2f && h > 25) { float s = 3.f + rng() * 5.f; Obj* o = put(K_BIGROCK, x, z, rng() * TAU, s, 0.8f + rng() * 0.4f, 0.8f + rng() * 0.35f, 0.8f + rng() * 0.3f, -s * 0.15f); o->sy = s * (0.8f + rng() * 0.8f); } continue; }
     if (sl > 0.55f && h > 20 && r1 < 0.05f) { float s = 2.f + rng() * 6.f; Obj* o = put(K_BIGROCK, x, z, rng() * TAU, s, 0.8f + rng() * 0.4f, 0.8f + rng() * 0.3f, 0.8f + rng() * 0.3f, -s * 0.2f); o->sy = s * (0.7f + rng() * 0.7f); continue; }
-    if (r1 < fm * 0.62f && sl < 0.8f) {
+    float zc0, zj0, zb0, za0; zones(x, z, h, zc0, zj0, zb0, za0);
+    if (r1 < fm * 0.62f && sl < 0.8f && h < 52.f && (zc0 > 0.5f || zj0 > 0.5f)) biomeTree(x, z, zc0, zj0);
+    else if (r1 < fm * 0.62f && sl < 0.8f) {
       float pr = rng(); bool high = h > 52.f || q > 0.64f;
       if (high) { if (h > 98.f && pr < 0.5f) continue; if (pr < 0.07f) put(K_DEAD, x, z, rng() * TAU, 0.9f + rng() * 0.6f, 0.9f, 0.9f, 0.9f, 0, true); else if (pr < 0.35f) put(K_PINEY, x, z, rng() * TAU, 0.8f + rng() * 0.8f, 0.85f + rng() * 0.25f, 0.9f + rng() * 0.25f, 0.85f, 0, true); else put(K_PINE, x, z, rng() * TAU, 0.75f + rng() * 0.85f, 0.85f + rng() * 0.3f, 0.9f + rng() * 0.25f, 0.85f + rng() * 0.15f, 0, true); }
       else if (q < 0.30f) { if (pr < 0.8f) put(K_OAK, x, z, rng() * TAU, 0.8f + rng() * 0.7f, 1.7f + rng() * 0.5f, 0.85f + rng() * 0.25f, 1.15f + rng() * 0.3f, 0, true); else put(K_PINEY, x, z, rng() * TAU, 0.8f + rng() * 0.5f, 1, 1, 1, 0, true); }
@@ -350,6 +374,24 @@ void generate(uint32_t seed) {
       else { if (pr < 0.5f) put(K_OAK, x, z, rng() * TAU, 0.8f + rng() * 0.7f, 0.85f + rng() * 0.35f, 1.0f + rng() * 0.25f, 0.8f + rng() * 0.25f, 0, true); else if (pr < 0.82f) put(K_PINE, x, z, rng() * TAU, 0.75f + rng() * 0.8f, 0.9f + rng() * 0.2f, 0.95f + rng() * 0.2f, 0.9f, 0, true); else put(K_PINEY, x, z, rng() * TAU, 0.8f + rng() * 0.6f, 1, 1.05f, 0.9f, 0, true); }
     } else if (r1 < fm * 0.62f + 0.03f && sl < 0.6f) { if (rng() < 0.7f) put(K_BUSH, x, z, rng() * TAU, 0.9f + rng() * 0.8f, q < 0.3f ? 1.6f : 0.9f + rng() * 0.3f, q < 0.3f ? 0.9f : 1.f, q < 0.3f ? 1.3f : 0.85f, 0, true); else put(rng() < 0.5f ? K_BOULDER : K_THORN, x, z, rng() * TAU, 0.8f + rng() * 1.6f, 0.9f, 0.9f, 0.9f, 0, true); }
     else if (r1 > 0.995f) { int w = (int)(rng() * 3); put(w == 0 ? K_BOULDER : w == 1 ? K_LOG : K_CAIRN, x, z, rng() * TAU, 0.9f + rng() * 1.3f, 1, 1, 1, 0, true); }
+  }
+  // v1.9 flora II: shore reeds + lily pads, willows, palms, birch groves, ferns + mushrooms, flowering shrubs, mountain spires
+  for (float gz = -HALF + 8; gz < HALF - 8; gz += 3.4f) for (float gx = -HALF + 8; gx < HALF - 8; gx += 3.4f) {
+    float x = gx + (rng() - 0.5f) * 3.2f, z = gz + (rng() - 0.5f) * 3.2f; int gi = ci(cellOf(z), 0, GS - 1) * GS + ci(cellOf(x), 0, GS - 1); float h = Hh[gi], lvl = Wl[gi], r = rng();
+    if (lvl > -1e8f) { float depth = lvl - h; float fl = std::fabs(flowX[gi]) + std::fabs(flowZ[gi]);
+      if (depth > 0.05f && depth < 0.6f && r < 0.14f) put(K_REEDS, x, z, rng() * TAU, 0.8f + rng() * 0.7f, 0.9f + rng() * 0.2f, 1.f, 0.9f, 0, false, 0.8f + rng() * 0.8f);
+      else if (depth > 0.35f && depth < 1.7f && fl < 0.08f && r > 0.955f) { Obj* o = put(K_LILY, x, z, rng() * TAU, 0.8f + rng() * 0.6f, 1, 1, 1, 0, false); o->y = lvl + 0.02f; }
+      continue; }
+    if (h < 1.5f || r > 0.2f) continue; if (roadDist(x, z) < 5.f || settleNear(x, z, 10) >= 0) continue;
+    float sl = slopeAt(x, z); float zc, zj, zb, za; zones(x, z, h, zc, zj, zb, za); float fm = forestMask(x, z, h); float rr = rng();
+    if (sl > 0.65f && sl < 1.5f && h > 30.f) { if (rr < 0.06f) { float s = 3.f + rng() * 4.f; Obj* o = put(K_SPIRE, x, z, rng() * TAU, s, 0.85f + rng() * 0.3f, 0.85f + rng() * 0.25f, 0.85f + rng() * 0.25f, -s * 0.25f); o->sy = s * (1.2f + rng() * 1.4f); } continue; }
+    if (sl > 0.7f) continue;
+    if (h < 40.f && rr < 0.30f && wetNear(x, z, 6.f)) put(K_WILLOW, x, z, rng() * TAU, 0.9f + rng() * 0.6f, 0.95f + rng() * 0.2f, 1.f, 0.95f, 0, true, 0.9f + rng() * 0.4f);
+    else if (h < 3.6f && sl < 0.3f && rr < 0.30f) put(K_PALM, x, z, rng() * TAU, 0.9f + rng() * 0.4f, 1, 1, 1, 0, true, 0.9f + rng() * 0.6f);
+    else if (zb > 0.35f && rr < 0.55f * zb) put(K_BIRCH, x, z, rng() * TAU, 0.8f + rng() * 0.6f, 0.95f + rng() * 0.15f, 1.f, 0.95f, 0, true, 0.9f + rng() * 0.5f);
+    else if (fm > 0.45f && rr < 0.26f) put(K_FERN, x, z, rng() * TAU, 0.7f + rng() * 0.9f, 0.9f + rng() * 0.3f, 1.f, 0.9f, 0, false);
+    else if (fm > 0.55f && rr < 0.32f) put(K_MUSHROOM, x, z, rng() * TAU, 0.7f + rng() * 0.8f, 1, 1, 1, 0, false);
+    else if (fm < 0.3f && rr < 0.04f && h < 60.f) { int c = (int)(rng() * 4); put(K_FBUSH, x, z, rng() * TAU, 0.8f + rng() * 0.6f, c == 0 ? 1.5f : c == 1 ? 1.1f : 0.9f, c == 0 ? 0.8f : c == 1 ? 1.3f : 1.f, c == 2 ? 1.4f : 0.8f, 0, true); }
   }
   // roadside: signposts + lamps at crossings; sign at each gate point
   for (size_t i = 0; i < settles.size(); i++) { const Settle& s = settles[i]; if (s.type > ST_FORT) continue; float gx, gz; gatePoint(s, gx, gz); put(K_SIGN, gx + s.gateZ * 4.f, gz - s.gateX * 4.f, std::atan2(s.gateX, s.gateZ), 1.2f); }
@@ -364,6 +406,7 @@ void generate(uint32_t seed) {
       float n1 = fb(x * 0.02f, z * 0.02f, 3, SEED + 21), n2 = fb(x * 0.2f, z * 0.2f, 2, SEED + 22), n3 = fb(x * 0.006f, z * 0.006f, 2, SEED + 23); float fm = forestMask(x, z, h); float q = fb(x * 0.0022f + 50, z * 0.0022f, 3, SEED + 41);
       V3 meadow = mix3(V3{0.24f, 0.42f, 0.13f}, V3{0.42f, 0.50f, 0.17f}, n1); if (q < 0.30f && fm > 0.3f) meadow = mix3(meadow, V3{0.50f, 0.58f, 0.30f}, 0.4f); V3 col = mix3(meadow, V3{0.16f, 0.27f, 0.10f}, fm * 0.75f); float grass = 1.f - 0.4f * fm;
       float alp = smooth(45.f, 88.f, h + (n1 - 0.5f) * 24.f); col = mix3(col, V3{0.40f, 0.45f, 0.28f}, alp * 0.75f);
+      { float zc, zj, zb, za; zones(x, z, h, zc, zj, zb, za); col = mix3(col, V3{0.13f, 0.40f, 0.09f}, zj * 0.75f); col = mix3(col, V3{0.46f, 0.52f, 0.30f}, zc * 0.35f); if (n2 > 0.58f) col = mix3(col, V3{0.82f, 0.60f, 0.66f}, zc * 0.4f * smooth(0.58f, 0.7f, n2)); col = mix3(col, V3{0.46f, 0.56f, 0.22f}, zb * 0.35f); col = mix3(col, V3{0.58f, 0.42f, 0.16f}, za * 0.28f * fm); }
       float rk = smooth(0.50f, 0.92f, sl + (n2 - 0.5f) * 0.28f); V3 rock = mix3(V3{0.34f, 0.31f, 0.28f}, V3{0.50f, 0.47f, 0.42f}, n2); col = mix3(col, rock, rk); grass *= 1.f - rk;
       float sn = smooth(104.f, 128.f, h + (n1 - 0.5f) * 34.f - sl * 20.f); col = mix3(col, V3{0.92f, 0.94f, 0.97f}, sn); grass *= 1.f - sn;
       float wl = wb[id]; float dw = wl > -1e8f ? h - wl : 9.f; float sand = smooth(1.9f, 0.1f, dw) * (1.f - sn); if (h < 3.4f && h > -1) sand = std::max(sand, smooth(3.4f, 1.f, h) * 0.9f); col = mix3(col, mix3(V3{0.78f, 0.70f, 0.48f}, V3{0.70f, 0.62f, 0.42f}, n2), sand); grass *= 1.f - sand;

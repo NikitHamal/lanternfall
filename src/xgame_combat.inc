@@ -6,6 +6,7 @@ struct Bow { int weapon = 0, arrows = 30; float draw = 0, rel = -1, regen = 0, z
 int gold = 0; float bounty[3] = {0, 0, 0}; bool dbgDrawHold = false; int dbgWalk = 0; int dbgShoot = -1, dbgFrames = 0;
 struct DmgTxt { float x = 0, y = 0, z = 0, t = -1; int val = 0, zone = 0; bool kill = false; uint32_t col = 0xffffff; char txt[20] = {0}; } DT[12]; int huntCount = 0; int dtNext = 0;
 struct Arr { bool on = false, stuck = false; V3 p, v, dir, off; float life = 0, dmg = 0; int npc = -1; } ARR[40];
+bool faunaArrow(Arr& a, V3 p0, V3 p1); bool faunaMelee(float dmg, float reach, float ox, float oy, float oz, float fx, float fz);
 struct Cell { bool in = false; int idx = 0, stage = 0, want = 0, house = -1; float ox = 0, oz = 0, fade = 0; } CI;
 struct Enter { float x, y, z, ry, R; int kind, idx; }; std::vector<Enter> enters; std::vector<uint8_t> looted;
 inline float gH(float x, float z) { return CI.in ? xi::BASEY : height(x, z); }
@@ -82,6 +83,7 @@ void playerHit() {
   for (int i = 0; i < MAXN; i++) { Npc& n = npcs[i]; if (!n.used || !n.alive) continue; float dx = n.x - P.x, dz = n.z - P.z, d = std::sqrt(dx * dx + dz * dz); if (d > reach + n.sc * 0.6f || (dx * fx + dz * fz) / (d + 1e-4f) < 0.15f) continue;
     bool got = false; int zone = Z_TORSO; for (int k = -2; k <= 2 && !got; k++) { float yw = P.face + k * 0.24f; V3 dir{std::sin(yw) * std::cos(pit), std::sin(pit), std::cos(yw) * std::cos(pit)}; float s; int z; if (hitNpc(n, org, org + dir * (reach + 0.7f), 0.1f, s, z)) { got = true; zone = z; } }
     if (!got) { got = true; zone = Z_TORSO; } hurtNpc(n, dmg, P.x, P.z, true, zone); hit = true; }
+  if (faunaMelee(dmg, reach, P.x, P.y + 1.0f * psc, P.z, fx, fz)) hit = true;
   if (hit) audio::play(S_HITMETAL, 0, 0.7f);
   else if (!CI.in) {
     float hx = P.x + fx * 1.6f, hz = P.z + fz * 1.6f;
@@ -117,6 +119,7 @@ void arrowsUpdate(float dt) {
     for (int s = 0; s < 2 && !a.stuck; s++) { float h = dt * 0.5f; V3 p0 = a.p; a.v.y -= 12.f * h; V3 p1 = p0 + a.v * h; if (len(a.v) > 0.1f) a.dir = norm(a.v);
       float bs = 2.f; int bi = -1, bz = 0; for (int i = 0; i < MAXN; i++) { Npc& n = npcs[i]; if (!n.used || !n.alive) continue; if (std::fabs(n.x - p1.x) > 7.f || std::fabs(n.z - p1.z) > 7.f) continue; float sp; int z; if (hitNpc(n, p0, p1, 0.02f, sp, z) && sp < bs) { bs = sp; bi = i; bz = z; } }
       if (bi >= 0) { V3 hp = p0 + (p1 - p0) * bs; Npc& n = npcs[bi]; a.stuck = true; a.npc = bi; a.off = hp - V3{n.x, n.y, n.z}; a.p = hp; a.life = 14.f; audio::play(S_ARROWHIT, 0, 0.7f); hurtNpc(n, a.dmg, n.x - a.v.x, n.z - a.v.z, true, bz); a.v = V3{}; break; }
+      if (faunaArrow(a, p0, p1)) break;
       float g = gH(p1.x, p1.z); bool wall = false; if (CI.in) { const xi::Def& d = xi::DEFS[CI.idx]; wall = std::fabs(p1.x - d.cx) > d.hx - 0.1f || std::fabs(p1.z - d.cz) > d.hz - 0.1f || p1.y > xi::BASEY + d.h - 0.1f; for (int i = 0; i < d.nc && !wall; i++) { float dx = p1.x - (d.cx + d.c[i].x), dz = p1.z - (d.cz + d.c[i].z); if (dx * dx + dz * dz < d.c[i].r * d.c[i].r * 0.5f && p1.y < xi::BASEY + 1.1f) wall = true; } }
       else if (p1.y < g + 8.f) { float cx = p1.x, cz = p1.z; if (collide(cx, cz, 0.05f)) wall = true; }
       if (p1.y < g || wall) { a.stuck = true; a.npc = -1; a.p = wall ? p0 : V3{p1.x, std::max(g - 0.05f, p1.y), p1.z}; a.life = 26.f; audio::play(S_ARROWHIT, 0, 0.35f); a.v = V3{}; break; }
