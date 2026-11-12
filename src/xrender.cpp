@@ -75,9 +75,36 @@ void main(){
   float hx = texture(uHeight, uv+vec2(eu,0.)).r - texture(uHeight, uv-vec2(eu,0.)).r, hz = texture(uHeight, uv+vec2(0.,eu)).r - texture(uHeight, uv-vec2(0.,eu)).r;
   vec3 N = normalize(vec3(-hx, 2.*e, -hz)); vec3 col = A.rgb*A.rgb; float d = length(vWp - uCam);
   float n1 = vn2(vWp.xz*.35), n2 = vn2(vWp.xz*1.7), n3 = vn2(vWp.xz*7.); float det = (.8 + .4*n1) * (.9 + .2*n2) * (.93 + .14*n3); det = mix(det, 1., smoothstep(90., 420., d)); col *= det;
-  float slope = 1. - N.y; float strata = .5 + .5*sin(vWp.y*2.6 + n1*5.); col *= 1. - .16*strata*smoothstep(.35,.7,slope);
+  float slope = 1. - N.y; float lum = dot(col, vec3(.3,.55,.15));
+  float snowK = smoothstep(.62, .86, lum + .06*(n1-.5));
+  float rockK = smoothstep(.16, .42, slope) * (1. - snowK);
+  float near = 1. - smoothstep(70., 380., d);
+  // macro colour life on grass: warm/cool patches, slightly calmer saturation
+  float gk = clamp(A.a*1.4, 0., 1.) * (1. - rockK) * (1. - snowK);
+  float pm = vn2(vWp.xz*.012 + 9.), pm2 = vn2(vWp.xz*.045 + 3.);
+  col = mix(col, col*vec3(1.16,1.04,.68), gk*smoothstep(.45,.85,pm)*.55);
+  col = mix(col, col*vec3(.78,.98,.9), gk*smoothstep(.55,.2,pm2)*.35);
+  col = mix(vec3(dot(col, vec3(.33))), col, mix(1., .9, gk));
+  // cliff faces: warm/cool strata, vertical cracks, lichen & moss
+  float wob = vn2(vWp.xz*.05)*3.;
+  float band = .5 + .5*sin(vWp.y*1.55 + wob*2. + n2*1.4), band2 = .5 + .5*sin(vWp.y*5.3 + wob*3.);
+  vec3 tint = mix(vec3(.84,.9,1.02), vec3(1.14,1.0,.8), band);
+  float cr = abs(vn2(vec2(vWp.x + vWp.z, vWp.y*1.35)*1.7 + 4.) - .5)*2.; cr = smoothstep(0., .16, cr);
+  float rk3 = vn(vWp*vec3(2.4,3.2,2.4)), rk4 = vn(vWp*vec3(9.,11.,9.));
+  vec3 rcol = col * tint * (.62 + .5*rk3) * mix(.62, 1., cr) * (.9 + .2*band2);
+  float moss = smoothstep(.48,.7, vn2(vWp.xz*.9+vWp.y*.35)) * smoothstep(.2,.8,N.y);
+  rcol = mix(rcol, vec3(.16,.26,.09)*(.7+.6*rk4), moss*.55*near);
+  col = mix(col, rcol, rockK);
+  // snow: soft blue shade, sparkle
+  vec3 sn = vec3(.93,.96,1.04) * (.9 + .1*vn2(vWp.xz*2.5));
+  col = mix(col, sn, snowK);
+  float h = rockK * (rk3*.55 + rk4*.12 + (1.-cr)*-.10 + n2*.2) + snowK*n3*.03;
+  N = bump(N, vWp, h, .9*near);
   if (B.a > .1) { float ang = B.b*3.14159; float st = .5 + .5*sin(dot(vWp.xz, vec2(cos(ang), sin(ang)))*5.9); col *= .78 + .36*st; }
-  col *= 1. - .28*B.g; float sh = shadowAt(vWp, N); vec3 c = shade(col, .96, 0., N, vWp, sh); oC = vec4(c, 1.); }
+  col *= 1. - .28*B.g; float sh = shadowAt(vWp, N);
+  vec3 c = shade(col, mix(.96, .7, snowK), 0., N, vWp, sh);
+  float sp = step(.992, hsh(floor(vWp*vec3(34.,34.,34.)))); c += snowK*sp*sh*uMoonCol*1.1*near;
+  oC = vec4(c, 1.); }
 )GLSL";
 const char* SKY_VS = R"GLSL(
 uniform mat4 uInvVP; uniform vec3 uCam; out vec3 vDir;

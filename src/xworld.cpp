@@ -98,7 +98,7 @@ static float baseH(float x, float z) {
   float wx = x + (fb(x * 0.004f, z * 0.004f, 2, SEED + 91) - 0.5f) * 160.f, wz = z + (fb(x * 0.004f + 5, z * 0.004f, 2, SEED + 92) - 0.5f) * 160.f;
   float mt = std::max({smooth(-0.18f, -0.62f, nz + 0.12f * std::sin(nx * 3.1f)), blob(nx, nz, 0.64f, -0.08f, 0.34f) * 0.95f, blob(nx, nz, -0.74f, -0.32f, 0.26f) * 0.8f, blob(nx, nz, 0.18f, -0.30f, 0.20f) * 0.55f, blob(nx, nz, 0.78f, 0.52f, 0.2f) * 0.5f});
   float rid = ridge(wx * 0.0046f, wz * 0.0046f, 5, SEED + 3); float roll = (fb(x * 0.0034f, z * 0.0034f, 4, SEED + 5) - 0.5f) * 26.f + (fb(x * 0.016f, z * 0.016f, 3, SEED + 6) - 0.5f) * 4.f;
-  float h = 7.f + roll * (1.f - mt * 0.4f) + mt * (30.f + 125.f * rid * (0.5f + 0.5f * mt));
+  float h = 7.f + roll * (1.f - mt * 0.4f) + mt * (34.f + 165.f * rid * (0.5f + 0.5f * mt));
   float gulf = blob(nx, nz, -0.64f, 0.62f, 0.42f); h = lerpf(h, -10.f, smooth(0.05f, 0.7f, gulf));
   float sea = std::max(gulf, 1.f - land); float floorH = lerpf(2.6f, -14.f, smooth(0.1f, 0.9f, sea)); h = std::max(h, floorH);
   return lerpf(-14.f, h, smooth(0.f, 1.f, land));
@@ -384,7 +384,7 @@ void generate(uint32_t seed) {
       continue; }
     if (h < 1.5f || r > 0.2f) continue; if (roadDist(x, z) < 5.f || settleNear(x, z, 10) >= 0) continue;
     float sl = slopeAt(x, z); float zc, zj, zb, za; zones(x, z, h, zc, zj, zb, za); float fm = forestMask(x, z, h); float rr = rng();
-    if (sl > 0.65f && sl < 1.5f && h > 30.f) { if (rr < 0.06f) { float s = 3.f + rng() * 4.f; Obj* o = put(K_SPIRE, x, z, rng() * TAU, s, 0.85f + rng() * 0.3f, 0.85f + rng() * 0.25f, 0.85f + rng() * 0.25f, -s * 0.25f); o->sy = s * (1.2f + rng() * 1.4f); } continue; }
+    if (sl > 0.65f && sl < 1.5f && h > 30.f) { if (rr < 0.06f) { float s = 3.f + rng() * 4.f; Obj* o = put(K_SPIRE, x, z, rng() * TAU, s, 0.85f + rng() * 0.3f, 0.85f + rng() * 0.25f, 0.85f + rng() * 0.25f, -s * 0.25f); o->sy = s * (0.55f + rng() * 0.6f); o->sx = o->sx * 1.5f; } continue; }
     if (sl > 0.7f) continue;
     if (h < 40.f && rr < 0.30f && wetNear(x, z, 6.f)) put(K_WILLOW, x, z, rng() * TAU, 0.9f + rng() * 0.6f, 0.95f + rng() * 0.2f, 1.f, 0.95f, 0, true, 0.9f + rng() * 0.4f);
     else if (h < 3.6f && sl < 0.3f && rr < 0.30f) put(K_PALM, x, z, rng() * TAU, 0.9f + rng() * 0.4f, 1, 1, 1, 0, true, 0.9f + rng() * 0.6f);

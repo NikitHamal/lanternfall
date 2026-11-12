@@ -422,7 +422,17 @@ void main(){
   float dz = (rp.y/uDisH)*.72 + n3(rp*17.)*.28;
   if (uDissolve > 0.) { float th = uDissolve*1.06; if (dz < th) discard; em += uDisCol * smoothstep(.07, 0., dz-th) * 7.; }
   float mudK = 1.;
-  if (ty < .5) { col *= .82 + .36*big; h = fine*.0006; }
+  float fol = 0.;
+  if (ty < .5) { col *= .82 + .36*big; h = fine*.0006;
+    float gdom = (vCol.g - max(vCol.r, vCol.b)) / max(vCol.g, .02), pdom = (min(vCol.r, vCol.b) - vCol.g) / max(vCol.r, .02);
+    fol = max(smoothstep(.04, .22, gdom), smoothstep(.12, .35, pdom));
+    if (fol > 0.) {
+      float cl = fb3(rp*3.1 + 1.3), lf = n3(rp*31.), lf2 = n3(rp*67. + 5.), lf3 = n3(rp*13. + 9.);
+      float fc = (.5 + .85*cl) * (.7 + .55*lf) * (.85 + .3*lf3);
+      vec3 fcol = col * fc; fcol = mix(fcol, fcol*vec3(1.28,1.18,.72), smoothstep(.58,.92,lf2)*.55);
+      fcol = mix(fcol, fcol*vec3(.7,.85,.7), smoothstep(.55,.2,cl)*.5);
+      col = mix(col, fcol, fol); h = mix(h, lf*.028 + lf2*.01 + lf3*.04, fol); rough = mix(rough, .66, fol);
+    } }
   else if (ty < 1.5) {
     float f = smoothstep(.0016,.0006,px); float w = sin(uv.x*1570.)*sin(uv.y*1570.);
     float fold = n3(rp*vec3(26.,5.,26.));
@@ -479,6 +489,7 @@ void main(){
     vec3 r1 = cross(dp2, N), r2 = cross(N, dp1); float det = dot(dp1, r1);
     if (abs(det) > 1e-12) { vec3 gr = sign(det) * (dhx*r1 + dhy*r2); N = normalize(abs(det)*N - clamp(gr, -abs(det)*2.5, abs(det)*2.5)); } }
   float sh = shadowAt(vWp, N); vec3 c = shade(col, rough, metal, N, vWp, sh) + em;
+  if (fol > 0.) c += col * uMoonCol * fol * .5 * pow(max(dot(-N, uMoonDir), 0.), 1.4) * sh * (.5 + .5*vAO);
   oC = vec4(c, 1.); }
 )GLSL";
 bool figLoad(FigAsset& a, const char* key) { a = FigAsset(); if (!loadFig(a, key)) { free(a.clipMem); a = FigAsset(); return false; } return true; }

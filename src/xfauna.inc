@@ -130,7 +130,7 @@ void faunaUpdate(float dt) {
   else for (Bfly& b : BF) b.on = false;
   // falling petals / leaves around the camera
   for (Petal& p : PT) { if (p.on) { p.ph += dt; p.y -= p.fall * dt; p.x += (std::sin(p.ph * 0.9f) * 0.5f + 0.45f) * dt; p.z += (std::cos(p.ph * 0.7f) * 0.45f + 0.2f) * dt; if (p.y < height(p.x, p.z) + 0.04f || dist2(p.x, p.z, P.x, P.z) > 30.f * 30.f) p.on = false; }
-    if (!p.on) { float a = fr01() * TAU, r = 2.f + fr01() * 26.f; float x = P.x + std::cos(a) * r, z = P.z + std::sin(a) * r; if (std::fabs(x) > HALF - 8 || std::fabs(z) > HALF - 8) continue; float h = height(x, z); if (h < 1.f || h > 80.f) continue;
+    if (!p.on) { float a = fr01() * TAU, r = 4.5f + fr01() * 24.f; float x = P.x + std::cos(a) * r, z = P.z + std::sin(a) * r; if (std::fabs(x) > HALF - 8 || std::fabs(z) > HALF - 8) continue; float h = height(x, z); if (h < 1.f || h > 80.f) continue;
       float zc, zj, zb, za; zones(x, z, h, zc, zj, zb, za); float fm = forestAt(x, z); float q = fr01(); p.sz = 1.f;
       if (zc > 0.3f && fm > 0.25f && q < 0.9f) tintHex(p.tint, q < 0.45f ? 0xf6b4cc : q < 0.75f ? 0xfbd2e0 : 0xee8fb4, 1.1f);
       else if (za > 0.4f && fm > 0.3f && q < 0.6f) { tintHex(p.tint, q < 0.2f ? 0xd8742a : q < 0.4f ? 0xc8402a : 0xe0a030); p.sz = 1.3f; }

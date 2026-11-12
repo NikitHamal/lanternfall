@@ -55,7 +55,7 @@ void buildFlora(int kind, MB& b) {
     case xw::K_LILY: { Sty pad = sty(0x2f7a3a, 0, 0.8f, 1.f), pad2 = sty(0x3f8e44, 0, 0.8f, 1.f), pk = sty(0xf4b6cf, 1, 0.85f, 1.f), yl = sty(0xf2d24a, 1);
       const float px[3] = {0.f, 0.75f, -0.55f}, pz[3] = {0.f, 0.35f, 0.62f}, pr[3] = {0.55f, 0.42f, 0.38f}; for (int k = 0; k < 3; k++) cyl(b, px[k], 0.f, pz[k], pr[k], pr[k], 0.018f, 10, k % 2 ? pad2 : pad, nullptr, true);
       for (int k = 0; k < 8; k++) blade(b, {0.12f, 0.03f, 0.04f}, k * 0.785f, 0.24f, 0.11f, 0.85f, -0.4f, 2, pk); blob(b, 0.12f, 0.08f, 0.04f, 0.035f, 0.03f, 0.035f, 5, 2, yl, 61, 0.f); break; }
-    case xw::K_SPIRE: { Sty r1 = {C(0x7d776c), 8, 0.92f, 0, 0, 0.5f, 6.f}, r2 = {C(0x8d887b), 8, 0.92f, 0, 0, 0.55f, 14.f}, r3 = {C(0x6b655b), 8, 0.92f, 0, 0, 0.5f, 10.f};
+    case xw::K_SPIRE: { Sty r1 = {C(0x5c564d), 8, 0.92f, 0, 0, 0.5f, 6.f}, r2 = {C(0x6c655a), 8, 0.92f, 0, 0, 0.55f, 14.f}, r3 = {C(0x4a453e), 8, 0.92f, 0, 0, 0.5f, 10.f};
       cyl(b, 0, -1.f, 0, 1.9f, 1.25f, 5.6f, 5, r1, nullptr, true); cyl(b, 0.1f, 4.5f, 0.05f, 1.25f, 0.68f, 4.5f, 5, r2, nullptr, true); cyl(b, -0.05f, 9.0f, 0, 0.68f, 0.06f, 3.6f, 5, r3, nullptr, false);
       tube(b, {1.4f, -1.f, 0.3f}, {0.95f, 5.2f, 0.1f}, 0.85f, 0.2f, 5, r2); tube(b, {-1.3f, -1.f, -0.4f}, {-0.7f, 4.0f, -0.2f}, 0.8f, 0.18f, 5, r3); tube(b, {0.2f, -1.f, 1.5f}, {0.15f, 3.2f, 0.9f}, 0.7f, 0.15f, 5, r1); break; }
     case xw::K_FBUSH: { Sty lf = sty(0x3a6e2c, 0, 0.55f, 1.2f); blob(b, 0, 0.55f, 0, 0.98f, 0.62f, 0.98f, 9, 4, lf, 5, 0.25f);
@@ -70,7 +70,7 @@ void buildFauna(int kind, MB& b) {
   switch (kind) {
     case xw::K_FA_LEG: { Sty lg = {V3{1, 1, 1}, 1, 0.9f, 0, 0, 0.85f, 1.f}, hf = {C(0x2e2824), 1, 0.9f, 0, 0, 0.7f, 1.f}; tube(b, {0, 0, 0}, {0, -0.93f, 0}, 1.f, 0.72f, 6, lg); box(b, 0, -0.96f, 0.1f, 0.8f, 0.045f, 0.9f, hf); break; }
     case xw::K_FA_WING: { Sty w = {V3{1, 1, 1}, 1, 0.8f, 0, 0, 0.95f, 1.f}; quad2(b, {0, 0, 0.12f}, {0.5f, 0, 0.14f}, {0.5f, 0, -0.14f}, {0, 0, -0.12f}, w); quad2(b, {0.5f, 0, 0.14f}, {1.f, 0, 0.0f}, {1.f, 0, -0.22f}, {0.5f, 0, -0.14f}, w); break; }
-    case xw::K_PETAL: { Sty pt = {V3{1, 1, 1}, 1, 0.8f, 0, 0, 1.f, 1.f}; quad2(b, {-0.045f, 0, -0.07f}, {0.045f, 0, -0.07f}, {0.05f, 0.012f, 0.07f}, {-0.05f, 0.012f, 0.07f}, pt); break; }
+    case xw::K_PETAL: { Sty pt = {V3{1, 1, 1}, 1, 0.8f, 0, 0, 1.f, 1.f}; quad2(b, {-0.04f, 0, -0.06f}, {0.04f, 0, -0.06f}, {0.012f, 0.014f, 0.085f}, {-0.012f, 0.014f, 0.085f}, pt); quad2(b, {-0.012f, 0.014f, 0.085f}, {0.012f, 0.014f, 0.085f}, {0.0f, 0.02f, 0.11f}, {0.0f, 0.02f, 0.11f}, pt); break; }
     case xw::K_FA_DOG: { fur = sty(0xc4985c, 1, 0.75f, 1.f); dk = sty(0x5a3a22, 1, 0.8f, 1.f); lt = sty(0xe8d8b8, 1, 0.8f, 1.f); nose = sty(0x1a1412, 1);
       blob(b, 0, 0.55f, -0.02f, 0.16f, 0.17f, 0.36f, 8, 4, fur, 3, 0.08f); blob(b, 0, 0.57f, 0.2f, 0.18f, 0.2f, 0.2f, 7, 3, fur, 5, 0.08f); blob(b, 0, 0.45f, 0.02f, 0.1f, 0.07f, 0.28f, 6, 3, lt, 6, 0.05f);
       tube(b, {0, 0.64f, 0.3f}, {0, 0.76f, 0.46f}, 0.11f, 0.09f, 6, fur); blob(b, 0, 0.78f, 0.52f, 0.12f, 0.11f, 0.14f, 7, 4, fur, 7, 0.06f); box(b, 0, 0.74f, 0.68f, 0.05f, 0.045f, 0.08f, lt); box(b, 0, 0.765f, 0.77f, 0.026f, 0.02f, 0.016f, nose);
