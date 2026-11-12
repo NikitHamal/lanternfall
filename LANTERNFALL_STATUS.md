@@ -177,3 +177,7 @@ Shipped (new `src/xtown.inc`, hooks in xgame.cpp / xgame_combat.inc / xfauna.inc
 - Debug: `--xcmd talk|shop|talkquest|shopquestclose|savenow|census`.
 QA shots Read this session: t0 (baseline daylight gate), shop (merchant menu + quest accept), journal (tracker), night / night3 (dark wilderness, dusk at the capital), noon, s2 (save reload: journal persisted), shop2 (final compact merchant menu).
 Deferred: tavern / smithy interiors, residents asleep in beds when the player enters at night, quest map markers, merchant stock rotation, Blender rebuild of Polyfork assets, chunk streaming, castle upgrade tiers.
+
+## v2.2.0 - Athran-grade fantasy overhaul (this session) - IN PROGRESS
+Env: molab URL returned 410 at tool call 11 (notebook dead before use; no heartbeat started). Rebuilt user-space sysroot (apt-get download -> dpkg -x /tmp/agentA_sys, Xvfb byte-patched), local Release build + llvmpipe captures work (see /tmp/agentA_cap.sh pattern in v2.1 notes).
+Plan: fix double-bow on TPV, FPV bow/aim, rebuild locomotion (walk/run) feel, remove Duel/Steward dead code, then world/art pass (see docs/ROADMAP.md, docs/TODO.md).
