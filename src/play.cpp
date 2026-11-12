@@ -478,8 +478,8 @@ void camera(float dt) {
     tgt = eye + d * 20.f; fov = cfg::S.fov * (PI / 180.f) - 0.22f * dk - 0.06f * H.zoomK + (P.speed > 5.5f ? 0.04f * (cfg::S.reduceMotion ? 0.f : 1.f) : 0.f);
     float sh = H.shake * 0.01f * cfg::effShake(); eye.x += (R() - 0.5f) * sh; eye.y += (R() - 0.5f) * sh; eye.z += (R() - 0.5f) * sh;
   } else if (H.view == VW_THIRD) {
-    V3 r = rightOf(P.yaw), d = fwdOf(P.yaw + P.swayX + P.kickY, P.pitch + P.swayY + P.kickP); float aim = P.drawing ? dk : 0.f; float shoulder = lerpf(0.55f, 0.85f, aim) + (P.blocking > 0.5f ? 0.1f : 0.f); float D = lerpf(cam.dist, cam.dist * 0.62f, aim);
-    float ph = 1.55f - (P.rollT > 0 ? 0.5f * std::sin(std::min(1.f, P.rollT / ROLL_T) * PI) : 0.f) - (P.down ? 0.9f : 0.f); V3 piv{P.x + r.x * 0.1f, P.y + ph, P.z + r.z * 0.1f}; V3 des = piv + r * shoulder - d * D;
+    V3 r = rightOf(P.yaw), d = fwdOf(P.yaw + P.swayX + P.kickY, P.pitch + P.swayY + P.kickP); float aim = P.drawing ? dk : 0.f; const FigAsset* hf = roster::cur(); float hs = hf ? std::max(1.f, std::max(hf->scale, hf->height / 2.2f)) : 1.f; float shoulder = hs * lerpf(0.55f, 0.85f, aim) + (P.blocking > 0.5f ? 0.1f : 0.f); float D = lerpf(cam.dist, cam.dist * 0.62f, aim) * (1.f + (hs - 1.f) * 1.1f);
+    float ph = 1.55f * (1.f + (hs - 1.f) * 0.8f) - (P.rollT > 0 ? 0.5f * std::sin(std::min(1.f, P.rollT / ROLL_T) * PI) : 0.f) - (P.down ? 0.9f : 0.f); V3 piv{P.x + r.x * 0.1f, P.y + ph, P.z + r.z * 0.1f}; V3 des = piv + r * shoulder - d * D;
     if (!cam.init) cam.sm = des; float k = 1 - std::exp(-17 * dt); cam.sm = cam.sm + (des - cam.sm) * k;   // spring-damped follow
     V3 tp = piv + r * shoulder * 0.9f; V3 seg = cam.sm - tp; float L = len(seg); float t; V3 ps = piv + r * (shoulder * 0.9f);
     if (L > 0.01f && gfx::rayWorld(ps.x, ps.y, ps.z, cam.sm.x, cam.sm.y, cam.sm.z, t)) { float nl = std::max(0.35f, t * L - 0.3f); cam.sm = ps + seg * (nl / L); }
@@ -517,7 +517,7 @@ void spellGeo(const Arrow& a) {
   V3 c{a.x, a.y, a.z}, d = norm(V3{a.vx, a.vy, a.vz});
   switch (a.kind) {
     case 10: put(shW, shWn, SH_SPHERE, ball(c, 0.17f), C(0xff8a2a), 0.4f, 0, 7.f); put(shW, shWn, SH_SPHERE, ball(c - d * 0.24f, 0.11f), C(0xffc060), 0.4f, 0, 5.f); put(shW, shWn, SH_SPHERE, ball(c - d * 0.44f, 0.07f), C(0xff5a20), 0.4f, 0, 4.f); break;
-    case 11: { float r = 0.18f + 0.03f * a.rad; put(shW, shWn, SH_SPHERE, ball(c, r), C(0xffd070), 0.4f, 0, 9.f); put(shW, shWn, SH_SPHERE, ball(c, r * 1.55f), C(0xff5a18), 0.5f, 0, 4.f); put(shW, shWn, SH_SPHERE, ball(c - d * 0.5f, r * 0.8f), C(0xff7a28), 0.5f, 0, 4.f); break; }
+    case 11: { float r = 0.11f + 0.015f * a.rad; put(shW, shWn, SH_SPHERE, ball(c, r), C(0xffd070), 0.4f, 0, 6.f); put(shW, shWn, SH_SPHERE, ball(c, r * 1.4f), C(0xff5a18), 0.5f, 0, 3.f); put(shW, shWn, SH_SPHERE, ball(c - d * 0.5f, r * 0.8f), C(0xff7a28), 0.5f, 0, 4.f); break; }
     case 12: case 13: { float r = a.kind == 13 ? 0.16f : 0.11f; put(shW, shWn, SH_SPHERE, ball(c, r), C(0x7aff8a), 0.3f, 0, 3.f); wCyl(c + V3{0, r * 0.6f, 0}, c + V3{0, r * 1.7f, 0}, r * 0.35f, C(0x8a6a3a), 0.6f); break; }
     case 14: wCyl(c - d * 0.55f, c + d * 0.1f, 0.03f, C(0xbfe8ff), 0.3f, 0, 6.f); put(shW, shWn, SH_CONE, seg(c + d * 0.05f, c + d * 0.3f, 0.04f, 0.04f), C(0xe8f8ff), 0.3f, 0, 7.f); break;
     default: wCyl(c - d * 1.6f, c + d * 0.2f, 0.065f, C(0x9fdcff), 0.3f, 0, 7.f); wCyl(c - d * 1.2f, c + d * 0.3f, 0.025f, C(0xffffff), 0.3f, 0, 9.f); put(shW, shWn, SH_CONE, seg(c + d * 0.15f, c + d * 0.7f, 0.08f, 0.08f), C(0xe8f8ff), 0.3f, 0, 8.f);

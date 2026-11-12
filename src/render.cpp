@@ -237,7 +237,7 @@ void addWeapon(const FigAsset& rig, const FigAnim& an, bool left, int wp, const 
   FigDraw& w = fdraw[nfd++]; M4 m; figWeaponMat(rig, an, left, wp, um, time_, m); w.a = &gFW[wp]; w.model = m; w.mat = WID; w.dissolve = 0; w.disH = 1; w.glow = 1; w.shadow = true; w.dim = pl::P.down ? 0.55f : 1.f; w.lantern = true; w.vm = false; for (int k = 0; k < 3; k++) { w.flash[k] = fl[k]; w.disCol[k] = 0; }
 }
 static void addVm() {
-  const pl::VMW& v = pl::vmw; if (!v.on) return;
+  const pl::VMW& v = pl::vmw; if (!v.on) return; static bool inited2 = false; if (!inited2) { inited2 = true; for (int b = 0; b < FMAXB; b++) { float* o = WID + b * 12; for (int k = 0; k < 12; k++) o[k] = 0; o[0] = o[5] = o[10] = 1; } }
   for (int i = 0; i < 2; i++) { int wp = v.wp[i]; if (wp < 0 || wp >= NWEAP || !gFW[wp].ok || nfd >= 4 + MAXMON + 6) continue; FigDraw& w = fdraw[nfd++]; w.a = &gFW[wp]; w.model = v.m[i]; w.mat = WID; w.dissolve = 0; w.disH = 1; w.glow = 1; w.shadow = false; w.dim = 1; w.lantern = true; w.vm = true; for (int k = 0; k < 3; k++) { w.flash[k] = 0; w.disCol[k] = 0; } }
 }
 static V3 lanternPos(const Unit& c) {
