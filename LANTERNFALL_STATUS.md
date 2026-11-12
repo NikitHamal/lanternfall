@@ -162,3 +162,6 @@ Shipped:
 Deferred: in-engine QA of all of the above (first capture with a display env), NPC daily schedules, animal sounds per species, Blender rebuild of Polyfork assets (not done, procedural meshes used), grass / terrain shader overhaul, chunk streaming, castle upgrade tiers, persistent save.
 
 CI: tag run 43223972335 (commit 7167e44) - Windows/Linux/macOS + release all success; release v1.9.0 published with 3 assets (linux 10.1 MB, macOS 10.7 MB, windows 10.3 MB). Main-branch run 43223955305 also green; the previous main run 43223755068 (678b8f4) green.
+
+## v2.0.0 - Verdant Realm overhaul (this session) - IN PROGRESS
+Env: molab 410 again. Built a user-space sysroot instead: Debian bookworm debs (Xvfb, Mesa llvmpipe, X11 dev headers) downloaded from deb.debian.org and `dpkg -x`'d to /tmp/agentA_sys (no root), Xvfb binary patched so xkbcomp resolves (/usr/bin -> /tmp/xb). Local Release build + real in-engine Xvfb captures work (960x540 q1 ~40 s/shot on 2 cores).
