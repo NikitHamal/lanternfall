@@ -81,12 +81,12 @@ bool faunaMelee(float dmg, float reach, float ox, float oy, float oz, float fx, 
 }
 int faunaNear(float r) { int best = -1; float bd = r * r; for (int i = 0; i < nFA; i++) { const Fauna& f = FA[i]; if (!f.used || !f.alive) continue; float d = dist2(f.x, f.z, P.x, P.z); if (d < bd) { bd = d; best = i; } } return best; }
 void faunaPrompt() {
-  if (CI.in || K.mounted) return; int i = faunaNear(2.3f); if (i < 0) return; const Fauna& f = FA[i]; static const char* PR[SP_N] = {"E  BEFRIEND THE DOG", "E  PET THE CAT", "E  SHOO THE HEN", "E  PET THE SHEEP", "E  PET THE COW", "E  MOUNT THE HORSE"};
+  if (CI.in || K.mounted) return; int i = faunaNear(3.0f); if (i < 0) return; const Fauna& f = FA[i]; static const char* PR[SP_N] = {"E  BEFRIEND THE DOG", "E  PET THE CAT", "E  SHOO THE HEN", "E  PET THE SHEEP", "E  PET THE COW", "E  MOUNT THE HORSE"};
   snprintf(H.prompt, sizeof H.prompt, "%s", f.sp == SP_DOG && f.pet ? "E  PRAISE YOUR DOG" : PR[f.sp]);
 }
 bool faunaInteract() {
   if (CI.in || K.mounted) return false; for (const Npc& n : npcs) if (n.used && n.alive && n.role < R_MON && !n.interior && dist2(n.x, n.z, P.x, P.z) < 2.6f * 2.6f) return false;
-  int i = faunaNear(2.3f); if (i < 0) return false; Fauna& f = FA[i];
+  int i = faunaNear(3.0f); if (i < 0) return false; Fauna& f = FA[i];
   if (f.sp == SP_DOG) { if (!f.pet) { for (int k = 0; k < nFA; k++) FA[k].pet = false; f.pet = true; f.state = 0; banner("A NEW COMPANION", "YOUR DOG WILL FOLLOW YOU AND BITE MONSTERS", 3.5f); } else say("DOG", "Woof! Woof! (it wags its tail)"); }
   else if (f.sp == SP_CAT) say("CAT", "Mrrow. (purrs and rubs against your leg)"); else if (f.sp == SP_HEN) { say("HEN", "Bawk bawk BAWK!"); f.fleeT = 3.f; f.state = 2; }
   else if (f.sp == SP_SHEEP) say("SHEEP", "Baaaa."); else if (f.sp == SP_COW) say("COW", "Mooo."); else if (!P.swim && !P.fly) { rideH = true; K.mounted = true; for (int k = 0; k < 3; k++) { rideTint[k] = f.tint[k]; rideLeg[k] = f.ltint[k]; } rideX = f.x; rideZ = f.z; f.used = false; P.x = f.x; P.z = f.z; banner("MOUNTED", "K TO DISMOUNT - GALLOP, SHOOT, CAST", 2.6f); }
@@ -112,11 +112,14 @@ void faunaUpdate(float dt) {
       else if (pd > 3.4f) { float sp = pd > 9.f ? sd.run : pd > 5.f ? 3.4f : sd.walk * 1.4f; faunaStep(f, dt, sp, P.x, P.z, 7.f); spdNow = sp; moving = true; }
       else { f.face += clampf(angDiff(f.face, std::atan2(P.x - f.x, P.z - f.z)), -3.f * dt, 3.f * dt); }
     } else {
-      float threat = 0, ax = 0, az = 0; if (sd.flee > 0 && P.deadT <= 0) { float rr = sd.flee * (P.speed > 4.f ? 1.45f : 1.f) * (B.draw > 0 ? 1.3f : 1.f); if (f.sp == SP_COW) rr = P.speed > 3.5f ? rr : 2.2f; if (f.sp == SP_HORSE && P.speed < 1.5f) rr = 3.2f; if (pd < rr) { threat = 1; ax = f.x - P.x; az = f.z - P.z; } }
+      float threat = 0, ax = 0, az = 0; if (sd.flee > 0 && P.deadT <= 0) { float rr; { bool sprintNow = P.speed > 5.2f || K.mounted; bool armed = B.draw > 0 || P.atkT >= 0;   // calm animals: walk up to them, they only bolt if you charge, shoot or swing
+        if (armed) rr = sd.flee * 0.9f; else if (sprintNow) rr = sd.flee * 0.55f; else rr = (f.sp == SP_HEN ? 1.5f : f.sp == SP_CAT ? 1.4f : f.sp == SP_SHEEP ? 1.2f : 0.f); if (f.hp < f.maxHp * 0.99f) rr = std::max(rr, sd.flee); } if (pd < rr) { threat = 1; ax = f.x - P.x; az = f.z - P.z; } }
       if (!threat) for (int k = 0; k < nMonL; k++) { const Npc& m = npcs[monList[k]]; if (!m.alive || m.role != R_MON || m.interior) continue; float d = dist2(m.x, m.z, f.x, f.z); if (d < 14.f * 14.f) { threat = 1; ax = f.x - m.x; az = f.z - m.z; break; } }
       if (threat > 0 || f.fleeT > 0) { if (threat > 0) { f.fleeT = std::max(f.fleeT, 1.2f); float l = std::sqrt(ax * ax + az * az) + 1e-4f; f.tx = f.x + ax / l * 14.f + (fr01() - 0.5f) * 5.f; f.tz = f.z + az / l * 14.f + (fr01() - 0.5f) * 5.f; f.state = 2; } f.fleeT -= dt;
         float sp = sd.run * (f.hp < f.maxHp * 0.99f ? 0.9f : 1.f); if (!faunaStep(f, dt, sp, f.tx, f.tz, 8.f)) { f.tx = f.x + (fr01() - 0.5f) * 16.f; f.tz = f.z + (fr01() - 0.5f) * 16.f; } spdNow = sp; moving = true; if (f.fleeT <= 0) { f.state = 0; f.t = 1.f + fr01() * 3.f; } }
       else if (f.state == 1) { if (faunaStep(f, dt, sd.walk, f.tx, f.tz, 3.f) || f.t < -9.f) { f.state = 0; f.t = 2.f + fr01() * 6.f; } else { spdNow = sd.walk; moving = true; } if (spdNow == 0 && f.state == 1) { f.state = 0; f.t = 1.f; } }
+      else if ((f.sp == SP_HORSE || f.sp == SP_DOG) && f.state == 0 && pd < 20.f && pd > 2.0f && P.speed < 4.4f && P.deadT <= 0 && !K.mounted) { float sp = pd > 9.f ? sd.walk * 1.2f : sd.walk * 0.8f; faunaStep(f, dt, sp, P.x, P.z, 3.f); spdNow = sp; moving = true; f.homeX = f.x; f.homeZ = f.z; }   // curious: come over to be mounted / petted
+      else if ((f.sp == SP_HORSE || f.sp == SP_DOG) && f.state == 0 && pd <= 2.0f && !K.mounted) { f.face += clampf(angDiff(f.face, std::atan2(P.x - f.x, P.z - f.z)), -2.5f * dt, 2.5f * dt); f.homeX = f.x; f.homeZ = f.z; }
       else { if (f.t <= 0) { float a = fr01() * TAU, r = 2.f + fr01() * sd.wander; f.tx = f.homeX + std::cos(a) * r; f.tz = f.homeZ + std::sin(a) * r; if (fr01() < 0.65f) { f.state = 1; f.t = 0.f; } else f.t = 2.f + fr01() * 6.f; } }
     }
     f.spd = spdNow; if (moving) f.ph += dt * (spdNow / std::max(0.2f, sd.legLen)) * (f.sp == SP_HEN ? 3.2f : 1.9f); else f.ph += dt * 1.6f;
