@@ -130,3 +130,7 @@ Shipped so far (built + captured on molab before it died; x_start, x_run, x_walk
 - Nightly horde (20:00) marches on the nearest settlement; guards fight it; kills pay gold. Debug: `--xcmd horde|hostile|bow|hold|walk|run|enter0..2|shoot`.
 Unverified visually (notebook died): FPV bow offsets after retune, interiors 1 (hall) and 2 (chapel), horde, hostile guards. CI compile is the only check for these.
 Deferred: Blender rebuild of Polyfork assets, new citizens/pets/trees from Polyfork, kingdom building loop (see docs/ROADMAP.md).
+
+## v1.8.0 - Kingdom Defense & Living Fantasy Overhaul (this session) - IN PROGRESS
+- Notebook status: molab URL (`sb-11c7bc88caad2a43`) returned HTTP 410 (`sandbox terminated`) on first probe at tool call 7; proceeding locally.
+- Pillar selected from `docs/ROADMAP.md`: **P6 Kingdom Building & Defense (Athran loop) + Living World / Spells / Mounts & Polyfork Fauna Integration**.
