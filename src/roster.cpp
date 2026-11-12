@@ -36,9 +36,11 @@ static void need(int i, int keep) {
   char path[128]; snprintf(path, sizeof path, "%s", TAB[i].key); if (!figLoad(s->a, path)) { fprintf(stderr, "roster: %s failed to load, falling back\n", path); s->idx = -1; }
 }
 void select(int i) {
+  int prev = cur_;
   cur_ = ((i % N) + N) % N; cfg::S.hero = cur_; need(cur_, cur_); need(cur_ + 1, cur_);
   // release anything that is neither current nor next so memory stays flat
   for (auto& s : slot) if (s.idx >= 0 && s.idx != cur_ && s.idx != (cur_ + 1) % N) { figFree(s.a); s.idx = -1; }
+  if (inited && cur_ != prev) cfg::save();
 }
 void step(int d) { select(cur_ + d); }
 const FigAsset* fig(int i) { return resident(i); }
