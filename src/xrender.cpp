@@ -72,7 +72,7 @@ float vn2(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); return mix(mix(
 float fbm2(vec2 p){ return .5*vn2(p)+.25*vn2(p*2.03+7.1)+.125*vn2(p*4.1+3.3)+.0625*vn2(p*8.3+1.7); }
 )GLSL";
 const char* TERR_FS = R"GLSL(
-in vec3 vWp; out vec4 oC; uniform sampler2D uHeight, uInfoA, uInfoB, uRoad; uniform float uWorld, uTime;
+in vec3 vWp; out vec4 oC; uniform sampler2D uHeight, uInfoA, uInfoB, uRoad; uniform float uWorld, uTime, uDbg;
 void main(){
   vec2 uv = vWp.xz/uWorld+.5; vec4 A = texture(uInfoA, uv), B = texture(uInfoB, uv); float e = 2.; float eu = e/uWorld;
   float hx = (texture(uHeight, uv+vec2(eu,0.)).r - texture(uHeight, uv-vec2(eu,0.)).r)*1024., hz = (texture(uHeight, uv+vec2(0.,eu)).r - texture(uHeight, uv-vec2(0.,eu)).r)*1024.;
@@ -80,7 +80,7 @@ void main(){
   float n1 = vn2(vWp.xz*.35), n2 = vn2(vWp.xz*1.7), n3 = vn2(vWp.xz*7.); float det = (.8 + .4*n1) * (.9 + .2*n2) * (.93 + .14*n3); det = mix(det, 1., smoothstep(90., 420., d)); col *= det;
   float slope = 1. - N.y; float lum = dot(col, vec3(.3,.55,.15));
   float snowK = smoothstep(.62, .86, lum + .06*(n1-.5)) * (1. - .85*smoothstep(.3, .7, B.g));
-  float rockK = smoothstep(.16 + .16*B.g, .42 + .14*B.g, slope) * (1. - snowK);   // wooded flanks keep their forest floor longer (no bare pale ramps under trees)
+  float rockK = smoothstep(.105 + .085*B.g, .27 + .06*B.g, slope) * (1. - snowK);   // same tan(theta) window as the CPU bake's rock weight (xworld bakeRows), so baked grey ground never shows without cliff detail   // wooded flanks keep their forest floor longer (no bare pale ramps under trees)
   float near = 1. - smoothstep(70., 380., d);
   // macro colour life on grass: warm/cool patches, slightly calmer saturation
   float gk = clamp(A.a*1.4, 0., 1.) * (1. - rockK) * (1. - snowK);
@@ -120,6 +120,7 @@ void main(){
   col *= 1. - .28*B.g; float sh = shadowAt(vWp, N);
   vec3 c = shade(col, mix(.96, .7, snowK), 0., N, vWp, sh);
   float sp = step(.992, hsh(floor(vWp*vec3(34.,34.,34.)))); c += snowK*sp*sh*uMoonCol*1.1*near;
+  if (uDbg > .5) c = uDbg < 1.5 ? vec3(rockK, snowK, rmk) : (uDbg < 2.5 ? N*.5+.5 : vec3(A.rgb));
   oC = vec4(c, 1.); }
 )GLSL";
 const char* SKY_VS = R"GLSL(
@@ -424,10 +425,11 @@ static bool growStage(int s) { int cur = (int)stage[s].size(); if (cur >= stageM
 static inline IData* stagePush(int s) { if (stageN[s] >= (int)stage[s].size() && !growStage(s)) return nullptr; return &stage[s][stageN[s]++]; }
 void gather(const Frame& f, bool shadowOnly) {
   for (int s = 0; s < NSLOT; s++) stageN[s] = 0; float cx = f.eye.x, cz = f.eye.z;
-  for (int k = 0; k < NK; k++) { if (!pm[k].ok || ids[k].empty()) continue; const KindDef& kd = KD[k]; if (shadowOnly && !kd.shadow) continue; float rMax = (kd.lo >= 0 ? kd.rLo : kd.rHi); if (shadowOnly) rMax = 90.f; int c0x = std::max(0, (int)((cx - rMax - CELL + HALF) / CELL)), c1x = std::min(NC - 1, (int)((cx + rMax + CELL + HALF) / CELL)), c0z = std::max(0, (int)((cz - rMax - CELL + HALF) / CELL)), c1z = std::min(NC - 1, (int)((cz + rMax + CELL + HALF) / CELL));
+  static int dbgSkipLo = -2, dbgSkipHi = -2, dbgOnly = -2; if (dbgSkipLo == -2) { const char* e = getenv("LF_SKIPLO"); dbgSkipLo = e ? atoi(e) : -1; e = getenv("LF_SKIPK"); dbgSkipHi = e ? atoi(e) : -1; e = getenv("LF_ONLYK"); dbgOnly = e ? atoi(e) : -1; }
+  for (int k = 0; k < NK; k++) { if (!pm[k].ok || ids[k].empty() || k == dbgSkipHi || (dbgOnly >= 0 && k != dbgOnly)) continue; const KindDef& kd = KD[k]; if (shadowOnly && !kd.shadow) continue; float rMax = (kd.lo >= 0 ? kd.rLo : kd.rHi); if (shadowOnly) rMax = 90.f; int c0x = std::max(0, (int)((cx - rMax - CELL + HALF) / CELL)), c1x = std::min(NC - 1, (int)((cx + rMax + CELL + HALF) / CELL)), c0z = std::max(0, (int)((cz - rMax - CELL + HALF) / CELL)), c1z = std::min(NC - 1, (int)((cz + rMax + CELL + HALF) / CELL));
     float hiR2 = (shadowOnly ? std::min(kd.rHi, 90.f) : kd.rHi) * (shadowOnly ? std::min(kd.rHi, 90.f) : kd.rHi), loR2 = kd.rLo * kd.rLo; bool hasLo = kd.lo >= 0 && !shadowOnly;
     for (int cz2 = c0z; cz2 <= c1z; cz2++) for (int cx2 = c0x; cx2 <= c1x; cx2++) { int c = cz2 * NC + cx2; int a = cellStart[k][c], b = cellStart[k][c + 1]; if (a == b) continue; float mx = -HALF + (cx2 + 0.5f) * CELL, mz = -HALF + (cz2 + 0.5f) * CELL; float dc = std::sqrt((mx - cx) * (mx - cx) + (mz - cz) * (mz - cz)); if (dc - CELL * 0.75f > rMax) continue; if (!shadowOnly && !sphereVis(mx, f.eye.y > 400.f ? f.eye.y : 40.f, mz, CELL * 0.8f + 60.f)) continue;
-      for (int i = a; i < b; i++) { const Obj& o = objs[ids[k][i]]; float dx = o.x - cx, dz = o.z - cz, d2 = dx * dx + dz * dz; if (d2 < hiR2) { if (IData* d = stagePush(k)) objToI(*d, o); } else if (hasLo && d2 < loR2) { if (kd.lo == SLOT_ROCK && d2 > 360.f * 360.f && o.sx < 4.6f) continue; if (IData* d = stagePush(kd.lo)) objToI(*d, o); } } } }
+      for (int i = a; i < b; i++) { const Obj& o = objs[ids[k][i]]; float dx = o.x - cx, dz = o.z - cz, d2 = dx * dx + dz * dz; if (d2 < hiR2) { if (IData* d = stagePush(k)) objToI(*d, o); } else if (hasLo && d2 < loR2) { if (kd.lo == SLOT_ROCK && d2 > 360.f * 360.f && o.sx < 4.6f) continue; if (kd.lo != dbgSkipLo) if (IData* d = stagePush(kd.lo)) objToI(*d, o); } } } }
   if (f.dyn) for (int i = 0; i < f.ndyn; i++) {
     int k = f.dyn[i].kind < 0 ? (int)K_ARROW : f.dyn[i].kind; if (k < 0 || k >= NK || !pm[k].ok) continue;
     if (shadowOnly) { if (!KD[k].shadow || f.dyn[i].mode < -0.5f) continue; float dx = f.dyn[i].m.m[12] - cx, dz = f.dyn[i].m.m[14] - cz; if (dx * dx + dz * dz > 95.f * 95.f) continue; }
@@ -467,7 +469,7 @@ void render(const Frame& f, const FigDraw* figs, int nfig) {
   // textures: 0 height, 1 infoA, 2 infoB, 3 water
   glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, texH); glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, texInfoA); glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, texInfoB); glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, texWater); glActiveTexture(GL_TEXTURE0 + 6); glBindTexture(GL_TEXTURE_2D, texRoad); glActiveTexture(GL_TEXTURE0);
   // terrain (fine levels first for early-z)
-  setLitX(pTerr, pl, plc); si(pTerr, "uHeight", 0); si(pTerr, "uInfoA", 1); si(pTerr, "uInfoB", 2); si(pTerr, "uRoad", 6); s1(pTerr, "uWorld", WORLD); s1(pTerr, "uTime", f.time); si(pTerr, "uN", TN); glBindVertexArray(terrVao); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrIbo[0]);
+  setLitX(pTerr, pl, plc); si(pTerr, "uHeight", 0); si(pTerr, "uInfoA", 1); si(pTerr, "uInfoB", 2); si(pTerr, "uRoad", 6); s1(pTerr, "uWorld", WORLD); s1(pTerr, "uTime", f.time); { static float dbgT = -1.f; if (dbgT < 0.f) { const char* e = getenv("LF_TDBG"); dbgT = e ? (float)atof(e) : 0.f; } s1(pTerr, "uDbg", dbgT); } si(pTerr, "uN", TN); glBindVertexArray(terrVao); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrIbo[0]);
   for (int L = 0; L < NL; L++) { float sp = CS * (float)(1 << L), sn = sp * 2.f; float cx = CS * 0.5f + std::floor((f.eye.x - CS * 0.5f) / sn + 0.5f) * sn, cz = CS * 0.5f + std::floor((f.eye.z - CS * 0.5f) / sn + 0.5f) * sn; s2(pTerr, "uCenter", cx, cz); s1(pTerr, "uSp", sp); s1(pTerr, "uBias", L == 0 ? 0.f : 0.03f * sp); int r = L == 0 ? 0 : 1; glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrIbo[r]); glDrawElements(GL_TRIANGLES, terrNI[r], GL_UNSIGNED_SHORT, nullptr); drawCalls++; }
   // props + figures
   setLitX(pProp, pl, plc); s1(pProp, "uTime", f.time); s1(pProp, "uDissolve", 0.f); s1(pProp, "uDisH", 1.f); glUniform3f(U(pProp, "uDisCol"), 0, 0, 0); glUniform3f(U(pProp, "uFlash"), 0, 0, 0); s1(pProp, "uDim", 1.f); s1(pProp, "uGlow", E.glow); drawProps(pProp, false);
