@@ -13,7 +13,8 @@ spells, gather by day, survive demon hordes at night, explore lost kingdoms and 
 - [x] reputation & crime: victims fight back or flee, witnesses panic, guards hunt you, per-nation bounty (WANTED stars) that decays
 - [x] summonable Noble Hart mount (`K`) with seated riding pose, trample charge, mounted archery & spellcasting (v1.8)
 - [ ] NPC daily schedules (work / market / tavern / sleep), shopkeepers & trade, quests, dialogue trees
-- [ ] children, pets (dogs/cats/chickens), livestock, warhorses
+- [x] pets (dogs befriend + guard), cats, hens, sheep, cows, horses (rideable, E), songbirds, crows, butterflies (v1.9)
+- [ ] children, NPC daily schedules, animal species sounds, hunting drops beyond food
 ### P3 Combat  (v1.7-v1.8)
 - [x] bow in explorer (hold to draw, release; arrows with gravity, stick into bodies/ground; camera-space FPV longbow viewmodel fixed in v1.8)
 - [x] location damage: head x2.6, torso x1, arms x0.6, legs x0.5 (bone-capsule hitboxes vs. skeleton)
@@ -37,7 +38,9 @@ spells, gather by day, survive demon hordes at night, explore lost kingdoms and 
 ### P7 Art / Blender pipeline
 - [~] Polyfork kit (`assets/polyfork`) in use for buildings/props/figures + procedural `.lfm`-layout meshes (`K_ORE`, `K_RIFT`, `K_PURIFIED`, `K_SPELL_FIRE`, `K_SPELL_FROST`)
 - [ ] more citizen / pet / tree / building assets from Polyfork re-built in Blender (`tools/blender_build_assets.py`) with baked AO
-- [ ] audio ambience (wind, river, birds, crickets, town hubbub), procedural exploration music
+- [x] audio ambience: birdsong by day, crickets at night, running water, daylight drone fade (v1.9)
+- [x] biome flora: cherry blossom, birch, jungle, willow, palm, ferns, mushrooms, reeds, lilies, rock spires, flowering shrubs, falling petals / leaves (v1.9)
+- [ ] town hubbub, procedural exploration music, snow / desert / swamp biomes
 ### P8 Systems
 - [ ] persistent world save / load (`save/kingdom.json`), custom map markers, quest journal, gamepad bindings in explorer
 
@@ -46,6 +49,7 @@ spells, gather by day, survive demon hordes at night, explore lost kingdoms and 
 |---|---|---|---|---|
 | v1.6.0 | ~5.2 k (dense) | 26 MB | 1.4 MB | explorer world |
 | v1.7.0 | ~5.6 k (dense) + 3 new modules | 26 MB | 1.5 MB | gait IK, body-part combat, bow, crime, interiors, horde |
+| v1.9.0 | ~7.0 k + xfauna.inc + xmesh_new.inc | 26 MB | ~1.7 MB | biome flora (11 kinds), fauna + ride horses, ambience, explore-only title |
 | v1.8.0 | ~6.5 k (dense) + `src/xkingdom.inc` | 26 MB | 1.6 MB | Athran kingdom build/siege loop, tower defense AI, warband orders, 4 spells + mana, rifts, Noble Hart mount, FPV bow fix |
 
 ## Next session candidates (pick ONE major pillar)

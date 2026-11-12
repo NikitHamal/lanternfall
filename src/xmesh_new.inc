@@ -78,11 +78,11 @@ void buildFauna(int kind, MB& b) {
     case xw::K_FA_CAT: { fur = sty(0xd8c8b0, 1, 0.75f, 1.f); dk = sty(0x4a4038, 1, 0.8f, 1.f); lt = sty(0xf2ead8, 1, 0.8f, 1.f);
       blob(b, 0, 0.3f, 0, 0.1f, 0.1f, 0.22f, 8, 4, fur, 3, 0.06f); blob(b, 0, 0.33f, 0.14f, 0.11f, 0.12f, 0.12f, 7, 3, fur, 5, 0.06f); blob(b, 0, 0.42f, 0.28f, 0.085f, 0.08f, 0.085f, 7, 3, fur, 7, 0.04f); box(b, 0, 0.395f, 0.35f, 0.03f, 0.025f, 0.03f, lt);
       boxR(b, -0.055f, 0.5f, 0.27f, 0.02f, 0.035f, 0.01f, 0.f, dk); boxR(b, 0.055f, 0.5f, 0.27f, 0.02f, 0.035f, 0.01f, 0.f, dk); for (int k = 0; k < 3; k++) box(b, 0, 0.4f, -0.02f + k * 0.06f, 0.104f, 0.012f, 0.012f, dk);
-      tube(b, {0, 0.32f, -0.2f}, {0, 0.38f, -0.34f}, 0.032f, 0.026f, 5, fur); tube(b, {0, 0.38f, -0.34f}, {0, 0.6f, -0.38f}, 0.026f, 0.018f, 5, fur); break; }
+      tube(b, {0, 0.32f, -0.2f}, {0, 0.36f, -0.34f}, 0.032f, 0.026f, 5, fur); tube(b, {0, 0.36f, -0.34f}, {0, 0.52f, -0.4f}, 0.026f, 0.016f, 5, fur); break; }
     case xw::K_FA_HEN: { fur = sty(0xf0e8da, 1, 0.8f, 1.f); dk = sty(0xb8452a, 1, 0.85f, 1.f); lt = sty(0xe0a030, 1, 0.8f, 1.f); nose = sty(0x8a5a36, 1, 0.8f, 1.f);
       blob(b, 0, 0.26f, 0, 0.1f, 0.11f, 0.15f, 8, 4, fur, 3, 0.1f); blob(b, 0, 0.36f, 0.12f, 0.06f, 0.1f, 0.06f, 6, 3, fur, 5, 0.06f); blob(b, 0, 0.46f, 0.15f, 0.05f, 0.05f, 0.055f, 6, 3, fur, 7, 0.04f);
       box(b, 0, 0.52f, 0.15f, 0.01f, 0.03f, 0.04f, dk); box(b, 0, 0.44f, 0.2f, 0.012f, 0.012f, 0.03f, lt); box(b, 0, 0.4f, 0.185f, 0.008f, 0.025f, 0.01f, dk);
-      for (int k = -1; k <= 1; k++) boxR(b, k * 0.035f, 0.38f, -0.2f, 0.012f, 0.1f, 0.07f, k * 0.25f, k == 0 ? nose : fur); break; }
+      for (int k = -2; k <= 2; k++) tube(b, {k * 0.01f, 0.3f, -0.12f}, {k * 0.045f, 0.5f - 0.02f * (float)(k < 0 ? -k : k), -0.25f}, 0.022f, 0.008f, 4, k % 2 ? fur : nose); break; }
     case xw::K_FA_SHEEP: { fur = sty(0xece6d6, 1, 0.8f, 3.f); dk = sty(0x3a3028, 1, 0.8f, 1.f);
       blob(b, 0, 0.72f, 0, 0.36f, 0.31f, 0.5f, 9, 5, fur, 3, 0.26f); blob(b, 0.18f, 0.84f, -0.15f, 0.2f, 0.16f, 0.22f, 7, 3, fur, 5, 0.25f); blob(b, -0.18f, 0.84f, 0.12f, 0.2f, 0.16f, 0.22f, 7, 3, fur, 7, 0.25f); blob(b, 0, 0.8f, -0.4f, 0.25f, 0.22f, 0.2f, 7, 3, fur, 9, 0.25f);
       blob(b, 0, 0.82f, 0.46f, 0.2f, 0.2f, 0.18f, 7, 3, fur, 11, 0.22f); tube(b, {0, 0.76f, 0.42f}, {0, 0.84f, 0.6f}, 0.09f, 0.08f, 6, dk); blob(b, 0, 0.82f, 0.68f, 0.09f, 0.1f, 0.13f, 7, 3, dk, 13, 0.05f);

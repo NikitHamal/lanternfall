@@ -72,7 +72,7 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: Lanternfall ${{ github.ref_name }}
           body: |
-            Native C++/OpenGL 3.3 desktop port of Lanternfall. v1.5 monster-mode overhaul: spear heroes (Spearman, Hoplite), rewritten first-person weapon animation (real sword/spear swings, low-profile casters that never cover your aim), lock-on, input buffering, new effects library, best-of-3 Duel mode vs an AI champion, new HUD. Download the archive for your OS, unpack and run `lanternfall` (no installer; keep the `assets/` folder next to the executable).
+            Native C++/OpenGL 3.3 desktop fantasy explorer (Lanternfall). v1.9 Living Lush World: explore-only title, cherry blossom / birch / jungle / willow / palm biomes with reeds, lilies, ferns and mushrooms, falling petals and leaves, dogs, cats, hens, sheep, cows and rideable horses, birds and butterflies, hunting with body-part damage, birdsong / cricket / river ambience. Download the archive for your OS, unpack and run `lanternfall` (no installer; keep the `assets/` folder next to the executable).
             - Windows: lanternfall-windows-x64.zip
             - Linux: lanternfall-linux-x64.tar.gz (needs an OpenGL 3.3 driver + X11)
             - macOS: lanternfall-macos-universal.zip (unsigned: right-click > Open the first time)
