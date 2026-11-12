@@ -15,7 +15,14 @@ bool roomCollide(float& x, float& z, float r) {
   for (int i = 0; i < d.nc; i++) { float dx = lx - d.c[i].x, dz = lz - d.c[i].z, dd = std::sqrt(dx * dx + dz * dz), mr = d.c[i].r + r * 0.6f; if (dd < mr) { if (dd < 1e-4f) { dx = 1; dz = 0; dd = 1; } lx = d.c[i].x + dx / dd * mr; lz = d.c[i].z + dz / dd * mr; m = true; } }
   x = d.cx + lx; z = d.cz + lz; return m;
 }
-bool collideAny(float& x, float& z, float r) { return CI.in ? roomCollide(x, z, r) : collide(x, z, r); }
+bool collideBuilds(float& x, float& z, float r, bool friendly, int* hitBuild = nullptr);
+struct GNode; GNode* nearestGNode(float px, float pz, float maxR); bool harvestNode(GNode* g, bool swingAnim);
+int nearestRift(float maxR, bool onlyCorrupt); bool tryPurifyRift(int ri);
+bool collideAny(float& x, float& z, float r) {
+  if (CI.in) return roomCollide(x, z, r);
+  bool a = collide(x, z, r), b = collideBuilds(x, z, r, true, nullptr);
+  return a || b;
+}
 int natOf(const Npc& n) { int k = n.settle >= 0 ? settles[n.settle].nation : (CI.in ? 0 : nationAt(n.x, n.z)); return k < 0 ? 0 : k > 2 ? 2 : k; }
 // ------------------------------------------------------------------ body zones (bone-accurate capsules from the live pose)
 struct BoneIx { const FigAsset* a = nullptr; int ix[15]; bool ok = false; } BIX[48]; int nBix = 0;
@@ -76,6 +83,12 @@ void playerHit() {
     bool got = false; int zone = Z_TORSO; for (int k = -2; k <= 2 && !got; k++) { float yw = P.face + k * 0.24f; V3 dir{std::sin(yw) * std::cos(pit), std::sin(pit), std::cos(yw) * std::cos(pit)}; float s; int z; if (hitNpc(n, org, org + dir * (reach + 0.7f), 0.1f, s, z)) { got = true; zone = z; } }
     if (!got) { got = true; zone = Z_TORSO; } hurtNpc(n, dmg, P.x, P.z, true, zone); hit = true; }
   if (hit) audio::play(S_HITMETAL, 0, 0.7f);
+  else if (!CI.in) {
+    float hx = P.x + fx * 1.6f, hz = P.z + fz * 1.6f;
+    int ri = nearestRift(3.8f, true);
+    if (ri >= 0) tryPurifyRift(ri);
+    else harvestNode(nearestGNode(hx, hz, 2.8f), false);
+  }
 }
 // ------------------------------------------------------------------ bow
 void fireArrow(float draw) {

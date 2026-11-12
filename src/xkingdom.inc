@@ -111,7 +111,7 @@ void resetKingdomSession() {
 }
 
 // Collide against player-built fortifications. `friendly` passes freely through BT_GATE archways!
-bool collideBuilds(float& x, float& z, float r, bool friendly, int* hitBuild = nullptr) {
+bool collideBuilds(float& x, float& z, float r, bool friendly, int* hitBuild) {
   bool moved = false;
   for (int i = 0; i < MAXB; i++) {
     const BuildObj& b = builds[i]; if (!b.used) continue;
