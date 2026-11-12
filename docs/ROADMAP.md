@@ -8,45 +8,48 @@ spells, gather by day, survive demon hordes at night, explore lost kingdoms and 
 - [x] 2 km procedural continent, 3 nations, capitals, villages, forts, camps, ruins, graveyards, roads, bridges, border gates
 - [x] rivers, lakes, waterfalls, forests, flowers, mountains, day/night cycle, ~400 NPCs, patrols, guards, monsters, bosses
 - [ ] chunk streaming / bigger map, caves, islands, snow biome, desert biome, swamp biome
-### P2 Living people  (v1.7 this session)
+### P2 Living people  (v1.7-v1.8)
 - [x] daytime: lanterns only carried when dusk/night/indoors
 - [x] reputation & crime: victims fight back or flee, witnesses panic, guards hunt you, per-nation bounty (WANTED stars) that decays
+- [x] summonable Noble Hart mount (`K`) with seated riding pose, trample charge, mounted archery & spellcasting (v1.8)
 - [ ] NPC daily schedules (work / market / tavern / sleep), shopkeepers & trade, quests, dialogue trees
-- [ ] children, pets (dogs/cats/chickens), livestock, horses & mounts
-### P3 Combat  (v1.7 this session)
-- [x] bow in explorer (hold to draw, release; arrows with gravity, stick into bodies/ground)
-- [x] location damage: head x2.5, torso x1, arms x0.6, legs x0.5 (hitboxes vs. skeleton height bands)
+- [ ] children, pets (dogs/cats/chickens), livestock, warhorses
+### P3 Combat  (v1.7-v1.8)
+- [x] bow in explorer (hold to draw, release; arrows with gravity, stick into bodies/ground; camera-space FPV longbow viewmodel fixed in v1.8)
+- [x] location damage: head x2.6, torso x1, arms x0.6, legs x0.5 (bone-capsule hitboxes vs. skeleton)
 - [x] melee hits hurt people; victims fight back, guards join, villagers flee
-- [ ] directional blocking, stagger types, finishers, armour slots, ranged enemies, shields for NPCs, siege
-- [ ] spells (fire, frost, heal, summon), mana, ability bar
-### P4 Interiors  (v1.7 this session)
-- [x] enter houses via the door (E): fade into furnished interior cells (cottage, longhouse, chapel, keep hall)
+- [x] spells (`Q` cast, `Z` cycle): Solar Fireball (AoE + dynamic light), Glacial Frost Nova (ring of 10 shards + freeze/hobble), Solar Aegis (heal + buff + mend walls), Storm Lance (piercing bolt), regenerating Arcane Mana bar (v1.8)
+- [ ] directional blocking, stagger types, finishers, armour slots, ranged enemies, shields for NPCs
+### P4 Interiors  (v1.7-v1.8)
+- [x] enter houses via the door (E): fade into furnished interior cells (cottage, longhouse/great hall, chapel, keep hall) + indoor HUD badge (v1.8)
 - [ ] more interiors (smithy, tavern, shop, castle floors), furniture interaction (sit/sleep/cook), loot containers
-### P5 Animation  (v1.7 this session)
-- [x] new procedural locomotion layer: speed-synced stride, hip bob/sway, counter-rotating spine & arms, lean into acceleration, run lean, landing squash
-- [ ] foot IK on slopes, turn-in-place, climbing, swimming strokes, mounted riding, per-weapon locomotion sets
-### P6 Kingdom building (Athran loop)  (v1.8+)
-- [~] nightly horde seed: at 20:00 a horde marches on the nearest settlement; guards defend (v1.7). Needs: walls/towers as targets, player-built defences, commands
-- [ ] resources (wood / stone / food / gold), gather nodes (trees, ore, farms)
-- [ ] build mode: walls, towers, gates, houses, barracks, farms; placement grid + cost
-- [ ] hire / command soldiers (follow, hold, attack, garrison), recruit from villagers
-- [ ] nightly demon invasions with pathfinding to the keep, siege units, boss waves, tower defence AI
-- [ ] reclaim corrupted lost kingdoms: corruption fog, purify beacons, dungeons
+### P5 Animation  (v1.7-v1.8)
+- [x] procedural locomotion layer: speed-synced stride, 2-bone leg IK, hip bob/sway, counter-rotating spine & arms, lean into acceleration
+- [x] seated mounted riding leg pose (`lThigh`/`rThigh`/`lShin`/`rShin`) synced to quadruped gallop (v1.8)
+- [ ] foot IK on steep slopes, turn-in-place, climbing, swimming strokes, per-weapon locomotion sets
+### P6 Kingdom building (Athran loop)  (v1.8 SHIPPED)
+- [x] resources (wood / stone / food / gold) + spatial 64m harvest grid (`G` or melee hit on trees, boulders, 85 procedural iron/gold ore veins, hay/bushes)
+- [x] real-time 3D Kingdom Build Mode (`C`, keys `1-6` / wheel, `R` rotate, `LMB` place, `RMB` repair): Stone Wall (end-to-end auto-snap), Archer Watchtower, Fortified Gatehouse (allies pass, enemies blocked), Royal Barracks (+2 sworn troops), Homestead Farm (passive food/gold + heal), Sunfire Beacon (dynamic light + holy burn)
+- [x] hire / command Sworn Warband troops (`G` enlist villagers/soldiers/knights or train at Barracks; `X` cycles `FOLLOW`, `HOLD LINE`, `CHARGE`, `GARRISON`)
+- [x] nightly demon siege waves (`NIGHT N DEMON SIEGE`): siege bosses (Barrow King / Cairnback Siegebreakers), monsters besiege & batter player-built walls/gates/towers, autonomous Watchtower ballista/archer defense AI leads & shoots monsters, Dawn Victory tax & auto-mend
+- [x] reclaim corrupted lost kingdoms: 19 Corrupted Rift monoliths (`K_RIFT` -> `K_PURIFIED`) guarded by lair monsters; purifying grants resources, full restore & a sworn Knight
+- [ ] multi-tier castle upgrades, siege catapults/rams, corruption fog shader, underground dungeons
 ### P7 Art / Blender pipeline
-- [~] Polyfork kit (assets/polyfork) in use for buildings/props/figures
-- [ ] more citizen / pet / tree / building assets from Polyfork re-built in Blender (tools/blender_build.py) with baked AO
-- [ ] audio ambience (wind, river, birds, crickets, town hubbub), music
+- [~] Polyfork kit (`assets/polyfork`) in use for buildings/props/figures + procedural `.lfm`-layout meshes (`K_ORE`, `K_RIFT`, `K_PURIFIED`, `K_SPELL_FIRE`, `K_SPELL_FROST`)
+- [ ] more citizen / pet / tree / building assets from Polyfork re-built in Blender (`tools/blender_build_assets.py`) with baked AO
+- [ ] audio ambience (wind, river, birds, crickets, town hubbub), procedural exploration music
 ### P8 Systems
-- [ ] save / load, map markers, journal, settings for explorer, gamepad in explorer
+- [ ] persistent world save / load (`save/kingdom.json`), custom map markers, quest journal, gamepad bindings in explorer
 
 ## Stats (update every session)
-| version | lines of C++ | assets | notes |
-|---|---|---|---|
-| v1.6.0 | ~5.2 k (dense) | 26 MB | explorer world |
-| v1.7.0 | ~5.6 k (dense) + 3 new modules | 26 MB | gait IK, body-part combat, bow, crime, interiors, horde |
+| version | lines of C++ | assets | binary | notes |
+|---|---|---|---|---|
+| v1.6.0 | ~5.2 k (dense) | 26 MB | 1.4 MB | explorer world |
+| v1.7.0 | ~5.6 k (dense) + 3 new modules | 26 MB | 1.5 MB | gait IK, body-part combat, bow, crime, interiors, horde |
+| v1.8.0 | ~6.5 k (dense) + `src/xkingdom.inc` | 26 MB | 1.6 MB | Athran kingdom build/siege loop, tower defense AI, warband orders, 4 spells + mana, rifts, Noble Hart mount, FPV bow fix |
 
 ## Next session candidates (pick ONE major pillar)
-1. Kingdom building: gather nodes + build mode (walls/towers/gates) + garrison commands, horde targeting built structures
-2. Blender rebuild of Polyfork citizens / pets / trees (needs a Blender-capable notebook) and placing them as instanced fauna
-3. Interior polish: smithy, tavern, shops with trade; sit/sleep animations; night schedules (NPCs go indoors)
-4. Horses + mounted travel; ambient audio; save/load
+1. Persistent Kingdom Save/Load (`save/kingdom.json`) + Multi-Tier Structure Upgrades (Timber -> Stone -> Citadel) & Siege Catapults
+2. Blender rebuild of new Polyfork citizens, village pets (dogs, cats, chickens, horses), and lush biome foliage placed as instanced fauna
+3. Living Towns II: Smithy, Tavern & Merchant interiors with equipment/arrow/potion shops, NPC day/night indoor schedules, and quests
+4. Ambient Soundscape & Procedural Fantasy Soundtrack (rivers, waterfalls, wind in pines, birdsong by day, crickets & war-horns at night)

@@ -82,7 +82,7 @@ static void drawExploreHud() {
   // ---- banner (discovery / events)
   if (H.bannerT > 0) { float a = std::min(1.f, std::min(H.bannerT * 1.2f, (5.f - H.bannerT + 0.3f) * 2.f)); a = std::max(0.f, std::min(1.f, a)); float y = H_ * 0.2f; rect(W_ / 2 - 150 * S, y - 3 * S, 300 * S, 1, {0.88f, 0.64f, 0.24f, a * 0.8f}); text(H.banner, W_ / 2, y, S * 2.4f, hexc(0xf6d58a, a), 1); text(H.bannerSub, W_ / 2, y + 22 * S, S * 1.1f, hexc(0xe9ddc0, a), 1); rect(W_ / 2 - 150 * S, y + 34 * S, 300 * S, 1, {0.88f, 0.64f, 0.24f, a * 0.8f}); }
   // ---- interaction prompt + dialogue
-  if (H.prompt[0]) { float y = H_ * 0.66f; rect(W_ / 2 - 70 * S, y - 3 * S, 140 * S, 14 * S, {0, 0, 0, 0.5f}); frame(W_ / 2 - 70 * S, y - 3 * S, 140 * S, 14 * S, hexc(0x6a5a3c)); text(H.prompt, W_ / 2, y, S * 1.0f, hexc(0xf0dcb0), 1); }
+  if (H.prompt[0]) { float y = H_ * 0.66f, pw = std::max(140.f * S, ((float)std::strlen(H.prompt) * 6.2f + 22.f) * S); rect(W_ / 2 - pw * 0.5f, y - 3 * S, pw, 14 * S, {0, 0, 0, 0.58f}); frame(W_ / 2 - pw * 0.5f, y - 3 * S, pw, 14 * S, hexc(0x6a5a3c)); text(H.prompt, W_ / 2, y, S * 1.0f, hexc(0xf0dcb0), 1); }
   if (H.dlgT > 0) { float a = std::min(1.f, H.dlgT * 2.f); float w = 330 * S, h = 40 * S, x = W_ / 2 - w / 2, y = H_ - h - 14 * S; rect(x, y, w, h, {0.04f, 0.045f, 0.06f, 0.9f * a}); frame(x, y, w, h, hexc(0x6a5a3c, a)); text(H.dlgName, x + 8 * S, y + 5 * S, S * 1.0f, hexc(0xe9c98a, a)); text(H.dlgText, x + 8 * S, y + 19 * S, S * 0.95f, hexc(0xf0e8d4, a)); }
   // ---- hints (bottom-right)
   { static const char* hint = "WASD MOVE  B BOW  Q SPELL  Z NEXT SPELL  C BUILD  G GATHER/ENLIST  X ORDERS  K MOUNT  E USE  M MAP  V VIEW"; if (H.discTotal > 0 && H.hour >= 0 && !H.buildMode) text(hint, W_ - M, H_ - 10 * S, S * 0.58f, hexc(0x8a826e), 2); }

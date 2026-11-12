@@ -131,6 +131,20 @@ Shipped so far (built + captured on molab before it died; x_start, x_run, x_walk
 Unverified visually (notebook died): FPV bow offsets after retune, interiors 1 (hall) and 2 (chapel), horde, hostile guards. CI compile is the only check for these.
 Deferred: Blender rebuild of Polyfork assets, new citizens/pets/trees from Polyfork, kingdom building loop (see docs/ROADMAP.md).
 
-## v1.8.0 - Kingdom Defense & Living Fantasy Overhaul (this session) - IN PROGRESS
-- Notebook status: molab URL (`sb-11c7bc88caad2a43`) returned HTTP 410 (`sandbox terminated`) on first probe at tool call 7; proceeding locally.
-- Pillar selected from `docs/ROADMAP.md`: **P6 Kingdom Building & Defense (Athran loop) + Living World / Spells / Mounts & Polyfork Fauna Integration**.
+## v1.8.0 - Kingdom Defense & Living Fantasy Overhaul (this session)
+- Notebook status: molab URL (`sb-11c7bc88caad2a43`) returned HTTP 410 (`sandbox terminated`) at tool call 7. Installed X11/GL dev headers + Xvfb + Mesa 22.3.6 (`llvmpipe`) locally, so full Release builds and 1280x720 Xvfb visual QA captures ran locally with zero deferred shots.
+- Fixed carried v1.7 visual issues verified via Xvfb:
+  1. Rewrote Explorer FPV bow placement (`src/xgame.cpp`) in direct camera space (`WP_BOW` canted left-of-centre with nocked `K_ARROW` aligned to reticle; previously `vmRef` pushed the bow mesh 0.9 m below the viewport).
+  2. Expanded `Hud::bannerSub` buffer (`src/explore.h`) so subtitles no longer truncate, and replaced the indoor empty-ocean minimap with a clean `INDOORS` badge (`src/ui_explore.inc`).
+  3. Auto-sized interaction prompt frame width to text length.
+- Shipped **Pillar P6 (Athran-style Kingdom Building, Siege Defense, Warband Command, Spells, Rifts & Mounts)** with zero per-frame heap allocations:
+  - `src/xrender.{h,cpp}` & `src/xmesh.cpp`: generalized `xr::Dyn` multi-kind GPU instancing (supports any `xw::Kind` with shadow casting and 3D stone/timber blueprint hologram shader `iT.a < -0.5`), dynamic point lights (`xr::PtLight`), plus 5 new procedural `.lfm`-layout meshes (`K_ORE`, `K_RIFT`, `K_PURIFIED`, `K_SPELL_FIRE`, `K_SPELL_FROST`).
+  - `src/xkingdom.inc` (new, static pools `MAXB=128`, `MAXSP=36`, `MAXRIFT=32`, 64 m spatial resource grid):
+    * **Resource Economy**: Wood, Stone, Food, Gold; 85 glittering Iron/Gold Ore Veins placed on rocky slopes + ~4k harvestable tree/boulder/ore/crop nodes (`G` or melee hit, regrows over 75 s).
+    * **Real-Time 3D Build Mode (`C`)**: 6 fortifications (`1` Stone Wall with end-to-end auto-snap, `2` Archer Watchtower with autonomous lead-aiming arrow defense AI, `3` Fortified Gatehouse letting player/allies pass while blocking monsters, `4` Royal Barracks spawning +2 sworn soldiers & training more, `5` Homestead Farm generating passive food/gold + healing, `6` Sunfire Beacon casting dynamic warm light & searing nearby demons); `R` rotates, `LMB` builds, `RMB` repairs.
+    * **Sworn Warband Command (`G` enlist / `X` orders)**: enlist villagers, guards, soldiers, or knights into your Warband and cycle `FOLLOW` (wedge formation), `HOLD LINE` (shield wall), `CHARGE`, and `GARRISON`.
+    * **Arcane Spellcraft (`Q` cast / `Z` cycle + Mana bar)**: Solar Fireball (AoE + dynamic light), Glacial Frost Nova (10-shard ring + AoE freeze/hobble), Solar Aegis (heal allies + +25% warband damage + mend walls), Storm Lance (piercing high-velocity bolt).
+    * **Nightly Demon Siege & Corrupted Rifts**: at 20:00 (or `--xcmd siege`), Night `N` Demon Siege waves led by Cairnback/Barrow King Siegebreakers march on your stronghold and batter blocking walls/gates/towers; repelling until dawn pays Kingdom tax & mends walls. 19 Corrupted Rift monoliths (`K_RIFT` -> `K_PURIFIED`) at monster lairs can be purified (`E` or strike) once guardians fall.
+    * **Noble Hart Mount (`K`)**: summons a full-scale `HOLLOWSTAG` steed (`2.15x` gallop speed, seated rider IK/bone pose, trample knockback, mounted archery & spells).
+- Metrics (Linux x86_64 Release, 1280x720 Mesa llvmpipe): executable `1.6 MB` (`1,605 KB`), `assets/` `26 MB`, peak child RSS across full Explorer + worldgen + Mesa software rasteriser `~900 MB`.
+- QA shots captured & Read (`1280x720`): `title.png`, `hero.png`, `x_build.png`, `x_siege.png`, `x_spells.png`, `x_mount.png`, `x_rift.png`, `x_fpv_bow.png`, `x_hall.png`, `x_chapel.png`, `moor.png`.
