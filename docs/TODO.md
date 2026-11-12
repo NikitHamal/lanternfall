@@ -31,3 +31,16 @@ Vision: a proper fantasy immersive third-person game (Athran-style kingdom defen
 - molab notebook ALIVE this session (20 cores, root, Debian trixie). Workflow: edit locally -> push -> molab `git pull` + `cmake --build -j20` -> Xvfb capture (JPEG pulled back as base64). Scripts recreated at /tmp/agentA_*.sh.
 - User feedback (issue #1 + screenshots): trees/leaves/grass/flowers poor; animals unrealistic + flee (cannot approach / mount); water/rivers/ponds/waterfalls poor; terrain too small & flat; guards float, wall walkways unreachable (no stairs / gates).
 - Plan: (1) calm animals + mount, (2) wall walkways + stairs + guards on real wall-top height, (3) terrain scale/relief, (4) flora + water art.
+
+## v2.3.0 (Realm Polish I) - shipped
+- [x] natural colour grade + grass palette / tufts / dry patches, terrain mottling + dirt patches
+- [x] stair landing bridges onto wall walks (all 8 logged stairs verified headless + in-engine)
+- [x] waterfall streak shader, pool foam / mist tuning, wider falls
+- [x] debug placement commands: fall0..5, horse / cow / sheep
+## Next session candidates (Realm Polish II)
+1. [ ] Trees: replace faceted blobs by layered alpha-clustered leaf cards with translucency + proper trunk flare (K_OAK / K_CHERRY / K_PINE), find and fix the salmon-red branched tree kind
+2. [ ] Water: pool colour (less icy), river banks (wet mud strip, foam at rocks), flow-mapped normals, shoreline depth fade, mist billboards
+3. [ ] Rock / cliff: triplanar texture instead of derivative bump, scree + boulders at the foot of slopes
+4. [ ] Verify animals in-engine (stand next to a horse / cow, approach, mount) with a dedicated camera spot away from walls; add animal species sounds
+5. [ ] NPC guard patrols: check posts type 1 stand exactly on deck height and can use stairs (path via decks) - add NPC stair pathing
+6. [ ] Terrain: chunk streaming + 4 km map, snow / desert / swamp biomes

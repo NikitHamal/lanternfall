@@ -191,8 +191,16 @@ Doc: see docs/TODO.md.
 
 CI: tag run 43243078141 (commit e7fbb4e) - Windows/Linux/macOS + release all success; release v2.2.0 published with 3 assets (linux 10.1 MB, macOS 10.7 MB, windows 10.3 MB). Main run 43243073274 green; earlier main runs 43242131032 (4121f6e) and 43240734933 (eba93dd) green.
 
-## v2.3.0 - Realm Polish I (this session) - IN PROGRESS
-Env: molab notebook ALIVE (20 cores, Debian trixie, cmake/Xvfb present, no Blender binary on PATH). Workflow: edit locally -> push -> `git pull` + `cmake --build -j20` on molab (/tmp/agentA_run/lf) -> Xvfb llvmpipe capture -> JPEG pulled back as base64 (scripts /tmp/agentA_r.sh, _cap.sh, _pull.sh).
-Baseline QA (shots Read): a_default (capital gate, neon lime grass), a_poi0 (lake), a_map (continent map is already big/relieved), a_mtn (bad camera: inside pine), b_fall (cherry trees: faceted flat pink + red-orange branches), b_village, b_forest (jungle village).
-Findings: grass is saturated lime and flat-coloured, blades too wide; cherry bark reads red-orange; map layout fine but ground reads uniformly green.
-Pass 1 (this commit): grass palette (desaturated, olive / straw / tall-tuft patches, dark roots, dry blades), narrower blades, cherry colours.
+## v2.3.0 - Realm Polish I (this session) - SHIPPED
+Env: molab notebook ALIVE all session (20 cores, Debian trixie, cmake + Xvfb present, no Blender binary on PATH -> no Blender work this session). Workflow: edit locally -> push -> molab `git pull` + `cmake --build -j20` (/tmp/agentA_run/lf) -> Xvfb llvmpipe capture 1280x720 q1 -> JPEG back as base64 (scripts /tmp/agentA_r.sh, _cap.sh, _pull.sh; execute-code.sh from marimo-pair).
+Baseline findings (shots Read): a_default, a_poi0, a_map, a_mtn, b_fall, b_village, b_forest: neon lime grass (grade pushed saturation 1.22 x 1.12 x 1.2 vibrance), wide flat blades, uniformly green ground, cherry bark red-orange, waterfall = flat white sheet, continent map itself is already large and relieved.
+Shipped:
+- **Colour grade**: explorer final pass `uSat` 1.12 -> 0.9, vibrance `uCol` 1 -> 0.5 (xrender.cpp). Grass/meadow now reads natural (olive, straw, deep green) instead of neon.
+- **Grass**: blades narrower (0.024 m), taller tuft patches (up to ~0.8 m), dry straw patches, dark olive patches, dark roots with warm sunlit tips, occasional dead blades, per-clump variation (GRASS_VS).
+- **Terrain shader**: near-field mottling (light/dark grass variation, bare dirt patches, warm dry patches) in TERR_FS; slightly less saturated meadow albedo (xworld.cpp).
+- **Cherry**: dark bark (0x2f2620), richer petal palette (xmesh_new.inc).
+- **Wall walks / stairs (real bug fixed)**: the stair top landing was 0.55 m short of the wall-walk deck, so the player/NPCs dropped back to the ground. The landing deck now spans 1.65 m toward the wall (`putStair` takes the outward normal). Headless self-test (`LF_DUMP=1`) now walks stair -> landing -> wall: all 8 logged stairs report `wallwalkReach 5.90`. Verified in-engine (f_walk: player standing on the wall walk, f_outside: capital wall + towers).
+- **Waterfalls**: layered streak shader (translucent gaps, white aerated lines, blue body), base foam, 1.25x wider sheets, calmer pool foam and softer mist (FALL_FS / WATER_FS).
+- **Debug**: `--xcmd fall0..5` (stand at a waterfall, `fallND` = distance N*6 m), `--xcmd horse|cow|sheep` (teleport next to nearest animal).
+QA shots Read this session: a_default, a_poi0, a_map, a_mtn, b_fall, b_village, b_forest, c_village, c_fall, d_village, d_default, e_wall, f_walk, f_outside, g_fall1, g_fall0, h_fall3, h_fall4, i_fall3, i_horse (camera inside the capital wall - unusable), j_sheep, j_cow.
+Known / deferred: horse+cow+sheep close-ups not verified (debug camera lands on the wall / building); waterfall pool still reads pale and the mist billboards are over-bright; cliff rock texture shows stepped pixel banding under llvmpipe (derivative bump; check on a GPU); a salmon-red branched tree kind (not cherry) is visible in Blossom Vale; tree canopies still faceted; terrain is still 2 km with a 2 m height grid (chunk streaming / bigger map not started); Blender rebuild blocked (no Blender on the notebook).
