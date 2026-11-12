@@ -27,16 +27,16 @@ static float urand(float a, float b) { return a + (b - a) * rng(); }
 // ------------------------------------------------------------------ queries
 float height(float x, float z) {
   float fx = (x + HALF) / CS - 0.5f, fz = (z + HALF) / CS - 0.5f; int ix = (int)std::floor(fx), iz = (int)std::floor(fz); float tx = fx - ix, tz = fz - iz;
-  int x0 = ci(ix, 0, G - 1), x1 = ci(ix + 1, 0, G - 1), z0 = ci(iz, 0, G - 1), z1 = ci(iz + 1, 0, G - 1);
-  return lerpf(lerpf(Hh[z0 * G + x0], Hh[z0 * G + x1], tx), lerpf(Hh[z1 * G + x0], Hh[z1 * G + x1], tx), tz);
+  int x0 = ci(ix, 0, GS - 1), x1 = ci(ix + 1, 0, GS - 1), z0 = ci(iz, 0, GS - 1), z1 = ci(iz + 1, 0, GS - 1);
+  return lerpf(lerpf(Hh[z0 * GS + x0], Hh[z0 * GS + x1], tx), lerpf(Hh[z1 * GS + x0], Hh[z1 * GS + x1], tx), tz);
 }
 float slopeAt(float x, float z) { float e = 2.5f; float dx = height(x + e, z) - height(x - e, z), dz = height(x, z + e) - height(x, z - e); return std::sqrt(dx * dx + dz * dz) / (2 * e); }
-float waterAt(float x, float z) { int ix = ci(cellOf(x), 0, G - 1), iz = ci(cellOf(z), 0, G - 1); return Wl[iz * G + ix]; }
+float waterAt(float x, float z) { int ix = ci(cellOf(x), 0, GS - 1), iz = ci(cellOf(z), 0, GS - 1); return Wl[iz * GS + ix]; }
 bool inWater(float x, float z, float* depth) { float w = waterAt(x, z); if (w < -1e8f) return false; float d = w - height(x, z); if (depth) *depth = d; return d > 0.f; }
-float roadDist(float x, float z) { int ix = ci(cellOf(x), 0, G - 1), iz = ci(cellOf(z), 0, G - 1); return roadD[iz * G + ix]; }
+float roadDist(float x, float z) { int ix = ci(cellOf(x), 0, GS - 1), iz = ci(cellOf(z), 0, GS - 1); return roadD[iz * GS + ix]; }
 int nationAt(float x, float z) { int b = 0; float bd = 1e30f; for (int i = 0; i < 3; i++) { float d = (x - nations[i].x) * (x - nations[i].x) + (z - nations[i].z) * (z - nations[i].z); if (d < bd) { bd = d; b = i; } } return b; }
 int settleNear(float x, float z, float margin) { for (size_t i = 0; i < settles.size(); i++) { const Settle& s = settles[i]; float d = std::sqrt((x - s.x) * (x - s.x) + (z - s.z) * (z - s.z)); if (d < s.r + margin) return (int)i; } return -1; }
-float highestPoint(float* hx, float* hz) { float best = -1e9f; int bi = 0; for (int i = 0; i < G * G; i++) if (Hh[i] > best) { best = Hh[i]; bi = i; } if (hx) *hx = -HALF + (bi % G + 0.5f) * CS; if (hz) *hz = -HALF + (bi / G + 0.5f) * CS; return best; }
+float highestPoint(float* hx, float* hz) { float best = -1e9f; int bi = 0; for (int i = 0; i < GS * GS; i++) if (Hh[i] > best) { best = Hh[i]; bi = i; } if (hx) *hx = -HALF + (bi % GS + 0.5f) * CS; if (hz) *hz = -HALF + (bi / GS + 0.5f) * CS; return best; }
 static float forestMask(float x, float z, float h) {
   float f = fb(x * 0.0045f + 10, z * 0.0045f, 4, SEED + 40); float m = smooth(0.46f, 0.60f, f); m *= 1.f - smooth(85.f, 118.f, h); m = std::max(m, 0.03f + 0.1f * smooth(0.38f, 0.46f, f)); return h < 1.5f ? 0.f : m;
 }
@@ -98,10 +98,10 @@ static float baseH(float x, float z) {
 static float hSm(float x, float z) { return (height(x, z) * 2 + height(x + 14, z) + height(x - 14, z) + height(x, z + 14) + height(x, z - 14)) / 6.f; }
 static void makeLake(float cx, float cz, float R, float forceLevel, const char* name, int poiKind) {
   float rim = 1e9f; for (int i = 0; i < 16; i++) { float a = i * TAU / 16; rim = std::min(rim, height(cx + std::cos(a) * R * 1.2f, cz + std::sin(a) * R * 1.2f)); }
-  float level = forceLevel > -1e8f ? forceLevel : std::max(rim - 1.4f, 1.2f); int x0 = ci(cellOf(cx - R * 1.6f), 0, G - 1), x1 = ci(cellOf(cx + R * 1.6f), 0, G - 1), z0 = ci(cellOf(cz - R * 1.6f), 0, G - 1), z1 = ci(cellOf(cz + R * 1.6f), 0, G - 1);
+  float level = forceLevel > -1e8f ? forceLevel : std::max(rim - 1.4f, 1.2f); int x0 = ci(cellOf(cx - R * 1.6f), 0, GS - 1), x1 = ci(cellOf(cx + R * 1.6f), 0, GS - 1), z0 = ci(cellOf(cz - R * 1.6f), 0, GS - 1), z1 = ci(cellOf(cz + R * 1.6f), 0, GS - 1);
   for (int j = z0; j <= z1; j++) for (int i = x0; i <= x1; i++) { float x = -HALF + (i + 0.5f) * CS, z = -HALF + (j + 0.5f) * CS; float wob = 1.f + (fb(x * 0.012f, z * 0.012f, 2, SEED + 77) - 0.5f) * 0.5f; float d = std::sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz)) / (R * wob);
-    float t = d; float prof = t < 0.9f ? level - 5.5f * (1 - (t / 0.9f) * (t / 0.9f)) : level + (t - 0.9f) * 5.5f; float& h = Hh[j * G + i]; h = smin(h, prof, 2.f);
-    if (t < 1.15f && h < level + 0.02f) Wl[j * G + i] = level; }
+    float t = d; float prof = t < 0.9f ? level - 5.5f * (1 - (t / 0.9f) * (t / 0.9f)) : level + (t - 0.9f) * 5.5f; float& h = Hh[j * GS + i]; h = smin(h, prof, 2.f);
+    if (t < 1.15f && h < level + 0.02f) Wl[j * GS + i] = level; }
   Poi p; memset(&p, 0, sizeof p); p.x = cx; p.z = cz; p.y = level; p.r = R * 0.9f; snprintf(p.name, 32, "%s", name); p.kind = poiKind; p.found = false; pois.push_back(p);
 }
 
@@ -130,11 +130,11 @@ static void carveRivers() {
     for (int i = 0; i < n; i++) P[i].lvl = P[i].bed + P[i].dep;
   }
   for (int id = 0; id < nRiv; id++) { const std::vector<RP>& P = rivers[id]; int n = (int)P.size(); for (int i = 0; i + 1 < n; i++) { const RP &a = P[i], &b = P[i + 1]; float sx = b.x - a.x, sz = b.z - a.z, sl2 = sx * sx + sz * sz, sl = std::sqrt(sl2); float R = std::max(a.w, b.w) * 0.5f + 16.f;
-      int x0 = ci(cellOf(std::min(a.x, b.x) - R), 0, G - 1), x1 = ci(cellOf(std::max(a.x, b.x) + R), 0, G - 1), z0 = ci(cellOf(std::min(a.z, b.z) - R), 0, G - 1), z1 = ci(cellOf(std::max(a.z, b.z) + R), 0, G - 1);
+      int x0 = ci(cellOf(std::min(a.x, b.x) - R), 0, GS - 1), x1 = ci(cellOf(std::max(a.x, b.x) + R), 0, GS - 1), z0 = ci(cellOf(std::min(a.z, b.z) - R), 0, GS - 1), z1 = ci(cellOf(std::max(a.z, b.z) + R), 0, GS - 1);
       for (int j = z0; j <= z1; j++) for (int k = x0; k <= x1; k++) { float x = -HALF + (k + 0.5f) * CS, z = -HALF + (j + 0.5f) * CS; float t = clampf(((x - a.x) * sx + (z - a.z) * sz) / sl2, 0.f, 1.f); float px = a.x + sx * t - x, pz = a.z + sz * t - z; float d = std::sqrt(px * px + pz * pz);
         float w = lerpf(a.w, b.w, t) * 0.5f, bed = lerpf(a.bed, b.bed, t), dep = lerpf(a.dep, b.dep, t); if (d > w + 14.f) continue; float over = std::max(0.f, d - w);
-        float prof = bed + 0.35f * (d / w) * (d / w) * (d < w ? 1.f : 0.f) + (d >= w ? 0.35f + over * 0.62f + over * over * 0.012f : 0.f); float& h = Hh[j * G + k]; h = smin(h, prof, 1.6f);
-        if (d < w + 1.0f) { float lvl = lerpf(a.lvl, b.lvl, t); if (h < lvl + 0.02f) { Wl[j * G + k] = std::max(Wl[j * G + k], lvl); flowX[j * G + k] = sx / sl; flowZ[j * G + k] = sz / sl; } } } } }
+        float prof = bed + 0.35f * (d / w) * (d / w) * (d < w ? 1.f : 0.f) + (d >= w ? 0.35f + over * 0.62f + over * over * 0.012f : 0.f); float& h = Hh[j * GS + k]; h = smin(h, prof, 1.6f);
+        if (d < w + 1.0f) { float lvl = lerpf(a.lvl, b.lvl, t); if (h < lvl + 0.02f) { Wl[j * GS + k] = std::max(Wl[j * GS + k], lvl); flowX[j * GS + k] = sx / sl; flowZ[j * GS + k] = sz / sl; } } } } }
 }
 
 // ------------------------------------------------------------------ objects
@@ -258,9 +258,9 @@ static void gradeRoad(const std::vector<V3>& poly) {
   for (int i = 0; i < n; i++) { float s = 0; int c = 0; for (int k = -22; k <= 22; k++) { int j = i + k; if (j < 0 || j >= n || wet[j]) continue; s += hy[j]; c++; } dry[i] = c ? s / c : hy[i]; }
   // wet runs: linear between the dry neighbours, +0.9 for the deck
   for (int i = 0; i < n;) { if (!wet[i]) { i++; continue; } int j = i; while (j < n && wet[j]) j++; float a = i > 0 ? dry[i - 1] : dry[std::min(j, n - 1)], b = j < n ? dry[j] : a; for (int k = i; k < j; k++) dry[k] = lerpf(a, b, (float)(k - i + 1) / (j - i + 1)); i = j; }
-  for (int i = 0; i < n; i++) { if (wet[i]) continue; float cx = d[i].x, cz = d[i].z; int x0 = ci(cellOf(cx - 9), 0, G - 1), x1 = ci(cellOf(cx + 9), 0, G - 1), z0 = ci(cellOf(cz - 9), 0, G - 1), z1 = ci(cellOf(cz + 9), 0, G - 1);
-    for (int j = z0; j <= z1; j++) for (int k = x0; k <= x1; k++) { float x = -HALF + (k + 0.5f) * CS, z = -HALF + (j + 0.5f) * CS; float dd = std::sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz)); roadD[j * G + k] = std::min(roadD[j * G + k], dd); if (Wl[j * G + k] > -1e8f) continue;
-      float w = 1.f - smooth(2.6f, 8.8f, dd); if (w > gradeW[j * G + k]) { gradeW[j * G + k] = w; gradeY[j * G + k] = dry[i]; } } }
+  for (int i = 0; i < n; i++) { if (wet[i]) continue; float cx = d[i].x, cz = d[i].z; int x0 = ci(cellOf(cx - 9), 0, GS - 1), x1 = ci(cellOf(cx + 9), 0, GS - 1), z0 = ci(cellOf(cz - 9), 0, GS - 1), z1 = ci(cellOf(cz + 9), 0, GS - 1);
+    for (int j = z0; j <= z1; j++) for (int k = x0; k <= x1; k++) { float x = -HALF + (k + 0.5f) * CS, z = -HALF + (j + 0.5f) * CS; float dd = std::sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz)); roadD[j * GS + k] = std::min(roadD[j * GS + k], dd); if (Wl[j * GS + k] > -1e8f) continue;
+      float w = 1.f - smooth(2.6f, 8.8f, dd); if (w > gradeW[j * GS + k]) { gradeW[j * GS + k] = w; gradeY[j * GS + k] = dry[i]; } } }
   // bridges over wet runs
   for (int i = 0; i < n;) { if (!wet[i]) { i++; continue; } int j = i; while (j < n && wet[j]) j++; int a = std::max(0, i - 2), b = std::min(n - 1, j + 1); float dx = d[b].x - d[a].x, dz = d[b].z - d[a].z, L = std::sqrt(dx * dx + dz * dz) + 1e-4f; float mx = (d[a].x + d[b].x) * 0.5f, mz = (d[a].z + d[b].z) * 0.5f; float deck = 0; for (int k = i; k < j; k++) deck = std::max(deck, dry[k]);
     float wl = -1e9f; for (int k = i; k < j; k++) wl = std::max(wl, waterAt(d[k].x, d[k].z)); deck = std::max(deck, wl + 0.9f); Obj o; o.kind = K_BRIDGE; o.x = mx; o.z = mz; o.y = deck; o.ry = std::atan2(dx / L, dz / L); o.sx = 1; o.sz = (L + 3.f) / 8.f; o.sy = 1; o.r = o.g = o.b = 128; o.sway = 0; objs.push_back(o); i = j; }
@@ -282,8 +282,8 @@ static void pickSites() {
       float score = rangeH * 3.f + d * 0.02f + (w.type == ST_CAPITAL ? 0 : (nationAt(x, z) == w.nation ? 0 : 60.f)) + rng() * 4.f; if (score < best) { best = score; bx = x; bz = z; } }
     if (best > 1e29f) continue; Settle s; s.type = w.type; s.nation = w.nation; s.size = w.size; s.x = bx; s.z = bz; s.r = R; snprintf(s.name, 28, "%s", w.name); settles.push_back(s); if (w.type == ST_CAPITAL) nations[w.nation].capital = (int)settles.size() - 1; }
   // flatten
-  for (Settle& s : settles) { float sum = 0; int c = 0; for (int k = 0; k < 20; k++) { float a = k * TAU / 20; sum += height(s.x + std::cos(a) * s.r * 0.6f, s.z + std::sin(a) * s.r * 0.6f); c++; } float y0 = std::max(sum / c, 3.4f); s.y = y0; float R = s.r * (s.type == ST_CAPITAL ? 1.f : 0.9f); int x0 = ci(cellOf(s.x - R * 1.6f), 0, G - 1), x1 = ci(cellOf(s.x + R * 1.6f), 0, G - 1), z0 = ci(cellOf(s.z - R * 1.6f), 0, G - 1), z1 = ci(cellOf(s.z + R * 1.6f), 0, G - 1);
-    for (int j = z0; j <= z1; j++) for (int i = x0; i <= x1; i++) { float x = -HALF + (i + 0.5f) * CS, z = -HALF + (j + 0.5f) * CS; float d = std::sqrt((x - s.x) * (x - s.x) + (z - s.z) * (z - s.z)) / R; float w = 1.f - smooth(0.85f, 1.55f, d); if (w > 0) { float& h = Hh[j * G + i]; h = lerpf(h, y0 + (fb(x * 0.05f, z * 0.05f, 2, 7) - 0.5f) * 0.5f, w); } } }
+  for (Settle& s : settles) { float sum = 0; int c = 0; for (int k = 0; k < 20; k++) { float a = k * TAU / 20; sum += height(s.x + std::cos(a) * s.r * 0.6f, s.z + std::sin(a) * s.r * 0.6f); c++; } float y0 = std::max(sum / c, 3.4f); s.y = y0; float R = s.r * (s.type == ST_CAPITAL ? 1.f : 0.9f); int x0 = ci(cellOf(s.x - R * 1.6f), 0, GS - 1), x1 = ci(cellOf(s.x + R * 1.6f), 0, GS - 1), z0 = ci(cellOf(s.z - R * 1.6f), 0, GS - 1), z1 = ci(cellOf(s.z + R * 1.6f), 0, GS - 1);
+    for (int j = z0; j <= z1; j++) for (int i = x0; i <= x1; i++) { float x = -HALF + (i + 0.5f) * CS, z = -HALF + (j + 0.5f) * CS; float d = std::sqrt((x - s.x) * (x - s.x) + (z - s.z) * (z - s.z)) / R; float w = 1.f - smooth(0.85f, 1.55f, d); if (w > 0) { float& h = Hh[j * GS + i]; h = lerpf(h, y0 + (fb(x * 0.05f, z * 0.05f, 2, 7) - 0.5f) * 0.5f, w); } } }
 }
 static void connect() {
   struct E { int a, b; }; std::vector<E> es; auto has = [&](int a, int b) { for (const E& e : es) if ((e.a == a && e.b == b) || (e.a == b && e.b == a)) return true; return false; }; int n = (int)settles.size();
@@ -300,7 +300,7 @@ static void connect() {
       if (C < bestC) { bestC = C; best = pts; } }
     best.insert(best.begin(), V3{A.x, 0, A.z}); best.push_back(V3{B.x, 0, B.z}); for (V3& p : best) p.y = height(p.x, p.z); Road r; r.pts = best; r.a = e.a; r.b = e.b; roads.push_back(r); gradeRoad(best); }
   // apply grading
-  for (int i = 0; i < G * G; i++) if (gradeW[i] > 0) Hh[i] = lerpf(Hh[i], gradeY[i], gradeW[i]);
+  for (int i = 0; i < GS * GS; i++) if (gradeW[i] > 0) Hh[i] = lerpf(Hh[i], gradeY[i], gradeW[i]);
   // border gates where the capital-capital roads change nation
   for (Road& r : roads) { int na = nationAt(r.pts[0].x, r.pts[0].z), nb = nationAt(r.pts.back().x, r.pts.back().z); if (na == nb || settles[r.a].type != ST_CAPITAL || settles[r.b].type != ST_CAPITAL) continue;
     for (size_t i = 1; i < r.pts.size(); i++) { int nn = nationAt(r.pts[i].x, r.pts[i].z); if (nn != na) { float dx = r.pts[i].x - r.pts[i - 1].x, dz = r.pts[i].z - r.pts[i - 1].z, L = std::sqrt(dx * dx + dz * dz) + 1e-4f; if (inWater(r.pts[i].x, r.pts[i].z)) break;
@@ -308,23 +308,24 @@ static void connect() {
 }
 void generate(uint32_t seed) {
   if (done) return; done = true; SEED = seed; rng = Rng(seed * 9301u + 7u);
-  Hh.assign(G * G, 0); Wl.assign(G * G, -1e9f); flowX.assign(G * G, 0); flowZ.assign(G * G, 0); roadD.assign(G * G, 99.f); gradeW.assign(G * G, 0); gradeY.assign(G * G, 0); fieldK.assign(G * G, 0); fieldA.assign(G * G, 0);
-  for (int j = 0; j < G; j++) for (int i = 0; i < G; i++) Hh[j * G + i] = baseH(-HALF + (i + 0.5f) * CS, -HALF + (j + 0.5f) * CS);
+  Hh.assign(GS * GS, 0); Wl.assign(GS * GS, -1e9f); flowX.assign(GS * GS, 0); flowZ.assign(GS * GS, 0); roadD.assign(GS * GS, 99.f); gradeW.assign(GS * GS, 0); gradeY.assign(GS * GS, 0); fieldK.assign(GS * GS, 0); fieldA.assign(GS * GS, 0);
+  for (int j = 0; j < GS; j++) for (int i = 0; i < GS; i++) Hh[j * GS + i] = baseH(-HALF + (i + 0.5f) * CS, -HALF + (j + 0.5f) * CS);
   makeLake(0.30f * HALF, 0.52f * HALF, 150.f, -1e9f, "Mirror Lake", 2); makeLake(-0.12f * HALF, -0.58f * HALF, 52.f, -1e9f, "Tarn of Stars", 2);
   { int made = 0; for (int t = 0; t < 400 && made < 1; t++) { float x = urand(-0.6f, 0.6f) * HALF, z = urand(-0.75f, -0.35f) * HALF; if (height(x, z) > 60 && height(x, z) < 100 && slopeAt(x, z) < 0.25f) { makeLake(x, z, 36.f, -1e9f, "Frostmere", 2); made++; } } }
   // rivers from the high country
-  { std::vector<V3> src; for (int t = 0; t < 3000 && nRiv < 8; t++) { float x = urand(-0.85f, 0.85f) * HALF, z = urand(-0.9f, 0.1f) * HALF; float h = height(x, z); if (h < 62.f || h > 125.f) continue; bool far = true; for (const V3& s : src) if ((s.x - x) * (s.x - x) + (s.z - z) * (s.z - z) < 260.f * 260.f) far = false; if (!far) continue; if (Wl[ci(cellOf(z), 0, G - 1) * G + ci(cellOf(x), 0, G - 1)] > -1e8f) continue; src.push_back({x, 0, z}); traceRiver(x, z, nRiv); if (rivers[nRiv].size() > 60) nRiv++; else rivers[nRiv].clear(); } }
+  { std::vector<V3> src; for (int t = 0; t < 3000 && nRiv < 8; t++) { float x = urand(-0.85f, 0.85f) * HALF, z = urand(-0.9f, 0.1f) * HALF; float h = height(x, z); if (h < 62.f || h > 125.f) continue; bool far = true; for (const V3& s : src) if ((s.x - x) * (s.x - x) + (s.z - z) * (s.z - z) < 260.f * 260.f) far = false; if (!far) continue; if (Wl[ci(cellOf(z), 0, GS - 1) * GS + ci(cellOf(x), 0, GS - 1)] > -1e8f) continue; src.push_back({x, 0, z}); traceRiver(x, z, nRiv); if (rivers[nRiv].size() > 60) nRiv++; else rivers[nRiv].clear(); } }
   carveRivers();
+  for (int i = 0; i < GS * GS; i++) if (Hh[i] < SEA) Wl[i] = std::max(Wl[i], SEA);
   pickSites(); connect();
   // inner streets
   for (size_t i = 0; i < settles.size(); i++) { Settle& s = settles[i]; if (s.type > ST_FORT) continue; float gx, gz; gatePoint(s, gx, gz); Road r; V3 a{gx, height(gx, gz), gz}, b{s.x + s.gateX * (s.type == ST_CAPITAL ? 2.f : 0.f), 0, s.z + s.gateZ * (s.type == ST_CAPITAL ? 2.f : 0.f)}; b.y = height(b.x, b.z); r.pts.push_back(a); r.pts.push_back(b); r.a = r.b = (int)i; roads.push_back(r); std::vector<V3> pp = r.pts; gradeRoad(pp); }
-  for (int i = 0; i < G * G; i++) if (gradeW[i] > 0) Hh[i] = lerpf(Hh[i], gradeY[i], gradeW[i]);
+  for (int i = 0; i < GS * GS; i++) if (gradeW[i] > 0) Hh[i] = lerpf(Hh[i], gradeY[i], gradeW[i]);
   // buildings
   for (size_t i = 0; i < settles.size(); i++) { switch (settles[i].type) { case ST_CAPITAL: buildCapital((int)i); break; case ST_VILLAGE: buildVillage((int)i); break; case ST_HAMLET: buildHamlet((int)i); break; case ST_FORT: buildFort((int)i); break; case ST_CAMP: buildCamp((int)i); break; case ST_RUINS: buildRuins((int)i); break; case ST_GRAVE: buildGrave((int)i); break; case ST_BORDER: buildBorder((int)i, settles[i].gateX, settles[i].gateZ); break; } }
   // fields around villages
   for (size_t i = 0; i < settles.size(); i++) { const Settle& s = settles[i]; if (s.type != ST_VILLAGE && s.type != ST_HAMLET) continue; int nf = s.type == ST_VILLAGE ? 4 + s.size : 3; for (int k = 0; k < nf; k++) for (int tr = 0; tr < 30; tr++) { float a = rng() * TAU, d = s.r + 10 + rng() * 55; float cx = s.x + std::cos(a) * d, cz = s.z + std::sin(a) * d; float fa = rng() * PI, hw = 12 + rng() * 8, hh = 9 + rng() * 6; float c = std::cos(fa), sn = std::sin(fa); bool ok = true; for (int q = 0; q < 9 && ok; q++) { float lx = (q % 3 - 1) * hw, lz = (q / 3 - 1) * hh; float x = cx + lx * c - lz * sn, z = cz + lx * sn + lz * c; if (wetNear(x, z, 3) || slopeAt(x, z) > 0.14f || roadDist(x, z) < 6.f || settleNear(x, z, 4) >= 0 && settleNear(x, z, 4) != (int)i) ok = false; }
       if (!ok) continue; for (const Obj& o : objs) if ((o.x - cx) * (o.x - cx) + (o.z - cz) * (o.z - cz) < (hw + 5) * (hw + 5) && o.kind >= K_COTTAGE) { ok = false; break; } if (!ok) continue; uint8_t kind = 1 + (uint8_t)(rng() * 3);
-      int x0 = ci(cellOf(cx - hw - hh), 0, G - 1), x1 = ci(cellOf(cx + hw + hh), 0, G - 1), z0 = ci(cellOf(cz - hw - hh), 0, G - 1), z1 = ci(cellOf(cz + hw + hh), 0, G - 1); for (int j = z0; j <= z1; j++) for (int q = x0; q <= x1; q++) { float x = -HALF + (q + 0.5f) * CS - cx, z = -HALF + (j + 0.5f) * CS - cz; float lx = x * c + z * sn, lz = -x * sn + z * c; if (std::fabs(lx) < hw && std::fabs(lz) < hh) { fieldK[j * G + q] = kind; fieldA[j * G + q] = fa; } }
+      int x0 = ci(cellOf(cx - hw - hh), 0, GS - 1), x1 = ci(cellOf(cx + hw + hh), 0, GS - 1), z0 = ci(cellOf(cz - hw - hh), 0, GS - 1), z1 = ci(cellOf(cz + hw + hh), 0, GS - 1); for (int j = z0; j <= z1; j++) for (int q = x0; q <= x1; q++) { float x = -HALF + (q + 0.5f) * CS - cx, z = -HALF + (j + 0.5f) * CS - cz; float lx = x * c + z * sn, lz = -x * sn + z * c; if (std::fabs(lx) < hw && std::fabs(lz) < hh) { fieldK[j * GS + q] = kind; fieldA[j * GS + q] = fa; } }
       for (int e = 0; e < 6; e++) { float lx = -hw + (e + 0.5f) * (2 * hw / 6); for (int sd = -1; sd <= 1; sd += 2) { float x = cx + lx * c - sd * hh * sn, z = cz + lx * sn + sd * hh * c; if (!inWater(x, z)) put(K_SFENCE, x, z, std::atan2(-sn * 0 - c * 0 + (-sn), c) * 0 + (-fa), 1.2f); } } break; } }
   // landmarks
   { float hx, hz; float hh = highestPoint(&hx, &hz); char nm[32]; snprintf(nm, 32, "Skyspire Peak"); addPoi(nm, hx, hz, 45.f, 4); put(K_BEACON, hx, hz, 0, 1.4f); put(K_BRAZIER, hx + 3, hz, 0, 1.4f); (void)hh; }
@@ -337,7 +338,7 @@ void generate(uint32_t seed) {
   for (int t = 0, c = 0; t < 600 && c < 4; t++) { float x = urand(-0.8f, 0.8f) * HALF, z = urand(-0.8f, 0.6f) * HALF; float h = height(x, z); if (h < 38 || h > 90 || slopeAt(x, z) > 0.3f || wetNear(x, z, 8) || settleNear(x, z, 60) >= 0 || roadDist(x, z) < 8) continue; put(K_BEACON, x, z, rng() * TAU, 1.3f); put(K_BRAZIER, x + 3, z, 0, 1.2f); c++; }
   // forests, bushes, rocks, big mountain rocks
   for (float gz = -HALF + 6; gz < HALF - 6; gz += 4.4f) for (float gx = -HALF + 6; gx < HALF - 6; gx += 4.4f) {
-    float x = gx + (rng() - 0.5f) * 4.2f, z = gz + (rng() - 0.5f) * 4.2f; float h = height(x, z); if (h < 1.6f || Wl[ci(cellOf(z), 0, G - 1) * G + ci(cellOf(x), 0, G - 1)] > -1e8f) continue; float rd = roadDist(x, z); if (rd < 6.5f) continue; if (settleNear(x, z, 12) >= 0) continue;
+    float x = gx + (rng() - 0.5f) * 4.2f, z = gz + (rng() - 0.5f) * 4.2f; float h = height(x, z); if (h < 1.6f || Wl[ci(cellOf(z), 0, GS - 1) * GS + ci(cellOf(x), 0, GS - 1)] > -1e8f) continue; float rd = roadDist(x, z); if (rd < 6.5f) continue; if (settleNear(x, z, 12) >= 0) continue;
     float sl = slopeAt(x, z); float fm = forestMask(x, z, h); float q = fb(x * 0.0022f + 50, z * 0.0022f, 3, SEED + 41); float r1 = rng();
     if (sl > 0.95f) { if (r1 < 0.2f && h > 25) { float s = 3.f + rng() * 9.f; Obj* o = put(K_BIGROCK, x, z, rng() * TAU, s, 0.8f + rng() * 0.4f, 0.8f + rng() * 0.35f, 0.8f + rng() * 0.3f, -s * 0.15f); o->sy = s * (0.8f + rng() * 0.8f); } continue; }
     if (sl > 0.55f && h > 20 && r1 < 0.05f) { float s = 2.f + rng() * 6.f; Obj* o = put(K_BIGROCK, x, z, rng() * TAU, s, 0.8f + rng() * 0.4f, 0.8f + rng() * 0.3f, 0.8f + rng() * 0.3f, -s * 0.2f); o->sy = s * (0.7f + rng() * 0.7f); continue; }
@@ -356,10 +357,10 @@ void generate(uint32_t seed) {
   for (int t = 0, c = 0; t < 400 && c < 10; t++) { float x = urand(-0.85f, 0.85f) * HALF, z = urand(-0.85f, 0.7f) * HALF; float h = height(x, z); if (h < 6 || wetNear(x, z, 10) || settleNear(x, z, 120) >= 0 || roadDist(x, z) < 30) continue; lairs.push_back({x, z, 40.f, h > 60 ? 5 : 0}); c++; }
   buildColGrid();
   // ---------------- textures
-  waterTex.assign((size_t)G * G * 4, 0.f); { std::vector<float> wb(G * G, -1e9f); for (int pass = 0; pass < 3; pass++) { std::vector<float> nb = pass == 0 ? Wl : wb; if (pass == 0) { wb = Wl; continue; } nb = wb; for (int j = 1; j < G - 1; j++) for (int i = 1; i < G - 1; i++) { float m = wb[j * G + i]; for (int dj = -1; dj <= 1; dj++) for (int di = -1; di <= 1; di++) m = std::max(m, wb[(j + dj) * G + i + di]); nb[j * G + i] = m; } wb = nb; }
-    for (int i = 0; i < G * G; i++) { float h = Hh[i]; float lvl = Wl[i]; float f = 0; if (lvl > -1e8f) f = 1; float outv = lvl > -1e8f ? lvl : h - 1.5f; waterTex[i * 4] = outv; waterTex[i * 4 + 1] = flowX[i]; waterTex[i * 4 + 2] = flowZ[i]; waterTex[i * 4 + 3] = f; } 
-    infoA.assign((size_t)G * G * 4, 255); infoB.assign((size_t)G * G * 4, 0);
-    for (int j = 0; j < G; j++) for (int i = 0; i < G; i++) { int id = j * G + i; float x = -HALF + (i + 0.5f) * CS, z = -HALF + (j + 0.5f) * CS; float h = Hh[id]; float hxm = Hh[j * G + std::max(0, i - 1)], hxp = Hh[j * G + std::min(G - 1, i + 1)], hzm = Hh[std::max(0, j - 1) * G + i], hzp = Hh[std::min(G - 1, j + 1) * G + i]; float sl = std::sqrt((hxp - hxm) * (hxp - hxm) + (hzp - hzm) * (hzp - hzm)) / (2 * CS);
+  waterTex.assign((size_t)GS * GS * 4, 0.f); { std::vector<float> wb(GS * GS, -1e9f); for (int pass = 0; pass < 3; pass++) { std::vector<float> nb = pass == 0 ? Wl : wb; if (pass == 0) { wb = Wl; continue; } nb = wb; for (int j = 1; j < GS - 1; j++) for (int i = 1; i < GS - 1; i++) { float m = wb[j * GS + i]; for (int dj = -1; dj <= 1; dj++) for (int di = -1; di <= 1; di++) m = std::max(m, wb[(j + dj) * GS + i + di]); nb[j * GS + i] = m; } wb = nb; }
+    for (int i = 0; i < GS * GS; i++) { float h = Hh[i]; float lvl = Wl[i]; float f = 0; if (lvl > -1e8f) f = 1; float outv = lvl > -1e8f ? lvl : h - 1.5f; waterTex[i * 4] = outv; waterTex[i * 4 + 1] = flowX[i]; waterTex[i * 4 + 2] = flowZ[i]; waterTex[i * 4 + 3] = f; } 
+    infoA.assign((size_t)GS * GS * 4, 255); infoB.assign((size_t)GS * GS * 4, 0);
+    for (int j = 0; j < GS; j++) for (int i = 0; i < GS; i++) { int id = j * GS + i; float x = -HALF + (i + 0.5f) * CS, z = -HALF + (j + 0.5f) * CS; float h = Hh[id]; float hxm = Hh[j * GS + std::max(0, i - 1)], hxp = Hh[j * GS + std::min(GS - 1, i + 1)], hzm = Hh[std::max(0, j - 1) * GS + i], hzp = Hh[std::min(GS - 1, j + 1) * GS + i]; float sl = std::sqrt((hxp - hxm) * (hxp - hxm) + (hzp - hzm) * (hzp - hzm)) / (2 * CS);
       float n1 = fb(x * 0.02f, z * 0.02f, 3, SEED + 21), n2 = fb(x * 0.2f, z * 0.2f, 2, SEED + 22), n3 = fb(x * 0.006f, z * 0.006f, 2, SEED + 23); float fm = forestMask(x, z, h); float q = fb(x * 0.0022f + 50, z * 0.0022f, 3, SEED + 41);
       V3 meadow = mix3(V3{0.30f, 0.50f, 0.15f}, V3{0.50f, 0.58f, 0.19f}, n1); if (q < 0.30f && fm > 0.3f) meadow = mix3(meadow, V3{0.50f, 0.58f, 0.30f}, 0.4f); V3 col = mix3(meadow, V3{0.16f, 0.27f, 0.10f}, fm * 0.75f); float grass = 1.f - 0.4f * fm;
       float alp = smooth(45.f, 88.f, h + (n1 - 0.5f) * 24.f); col = mix3(col, V3{0.40f, 0.45f, 0.28f}, alp * 0.75f);
@@ -374,8 +375,8 @@ void generate(uint32_t seed) {
       (void)n3; auto b8 = [](float v) { return (uint8_t)clampf(v * 255.f + 0.5f, 0, 255); }; infoA[id * 4] = b8(col.x); infoA[id * 4 + 1] = b8(col.y); infoA[id * 4 + 2] = b8(col.z); infoA[id * 4 + 3] = b8(grass);
       infoB[id * 4] = b8(flower); infoB[id * 4 + 1] = b8(fm); infoB[id * 4 + 2] = b8(fa / PI); infoB[id * 4 + 3] = fk * 60; } }
   // minimap (4 m / px)
-  mapRGBA.assign((size_t)MAPN * MAPN * 4, 255); for (int j = 0; j < MAPN; j++) for (int i = 0; i < MAPN; i++) { int gi = std::min(G - 1, i * 2), gj = std::min(G - 1, j * 2); float h = Hh[gj * G + gi]; int id = gj * G + gi; V3 c{infoA[id * 4] / 255.f, infoA[id * 4 + 1] / 255.f, infoA[id * 4 + 2] / 255.f};
-    float hs = clampf(0.5f + (Hh[gj * G + std::min(G - 1, gi + 2)] - Hh[gj * G + std::max(0, gi - 2)] + Hh[std::max(0, gj - 2) * G + gi] - Hh[std::min(G - 1, gj + 2) * G + gi]) * 0.05f, 0.25f, 1.15f); c = c * (hs * 1.1f + 0.1f);
+  mapRGBA.assign((size_t)MAPN * MAPN * 4, 255); for (int j = 0; j < MAPN; j++) for (int i = 0; i < MAPN; i++) { int gi = std::min(GS - 1, i * 2), gj = std::min(GS - 1, j * 2); float h = Hh[gj * GS + gi]; int id = gj * GS + gi; V3 c{infoA[id * 4] / 255.f, infoA[id * 4 + 1] / 255.f, infoA[id * 4 + 2] / 255.f};
+    float hs = clampf(0.5f + (Hh[gj * GS + std::min(GS - 1, gi + 2)] - Hh[gj * GS + std::max(0, gi - 2)] + Hh[std::max(0, gj - 2) * GS + gi] - Hh[std::min(GS - 1, gj + 2) * GS + gi]) * 0.05f, 0.25f, 1.15f); c = c * (hs * 1.1f + 0.1f);
     if (Wl[id] > -1e8f && h < Wl[id] + 0.05f) c = mix3(V3{0.10f, 0.28f, 0.50f}, V3{0.18f, 0.42f, 0.62f}, clampf((Wl[id] - h) * -0.2f + 1.f, 0, 1)); else if (h < 0.f) c = V3{0.08f, 0.22f, 0.42f};
     mapRGBA[(j * MAPN + i) * 4] = (uint8_t)(clampf(c.x, 0, 1) * 255); mapRGBA[(j * MAPN + i) * 4 + 1] = (uint8_t)(clampf(c.y, 0, 1) * 255); mapRGBA[(j * MAPN + i) * 4 + 2] = (uint8_t)(clampf(c.z, 0, 1) * 255); }
   fprintf(stderr, "world: %zu objects, %zu settlements, %zu roads, %zu falls, %zu pois, %zu posts, %zu lights, %zu colliders\n", objs.size(), settles.size(), roads.size(), falls.size(), pois.size(), posts.size(), lights.size(), cols.size());

@@ -45,6 +45,8 @@ typedef ptrdiff_t GLsizeiptr, GLintptr;
 #define GL_TEXTURE_2D_MULTISAMPLE 0x9100
 #define GL_TEXTURE0 0x84C0
 #define GL_TEXTURE1 0x84C1
+#define GL_TEXTURE2 0x84C2
+#define GL_TEXTURE3 0x84C3
 #define GL_TEXTURE_MIN_FILTER 0x2801
 #define GL_TEXTURE_MAG_FILTER 0x2800
 #define GL_TEXTURE_WRAP_S 0x2802
@@ -62,6 +64,11 @@ typedef ptrdiff_t GLsizeiptr, GLintptr;
 #define GL_RGBA8 0x8058
 #define GL_R8 0x8229
 #define GL_RGBA16F 0x881A
+#define GL_R32F 0x822E
+#define GL_RGBA32F 0x8814
+#define GL_REPEAT 0x2901
+#define GL_LINEAR_MIPMAP_LINEAR 0x2703
+#define GL_RGB 0x1907
 #define GL_DEPTH_COMPONENT 0x1902
 #define GL_DEPTH_COMPONENT24 0x81A6
 #define GL_DEPTH_COMPONENT32F 0x8CAC
@@ -101,7 +108,7 @@ typedef ptrdiff_t GLsizeiptr, GLintptr;
  X(void,EnableVertexAttribArray,(GLuint)) X(void,VertexAttribPointer,(GLuint,GLint,GLenum,GLboolean,GLsizei,const void*)) X(void,VertexAttribDivisor,(GLuint,GLuint)) \
  X(void,GenFramebuffers,(GLsizei,GLuint*)) X(void,BindFramebuffer,(GLenum,GLuint)) X(void,FramebufferTexture2D,(GLenum,GLenum,GLenum,GLuint,GLint)) \
  X(GLenum,CheckFramebufferStatus,(GLenum)) X(void,BlitFramebuffer,(GLint,GLint,GLint,GLint,GLint,GLint,GLint,GLint,GLbitfield,GLenum)) \
- X(void,DeleteFramebuffers,(GLsizei,const GLuint*)) X(const GLubyte*,GetString,(GLenum)) X(void,DrawBuffer,(GLenum)) X(void,ReadBuffer,(GLenum))
+ X(void,DeleteFramebuffers,(GLsizei,const GLuint*)) X(const GLubyte*,GetString,(GLenum)) X(void,DrawBuffer,(GLenum)) X(void,ReadBuffer,(GLenum)) X(void,GenerateMipmap,(GLenum)) X(void,Scissor,(GLint,GLint,GLsizei,GLsizei))
 #define X(r,n,a) inline r (*gl##n) a = nullptr;
 GL_FUNCS(X)
 #undef X
