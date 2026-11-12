@@ -246,7 +246,7 @@ void selectUpdate(float dt) {
 }
 }  // namespace
 void heroStep(int d) { roster::step(d); selT = 0; P.vic = 0; P.relT = 9; P.drawing = false; }
-void setBiome(int b) { gBiome = b; }
+void setBiome(int b) { gBiome = ((b % 3) + 3) % 3; static const int BR[3] = {4, 3, 1}; if (mode != M_OFF) gfx::setReach(BR[gBiome], true); }
 int biome() { return gBiome; }
 void useAbility() {
   if (mode == M_OFF || mode == M_SELECT || P.down || P.abilCd > 0) return; const roster::Hero& hr = roster::at(roster::sel()); P.abilCd = hr.cd; P.abilT = hr.dur; V3 f = fwdOf(P.yaw, 0);
@@ -279,7 +279,7 @@ void start(int m) {
   P.x = P.ox = ax0; P.z = P.oz = pathZ(ax0); P.y = terrH(P.x, P.z); P.yaw = P.face = PI / 2; P.pitch = 0.0f; playerUnit = Unit(); playerUnit.used = true; playerUnit.team = 0; playerUnit.cls = FLETCHER; fx.clear();
   if (m == M_RANGE) { buildRange(); banner("PRACTICE RANGE", "HOLD LMB TO DRAW - RELEASE AT THE GOLD MARK"); feed("Targets: static, sliding, bobbing, sweeping", 0xb3a88e); } else if (m == M_WAVES) { P.lives = 3; banner("WAVE HUNT", "SURVIVE - BLOCK RMB - ROLL SPACE"); H.wave = 0; waveT = 3.f; }
   if (m == M_SELECT) { H.view = VW_THIRD; P.face = P.yaw = -PI / 2; selT = 0; P.relT = 9; H.bannerT = 0; }
-  gfx::resetCamera();
+  gfx::resetCamera(); { static const int BR[3] = {4, 3, 1}; gfx::setReach(BR[gBiome % 3], true); }
 }
 void stop() { mode = M_OFF; slowK = 1; gfx::camO.on = false; }
 void look(float dx, float dy) {
@@ -290,6 +290,7 @@ void look(float dx, float dy) {
 void scroll(float dy) { if (mode == M_SELECT) { heroStep(dy > 0 ? -1 : 1); return; } if (H.view == VW_FREE) cam.orbitD = clampf(cam.orbitD - dy * 0.8f, 2.2f, 45.f); else if (H.view == VW_THIRD) cam.dist = clampf(cam.dist - dy * 0.3f, 2.0f, 6.f); }
 void keyPress(int k) {
   if (mode == M_OFF) return;
+  if (k == 'T' || (mode == M_SELECT && k >= '1' && k <= '3')) { if (k == 'T') setBiome(gBiome + 1); else setBiome(k - '1'); static const char* BN[3] = {"ASHEN MOOR", "PINE HIGHLANDS", "DROWNED FEN"}; if (mode != M_SELECT) feed(BN[gBiome], 0xb3a88e); return; }
   if (mode == M_SELECT) { if (k == 263 || k == 'A') heroStep(-1); else if (k == 262 || k == 'D') heroStep(1); else if (k == 13 || k == 32) stop(); return; }
   if (k == 'E') { useAbility(); return; }
   if (k == cfg::S.key[cfg::ACT_VIEW]) setView(H.view + 1); else if (k == cfg::S.key[cfg::ACT_ASSIST]) { H.assist = !H.assist; feed(H.assist ? "Arc assist ON" : "Arc assist OFF", 0xb3a88e); } else if (k == 'B') { H.bot = !H.bot; feed(H.bot ? "Auto-archer ON" : "Auto-archer OFF", 0xb3a88e); }
@@ -380,7 +381,7 @@ void buildShapes() {
   float ease = e * e * (3.f - 2.f * e), lift = smooth(0.f, 0.3f, e), mv = std::min(1.f, P.speed / 4.f);
   float rl = P.relT < 0.6f ? P.relT : 9.f, ov = rl < 0.6f ? std::exp(-rl * 9.f) * std::cos(rl * 62.f) : 0.f, kick = rl < 0.5f ? std::exp(-rl * 14.f) : 0.f;
   float held = P.drawing && P.holdT > 0.9f ? std::min(1.f, (P.holdT - 0.9f) / 1.f) : 0.f;   // over-hold tremble
-  float gx = lerpf(-0.27f, -0.085f, lift), gy = lerpf(-0.29f, -0.155f, lift), gz = lerpf(-0.66f, -0.76f, lift);
+  float gx = lerpf(-0.27f, -0.14f, lift), gy = lerpf(-0.29f, -0.155f, lift), gz = lerpf(-0.66f, -0.76f, lift);
   gx = lerpf(gx, -0.03f, blk); gy = lerpf(gy, -0.10f, blk); gz = lerpf(gz, -0.64f, blk); gz += kick * 0.06f; gy += kick * 0.02f;
   gx += (0.010f * std::sin(tmv * 1.15f) - lagX * 0.5f + spr * 0.10f) * mo + held * 0.004f * nz(tmv * 24, 5);
   gy += (0.010f * std::sin(tmv * 1.55f + 1.f) + 0.004f * std::sin(tmv * 1.9f) + lagY * 0.5f - spr * 0.10f + std::sin(P.bob * 2.f) * 0.008f * mv) * mo + held * 0.004f * nz(tmv * 27, 6);
@@ -388,25 +389,25 @@ void buildShapes() {
   if (P.stagT > 0) { gx += 0.05f * nz(tmv * 30, 1); gy += 0.04f * nz(tmv * 33, 2); }
   V3 G = W(gx, gy, gz);
   V3 F = norm(mix3(Wd(0.10f, 0.05f + spr * 0.1f, -1.f), Wd(-0.073f, 0.015f, -0.39f), lift)); if (blk > 0.05f) F = norm(F + Wd(-0.1f, 0, 0) * blk);
-  float ang = lerpf(lerpf(0.20f, -0.16f, lift), 1.35f, blk); V3 U = Wd(std::sin(ang), std::cos(ang), 0); U = norm(U - F * dot(U, F)); V3 side = norm(cross(F, U));
+  float ang = lerpf(lerpf(0.20f, -0.26f, lift), 1.35f, blk); V3 U = Wd(std::sin(ang), std::cos(ang), 0); U = norm(U - F * dot(U, F)); V3 side = norm(cross(F, U));
   float bend = 0.30f + 0.70f * e - 0.30f * ov, L = 0.38f; const int N = 8;
-  V3 wood = C(0x7a4a26), tipc = C(0xd8cfae), leather = C(0x4a2f1c), sleeve = C(0x2e3a2e), strc = C(0xd8ccb0), brace = C(0x8a6a3a);
+  V3 wood = C(0x7a4a26), tipc = C(0xd8cfae), leather = C(0x4a2f1c), sleeve = C(0x2e3a2e), strc = C(0x9c9078), brace = C(0x8a6a3a);
   auto limb = [&](float s) { float a_ = std::fabs(s); return G + U * (s * L * (1 - 0.1f * bend * a_ * a_)) - F * (bend * 0.2f * a_ * a_ * (0.7f + 0.3f * a_)); };
   for (int i = 0; i < N; i++) for (int sg = -1; sg <= 1; sg += 2) { float s0 = sg * (float)i / N, s1 = sg * (float)(i + 1) / N; V3 a0 = limb(s0), a1 = limb(s1); float th = 0.012f * (1 - 0.55f * (float)i / N); putV(SH_CYL, seg(a0, a1, th * 1.15f, th * 0.7f), wood, 0.5f, 0.f, 0.f); }
-  V3 tp = limb(1), bt = limb(-1); putV(SH_SPHERE, ball(tp, 0.015f), tipc, 0.5f, 0, 0); putV(SH_SPHERE, ball(bt, 0.015f), tipc, 0.5f, 0, 0);
+  V3 tp = limb(1), bt = limb(-1); putV(SH_SPHERE, ball(tp, 0.008f), tipc, 0.5f, 0, 0); putV(SH_SPHERE, ball(bt, 0.008f), tipc, 0.5f, 0, 0);
   putV(SH_CYL, seg(G - U * 0.08f, G + U * 0.08f, 0.027f, 0.027f), leather, 0.8f, 0, 0);   // riser wrap
   float dd = lerpf(0.09f, 0.40f, ease) - (rl < 0.6f ? 0.07f * ov : 0.f); V3 N0 = G - F * dd + side * (0.012f * ov) + up * (0.03f * std::sin(PI * e) * mo) + rt * (0.01f * std::sin(PI * e) * mo);
-  putV(SH_CYL, seg(tp, N0, 0.0028f, 0.0028f), strc, 0.6f, 0, 0); putV(SH_CYL, seg(N0, bt, 0.0028f, 0.0028f), strc, 0.6f, 0, 0); putV(SH_CYL, seg(N0 - U * 0.022f, N0 + U * 0.022f, 0.0042f, 0.0042f), strc, 0.6f, 0, 0);
+  putV(SH_CYL, seg(tp, N0, 0.002f, 0.002f), strc, 0.6f, 0, 0); putV(SH_CYL, seg(N0, bt, 0.002f, 0.002f), strc, 0.6f, 0, 0); putV(SH_CYL, seg(N0 - U * 0.022f, N0 + U * 0.022f, 0.0042f, 0.0042f), strc, 0.6f, 0, 0);
   bool nocked = P.nockT <= 0 && !(P.relT < 0.25f) && blk < 0.5f; if (nocked) arrowGeo(N0 + F * 0.62f, F, 0.62f, true);
   // draw hand: palm behind the string, three fingers hooked on it, opening on release; forearm + sleeve back to the elbow
   float op = rl < 0.22f ? 1.f - rl / 0.22f : 0.f; V3 HP = N0 - F * 0.05f - up * 0.004f;
-  putV(SH_SPHERE, ball(HP, 0.031f), leather, 0.8f, 0, 0);
-  for (int k = -1; k <= 1; k++) { V3 kn = HP + U * (k * 0.013f) + F * 0.012f, ti = N0 + U * (k * 0.011f) + (side * 0.02f - F * 0.02f + U * (k * 0.03f)) * op; putV(SH_CYL, seg(kn, ti, 0.0085f, 0.0085f), leather, 0.8f, 0, 0); }
-  V3 Er = W(0.27f + 0.05f * e, -0.40f + 0.09f * e, -0.04f + 0.06f * e); putV(SH_CYL, seg(HP - F * 0.01f, Er, 0.036f, 0.036f), sleeve, 0.9f, 0, 0); putV(SH_CYL, seg(HP - F * 0.04f, HP - F * 0.09f, 0.040f, 0.040f), brace, 0.7f, 0, 0); putV(SH_CYL, seg(Er, W(0.52f, -0.78f, 0.35f), 0.05f, 0.05f), sleeve, 0.9f, 0, 0);
+  putV(SH_SPHERE, ball(HP, 0.024f), leather, 0.8f, 0, 0);
+  for (int k = -1; k <= 1; k++) { V3 kn = HP + U * (k * 0.013f) + F * 0.012f, ti = N0 + U * (k * 0.011f) + (side * 0.02f - F * 0.02f + U * (k * 0.03f)) * op; putV(SH_CYL, seg(kn, ti, 0.0065f, 0.0065f), leather, 0.8f, 0, 0); }
+  V3 Er = W(0.27f + 0.05f * e, -0.40f + 0.09f * e, -0.04f + 0.06f * e); putV(SH_CYL, seg(HP - F * 0.01f, Er, 0.027f, 0.027f), sleeve, 0.9f, 0, 0); putV(SH_CYL, seg(HP - F * 0.04f, HP - F * 0.09f, 0.031f, 0.031f), brace, 0.7f, 0, 0); putV(SH_CYL, seg(Er, W(0.52f, -0.78f, 0.35f), 0.036f, 0.036f), sleeve, 0.9f, 0, 0);
   // bow hand: fist around the riser (fingers in front, thumb across), forearm to the elbow
-  putV(SH_SPHERE, ball(G - F * 0.004f, 0.037f), leather, 0.8f, 0, 0);
-  for (int k = 0; k < 4; k++) putV(SH_SPHERE, ball(G + F * 0.03f + U * (-0.03f + 0.02f * k) - side * 0.004f, 0.0125f), leather, 0.8f, 0, 0);
-  putV(SH_SPHERE, ball(G + side * 0.032f - F * 0.008f + U * 0.018f, 0.014f), leather, 0.8f, 0, 0);
-  V3 El = W(-0.34f - 0.02f * e, -0.43f, -0.24f); putV(SH_CYL, seg(G - F * 0.03f, El, 0.040f, 0.040f), sleeve, 0.9f, 0, 0); putV(SH_CYL, seg(G - F * 0.05f, G - F * 0.11f - U * 0.01f, 0.044f, 0.044f), brace, 0.7f, 0, 0); putV(SH_CYL, seg(El, W(-0.62f, -0.82f, 0.30f), 0.052f, 0.052f), sleeve, 0.9f, 0, 0);
+  putV(SH_SPHERE, ball(G - F * 0.004f, 0.029f), leather, 0.8f, 0, 0);
+  for (int k = 0; k < 4; k++) putV(SH_SPHERE, ball(G + F * 0.03f + U * (-0.03f + 0.02f * k) - side * 0.004f, 0.01f), leather, 0.8f, 0, 0);
+  putV(SH_SPHERE, ball(G + side * 0.032f - F * 0.008f + U * 0.018f, 0.011f), leather, 0.8f, 0, 0);
+  V3 El = W(-0.34f - 0.02f * e, -0.43f, -0.24f); putV(SH_CYL, seg(G - F * 0.03f, El, 0.03f, 0.03f), sleeve, 0.9f, 0, 0); putV(SH_CYL, seg(G - F * 0.05f, G - F * 0.11f - U * 0.01f, 0.034f, 0.034f), brace, 0.7f, 0, 0); putV(SH_CYL, seg(El, W(-0.62f, -0.82f, 0.30f), 0.038f, 0.038f), sleeve, 0.9f, 0, 0);
 }
 }  // namespace pl

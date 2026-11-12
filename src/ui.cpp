@@ -107,17 +107,17 @@ static void drawOptions() {
   button(cx - 118 * S, cy + ph / 2 - 28 * S, 108 * S, 20 * S, "RESET DEFAULTS", nullptr, false, false, 503); button(cx + 10 * S, cy + ph / 2 - 28 * S, 108 * S, 20 * S, "DONE", nullptr, true, false, 501);
   text("SAVED TO SAVE/SETTINGS.JSON ON EVERY CHANGE.  CLICK LEFT/RIGHT HALF OF A ROW TO ADJUST.", cx, cy + ph / 2 - 40 * S, S * 0.62f, hexc(0x6a6252), 1);
 }
-static void statBar(float x, float y, float w, const char* lab, float v) { text(lab, x, y - 1 * S, S * 0.7f, hexc(0xb3a88e)); float bx = x + 52 * S, bw = w - 52 * S; rect(bx, y + S, bw, 2.5f * S, {0.12f, 0.11f, 0.1f, 0.9f}); rect(bx, y + S, bw * clampf(v, 0.05f, 1.f), 2.5f * S, hexc(0xe0b060)); }
+static void statBar(float x, float y, float w, const char* lab, float v) { text(lab, x, y - 1 * S, S * 0.7f, hexc(0xb3a88e)); float bx = x + 70 * S, bw = w - 70 * S; rect(bx, y + S, bw, 2.5f * S, {0.12f, 0.11f, 0.1f, 0.9f}); rect(bx, y + S, bw * clampf(v, 0.05f, 1.f), 2.5f * S, hexc(0xe0b060)); }
 static void drawSelect() {
   using namespace pl; const roster::Hero& hr = roster::at(roster::sel()); float W_ = (float)SW; const float U = 4 * S, M = 3 * U; char b[64];
   text("CHOOSE YOUR ARCHER", M, M, S * 1.5f, hexc(0xf1dfb6)); snprintf(b, 64, "%d / %d", roster::sel() + 1, roster::N); text(b, W_ - M, M, S * 1.1f, hexc(0xb3a88e), 2);
-  float t = std::fmod(selT, 8.f); const char* ph = t < 2.2f ? "PREVIEW  IDLE" : t < 4.7f ? "PREVIEW  DRAW AND RELEASE" : t < 7.3f ? "PREVIEW  VICTORY" : "PREVIEW  IDLE"; text(ph, W_ / 2, M + 2 * S, S * 0.8f, hexc(0x8f8672), 1);
-  float lx = M, ly = SH * 0.30f; text(hr.name, lx, ly, S * 2.4f, hexc(0xf1dfb6)); text(hr.role, lx, ly + 14 * S, S * 1.1f, hexc(0xe0a33c)); text(hr.weapon, lx, ly + 25 * S, S * 0.8f, hexc(0x9a917c));
-  float sy = ly + 42 * S, sw = 120 * S; statBar(lx, sy, sw, "DRAW SPEED", (hr.draw - 0.6f) / 0.7f); statBar(lx, sy + 9 * S, sw, "STABILITY", (hr.stab - 0.7f) / 0.7f); statBar(lx, sy + 18 * S, sw, "ARROW DAMAGE", (hr.dmg - 0.7f) / 0.8f); statBar(lx, sy + 27 * S, sw, "MOVE SPEED", (hr.move - 0.78f) / 0.4f); statBar(lx, sy + 36 * S, sw, "QUIVER", hr.quiver / 20.f); statBar(lx, sy + 45 * S, sw, "HEALTH", (hr.hp - 70.f) / 120.f);
+  float t = std::fmod(selT, 8.f); const char* ph = t < 2.2f ? "PREVIEW  IDLE" : t < 4.7f ? "PREVIEW  DRAW AND RELEASE" : t < 7.3f ? "PREVIEW  VICTORY" : "PREVIEW  IDLE"; { static const char* BN[3] = {"ASHEN MOOR", "PINE HIGHLANDS", "DROWNED FEN"}; text(BN[pl::biome() % 3], W_ / 2, M + 12 * S, S * 0.9f, hexc(0xe9c98a), 1); } text(ph, W_ / 2, M + 2 * S, S * 0.8f, hexc(0x8f8672), 1);
+  float lx = M, ly = SH * 0.30f; text(hr.name, lx, ly, S * 2.4f, hexc(0xf1dfb6)); text(hr.role, lx, ly + 20 * S, S * 1.1f, hexc(0xe0a33c)); text(hr.weapon, lx, ly + 31 * S, S * 0.8f, hexc(0x9a917c));
+  float sy = ly + 50 * S, sw = 150 * S; statBar(lx, sy, sw, "DRAW SPEED", (hr.draw - 0.6f) / 0.7f); statBar(lx, sy + 9 * S, sw, "STABILITY", (hr.stab - 0.7f) / 0.7f); statBar(lx, sy + 18 * S, sw, "ARROW DAMAGE", (hr.dmg - 0.7f) / 0.8f); statBar(lx, sy + 27 * S, sw, "MOVE SPEED", (hr.move - 0.78f) / 0.4f); statBar(lx, sy + 36 * S, sw, "QUIVER", hr.quiver / 20.f); statBar(lx, sy + 45 * S, sw, "HEALTH", (hr.hp - 70.f) / 120.f);
   float rx = W_ - M, ry = SH * 0.30f; text("ACTIVE  [E]", rx, ry, S * 0.8f, hexc(0x9a917c), 2); text(hr.active, rx, ry + 9 * S, S * 1.5f, hexc(0xffd24a), 2); text(hr.activeDesc, rx, ry + 24 * S, S * 0.75f, hexc(0xc8bea4), 2); snprintf(b, 64, "COOLDOWN %d S", (int)hr.cd); text(b, rx, ry + 33 * S, S * 0.7f, hexc(0x8f8672), 2);
   text("PASSIVE", rx, ry + 52 * S, S * 0.8f, hexc(0x9a917c), 2); text(hr.passive, rx, ry + 61 * S, S * 1.5f, hexc(0xe9c98a), 2); text(hr.passiveDesc, rx, ry + 76 * S, S * 0.75f, hexc(0xc8bea4), 2);
   float by = SH - 14 * U, bw = 8 * U, bh = 5 * U, cx = SW / 2.f; button(cx - 20 * U - bw / 2, by, bw, bh, "<", nullptr, false, false, 510); button(cx + 20 * U - bw / 2, by, bw, bh, ">", nullptr, false, false, 511); button(cx - 11 * U, by, 22 * U, bh, "SELECT", nullptr, true, false, 512);
-  text("A / D, ARROWS, WHEEL OR BUMPERS CHANGE   ENTER SELECTS   ESC BACK", cx, SH - 6 * U, S * 0.7f, hexc(0x6a6252), 1);
+  text("A / D, ARROWS, WHEEL OR BUMPERS CHANGE   1 2 3 WORLD   ENTER SELECTS   ESC BACK", cx, SH - 6 * U, S * 0.7f, hexc(0x6a6252), 1);
 }
 static void drawReticle(float cx, float cy, const pl::Player& p) {
   using namespace pl; bool sw = H.sweet > 0.5f, ov = p.drawing && p.holdT > 0.9f, cb = cfg::S.colorblind; int st = cfg::S.reticle & 3;
