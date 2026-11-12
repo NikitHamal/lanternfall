@@ -472,7 +472,7 @@ void update(float dtReal, const Input& in0) {
 void camera(float dt) {
   if (mode == M_OFF) return; dt = std::min(dt, 0.05f); V3 eye, tgt; float fov; float kick = 0;
   float dk = P.drawing ? curve(P.draw) : 0.f; (void)kick;
-  if (mode == M_SELECT) { const FigAsset* fa = roster::cur(); float sc = std::max(std::max(fa->scale, fa->height / 2.0f), roster::at(roster::sel()).pass == roster::PS_TITAN ? 2.3f : 1.f); eye = {P.x - (3.4f + 1.5f * sc), P.y + 0.3f + 1.25f * sc, P.z + 0.9f}; tgt = {P.x, P.y + 0.3f + 1.0f * sc, P.z}; fov = 0.62f; }
+  if (mode == M_SELECT) { const FigAsset* fa = roster::cur(); float sc = std::max(std::max(fa->scale, fa->height / 2.0f), roster::at(roster::sel()).pass == roster::PS_TITAN ? 3.1f : 1.f); eye = {P.x - (3.4f + 1.5f * sc), P.y + 0.3f + 1.25f * sc, P.z + 0.9f}; tgt = {P.x, P.y + 0.3f + 1.0f * sc, P.z}; fov = 0.62f; }
   else if (H.view == VW_FIRST) {
     V3 d = camDirRaw(); float yaw = P.yaw + P.swayX + P.kickY + (P.hitDir > 0 ? 1.f : -1.f) * P.hitK * 0.02f, pitch = P.pitch + P.swayY + P.kickP; d = fwdOf(yaw, pitch); eye = eyePos(); if (P.down) { eye.y -= 0.0f; d = fwdOf(yaw, std::max(-0.9f, pitch - 0.9f * std::min(1.f, P.downT * 2))); }
     tgt = eye + d * 20.f; fov = cfg::S.fov * (PI / 180.f) - 0.22f * dk - 0.06f * H.zoomK + (P.speed > 5.5f ? 0.04f * (cfg::S.reduceMotion ? 0.f : 1.f) : 0.f);
