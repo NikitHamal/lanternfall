@@ -219,3 +219,7 @@ QA shots Read: a_default, t_oak, t_oak2, t_pine, t_a (inside a dense crown - bad
 Not done / deferred (requested by the user, see docs/TODO.md): terrain scale and relief ("not landy enough" - 2 km map is unchanged), animal realism + approach/mount verification (the code already lets you walk up to horses/cows/sheep and mount with E; no clean capture yet), guard-on-wall height verification near the capital, grass/flower art pass, river banks / waterfall pool, gates + stairs for every wall, Blender rebuild of characters/buildings, tree bark texture, bush kinds (Polyfork round bush / fern) still old assets.
 
 CI: tag run 43257544870 (commit ba1a013) - Windows/Linux/macOS + release all success; release v2.4.0 published with 3 assets (linux 10.1 MB, macOS 10.7 MB, windows 10.3 MB): https://github.com/NikitHamal/lanternfall/releases/tag/v2.4.0
+
+## v2.5.0 - Realm Polish III: "The Great Continent" (this session) - IN PROGRESS
+Env: molab URL returned 410 (dead on arrival, no heartbeat). No Blender. Rebuilt user-space sysroot (apt-get download w/ private APT_CONFIG -> dpkg -x /tmp/agentA_sys; Xvfb byte-patched `/usr/bin\0` -> `/tmp/xbn\0`; also need libpciaccess0), cmake via pip. Capture: `Q=0 SZ="960 540"` takes ~8 s; 1280x720 q1 does not finish 20 frames in 200 s on 2 cores.
+Plan: pillar = terrain scale/relief + rivers/water; then animals approach, wall/guard audit.
