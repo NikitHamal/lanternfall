@@ -165,3 +165,7 @@ CI: tag run 43223972335 (commit 7167e44) - Windows/Linux/macOS + release all suc
 
 ## v2.0.0 - Verdant Realm overhaul (this session) - IN PROGRESS
 Env: molab 410 again. Built a user-space sysroot instead: Debian bookworm debs (Xvfb, Mesa llvmpipe, X11 dev headers) downloaded from deb.debian.org and `dpkg -x`'d to /tmp/agentA_sys (no root), Xvfb binary patched so xkbcomp resolves (/usr/bin -> /tmp/xb). Local Release build + real in-engine Xvfb captures work (960x540 q1 ~40 s/shot on 2 cores).
+
+## v2.1.0 - Living Towns II (this session) - IN PROGRESS
+Env: no molab. Rebuilt the user-space sysroot (apt-get download w/ private Dir::State/Cache -> dpkg -x into /tmp/agentA_sys, Xvfb binary byte-patched /usr/bin -> /tmp/xb for xkbcomp), cmake via pip. Local Release build + Xvfb llvmpipe captures work (960x540 q1).
+Pillar: NPC daily schedules (work / plaza / home + sleeping), talk menu (E), merchants (arrows, draughts, weapon + armour tiers, sell food), quest board (slay / hunt / gather / scout) with turn-in + pardon, persistent explorer save. Plan + checklist in docs/ROADMAP.md.
