@@ -186,3 +186,6 @@ QA screenshots read this session: `shots/shortlist_sheet.png` (22 candidate thum
 
 ### Deferred
 - LOD1 for `b_*` not produced; characters/state suite untouched this batch (statics only); old 45 assets have no committed preview GLB / thumbnail / meta.json; marimo card not reachable (410); CI: `release.yml` only runs on `main`/tags, so no run exists for `assets`.
+
+### CI (session 3)
+`/actions/runs?branch=assets` -> total_count 0 (workflow only triggers on `main`/tags); no run ID exists. No tag created, nothing merged to `main`.
