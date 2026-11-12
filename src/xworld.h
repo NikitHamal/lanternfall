@@ -5,7 +5,7 @@
 #include <vector>
 #include <cstdint>
 namespace xw {
-constexpr int GS = 1024; constexpr float CS = 2.f, HALF = 1024.f, SEA = 0.f, WORLD = 2048.f; constexpr int MAPN = 512;
+constexpr int GS = 2048; constexpr float CS = 2.f, HALF = 2048.f, SEA = 0.f, WORLD = 4096.f; constexpr int MAPN = 1024; constexpr float KS = HALF / 1024.f;   // KS: world scale vs the v2.4 2 km map
 // object kinds (polyfork props/buildings + procedural meshes, see xrender.cpp kind table)
 enum Kind : uint8_t {
   K_PINE, K_PINEY, K_OAK, K_DEAD, K_BOULDER, K_CAIRN, K_BUSH, K_THORN, K_LOG, K_SIGN, K_CAMP, K_BRAZIER, K_LAMP, K_POLE, K_IFENCE, K_BARREL, K_CRATE, K_WELL, K_STALL,

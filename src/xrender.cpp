@@ -13,7 +13,7 @@ float indoor = 0.f; float weather = 0.f;
 int drawCalls = 0; M4 viewM, projM, vpM; float lastDt = 0.016f;
 namespace {
 using namespace xw;
-constexpr int NL = 7, TN = 128, NC = 32; constexpr float CELL = 64.f;
+constexpr int NL = 7, TN = 128, NC = 64; constexpr float CELL = 64.f;
 struct IData { float m[16]; float tint[4]; };
 struct PMesh { GLuint vao = 0, vbo = 0, ibo = 0, inst = 0; int ni = 0, cap = 0; bool ok = false; };
 struct KindDef { const char* key; int lo; float rHi, rLo; bool shadow; };
@@ -277,7 +277,7 @@ void main(){ vec2 c = vec2(float(gl_VertexID & 1), float((gl_VertexID >> 1) & 1)
 const char* MAP_FS = R"GLSL(
 in vec2 vL; out vec4 oC; uniform sampler2D uMap; uniform vec2 uCenter; uniform float uHalf, uRot, uYaw, uTime; uniform int uMode; uniform vec4 uPoi[48]; uniform vec4 uNat[3]; uniform vec3 uNatC[3];
 void main(){ vec2 l = vL; float rr = length(l); if (uMode == 0 && rr > 1.) discard;
-  float cs = cos(uRot), sn = sin(uRot); vec2 w = vec2(l.x*cs - l.y*sn, l.x*sn + l.y*cs)*uHalf + uCenter; vec2 uv = w/2048. + .5; vec3 col = texture(uMap, uv).rgb; if (uv.x < 0. || uv.y < 0. || uv.x > 1. || uv.y > 1.) col = vec3(.05,.12,.22);
+  float cs = cos(uRot), sn = sin(uRot); vec2 w = vec2(l.x*cs - l.y*sn, l.x*sn + l.y*cs)*uHalf + uCenter; vec2 uv = w/4096. + .5; vec3 col = texture(uMap, uv).rgb; if (uv.x < 0. || uv.y < 0. || uv.x > 1. || uv.y > 1.) col = vec3(.05,.12,.22);
   float bd = 1e9; int bi = 0; for (int i = 0; i < 3; i++) { float d = length(w - uNat[i].xy); if (d < bd) { bd = d; bi = i; } } col = mix(col, uNatC[bi], .10);
   float px = uHalf/ (uMode==0 ? 62. : 300.);
   for (int i = 0; i < 48; i++) { vec4 P = uPoi[i]; if (P.w < -.5) continue; float d = length(w - P.xy); float r = (P.z < .5 ? 6. : P.z < 1.5 ? 4.2 : 3.2)*px; if (d < r + px*.9) { vec3 c = P.z < .5 ? vec3(1.,.82,.3) : P.z < 1.5 ? vec3(.95,.62,.25) : P.z < 3.5 ? vec3(.4,.8,1.) : vec3(.9,.9,.9); if (P.w < .5) c = mix(c, vec3(.3), .6); col = mix(col, vec3(.04), step(d, r+px*.9)); col = mix(col, c, step(d, r)); } }

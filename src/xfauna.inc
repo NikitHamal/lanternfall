@@ -11,7 +11,7 @@ const SpDef SPD[SP_N] = {
   {"COW", K_FA_COW, 1.0f, 1.0f, 0.075f, 0.62f, 0.28f, 0.85f, 0.52f, 0.9f, 3.9f, 5.f, 60, 12, 0.8f, 4, 0xe9e4da, 14},
   {"HORSE", K_FA_HORSE, 1.05f, 1.05f, 0.06f, 0.62f, 0.22f, 0.8f, 0.45f, 1.8f, 8.6f, 11.f, 70, 30, 0.8f, 4, 0xffffff, 10}};
 struct Fauna { bool used = false, alive = true, pet = false; int sp = 0, state = 0; float x = 0, y = 0, z = 0, face = 0, sc = 1, hp = 10, maxHp = 10, homeX = 0, homeZ = 0, tx = 0, tz = 0, t = 0, spd = 0, ph = 0, hitT = 0, deadT = 0, fleeT = 0, biteCd = 0, tint[3] = {1, 1, 1}, ltint[3] = {1, 1, 1}, pitch = 0; };
-constexpr int MAXF = 560; Fauna FA[MAXF]; int nFA = 0;
+constexpr int MAXF = 1500; Fauna FA[MAXF]; int nFA = 0;
 bool rideH = false; float rideTint[3] = {1, 1, 1}, rideLeg[3] = {1, 1, 1}, ridePh = 0, rideX = 0, rideZ = 0, rideFace = 0;   // riding a procedural horse (E on a horse)
 struct Bird { float cx = 0, cz = 0, r = 10, alt = 12, ph = 0, spd = 7, dir = 1, gh = 0, sc = 1, tint[3] = {1, 1, 1}; bool crow = false; } BD[56]; int nBD = 0;
 struct Bfly { float x = 0, y = 0, z = 0, ax = 0, az = 0, ph = 0, tint[3] = {1, 1, 1}; bool on = false; } BF[44];
@@ -39,9 +39,9 @@ void faunaInit() {
     auto scatter = [&](int sp, int n, float r0, float r1) { for (int k = 0, tries = 0; k < n && tries < n * 14; tries++) { float a = fr01() * TAU, r = r0 + (r1 - r0) * fr01(); if (addFauna(sp, s.x + std::cos(a) * r, s.z + std::sin(a) * r)) k++; } };
     scatter(SP_HEN, hens, 4.f, s.r * 0.75f); scatter(SP_DOG, dogs, 4.f, s.r * 0.8f); scatter(SP_CAT, cats, 4.f, s.r * 0.8f);
     scatter(SP_SHEEP, sheep, s.r * 0.95f, s.r * 1.5f + 14.f); scatter(SP_COW, cows, s.r * 1.0f, s.r * 1.6f + 16.f); scatter(SP_HORSE, horses, s.r * 0.7f, s.r * 1.4f + 14.f); }
-  auto herd = [&](int sp, int n, int herds) { for (int h = 0, tries = 0; h < herds && tries < 400 && nFA < MAXF - 6; tries++) { float x = (fr01() * 2.f - 1.f) * (HALF - 120.f), z = (fr01() * 2.f - 1.f) * (HALF - 120.f); float ht = height(x, z); if (ht < 3.f || ht > 46.f || settleNear(x, z, 50) >= 0 || !validSpot(x, z, 0.4f)) continue;
+  auto herd = [&](int sp, int n, int herds) { for (int h = 0, tries = 0; h < herds && tries < 1600 && nFA < MAXF - 6; tries++) { float x = (fr01() * 2.f - 1.f) * (HALF - 120.f), z = (fr01() * 2.f - 1.f) * (HALF - 120.f); float ht = height(x, z); if (ht < 3.f || ht > 46.f || settleNear(x, z, 50) >= 0 || !validSpot(x, z, 0.4f)) continue;
       int made = 0; for (int k = 0, t2 = 0; k < n && t2 < n * 10; t2++) { float a = fr01() * TAU, r = 2.f + fr01() * 9.f; Fauna* f = addFauna(sp, x + std::cos(a) * r, z + std::sin(a) * r); if (f) { f->homeX = x; f->homeZ = z; f->tx = f->x; f->tz = f->z; k++; made++; } } if (made) h++; } };
-  herd(SP_SHEEP, 5, 12); herd(SP_COW, 4, 6); herd(SP_HORSE, 3, 9);
+  herd(SP_SHEEP, 6, 34); herd(SP_COW, 4, 18); herd(SP_HORSE, 4, 26);
   for (int i = 0; i < 40; i++) { Bird& b = BD[nBD++]; b.cx = (fr01() * 2.f - 1.f) * (HALF - 60.f); b.cz = (fr01() * 2.f - 1.f) * (HALF - 60.f); b.r = 8.f + fr01() * 24.f; b.alt = 8.f + fr01() * 16.f; b.ph = fr01() * TAU; b.spd = 6.f + fr01() * 3.f; b.dir = fr01() < 0.5f ? 1.f : -1.f; b.sc = 1.f; b.crow = false;
     static const uint32_t BC[5] = {0x6a8ac8, 0xc8442a, 0x8a6a4a, 0xe8c040, 0x9a9a8e}; tintHex(b.tint, BC[i % 5]); b.gh = std::max(0.f, height(b.cx, b.cz)); }
   for (size_t i = 0, c = 0; i < settles.size() && c < 14; i++) { const Settle& s = settles[i]; if (s.type != ST_GRAVE && s.type != ST_RUINS && s.type != ST_CAMP) continue; for (int k = 0; k < 4 && nBD < 56; k++, c++) { Bird& b = BD[nBD++]; b.cx = s.x; b.cz = s.z; b.r = 14.f + fr01() * 14.f; b.alt = 11.f + fr01() * 10.f; b.ph = fr01() * TAU; b.spd = 7.f + fr01() * 2.f; b.dir = k % 2 ? 1.f : -1.f; b.sc = 2.2f; b.crow = true; tintHex(b.tint, 0x26262c); b.gh = std::max(0.f, height(b.cx, b.cz)); } }

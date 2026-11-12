@@ -29,7 +29,7 @@ static void weatherUpdate(float dt);
 bool on = false, built = false; Rng rng(77); float clockH = 9.5f, tMul = 1.f, tAbs = 0, sinceStart = 0;
 enum Role { R_VILL, R_GUARD, R_KNIGHT, R_SOLDIER, R_MON, R_STAG, R_BOAR };
 enum St { S_IDLE, S_WALK, S_PATROL, S_CHASE, S_ATK, S_FLEE, S_RETURN };
-constexpr int MAXN = 520;
+constexpr int MAXN = 1500;
 struct RigDef { const FigAsset* a; int wR, wL; float scale; const char* title; bool own; };
 struct Npc {
   bool used = false, alive = true, hitDone = false, lair = false, boss = false, onWall = false, vis = false, talking = false, asleep = false; int role = 0, rig = 0, mon = 0, state = 0, post = -1, road = -1, dir = 1, tgtKind = 0, tgtIdx = -1, settle = -1;
@@ -328,7 +328,7 @@ void debugCmd(const char* c) { if (strstr(c, "rain")) { wxForce = 1; wxW = 1.f; 
   }
 }
 void debugKillDay() { for (Npc& n : npcs) if (n.used && n.role >= R_MON && n.role == R_MON && n.alive) n.used = false; }
-bool mapToScreen(float wx, float wz, float& sx, float& sy) { if (!H.map) return false; sx = H.mapPx + (wx / 1024.f * 0.5f + 0.5f) * H.mapSize; sy = H.mapPy + (wz / 1024.f * 0.5f + 0.5f) * H.mapSize; return true; }
+bool mapToScreen(float wx, float wz, float& sx, float& sy) { if (!H.map) return false; sx = H.mapPx + (wx / HALF * 0.5f + 0.5f) * H.mapSize; sy = H.mapPy + (wz / HALF * 0.5f + 0.5f) * H.mapSize; return true; }
 
 void update(float dtReal, const pl::Input& inRaw) {
   pl::Input in = inRaw; if (TM.open) { in.lmb = in.rmb = false; in.mx = in.mz = 0; in.sprint = false; }
@@ -510,7 +510,7 @@ void draw() {
   }
   for (DmgTxt& x : DT) { if (x.t < 0) continue; x.t += 1.f / 60.f; if (x.t > 1.1f) { x.t = -1; continue; } float sx, sy; if (nLabels < 42 && xr::project(x.x, x.y + x.t * 0.8f, x.z, sx, sy)) { Label& L = labels[nLabels++]; L.x = sx; L.y = sy - x.t * 8.f; memcpy(L.text, x.txt, sizeof x.txt); L.text[19] = 0; L.hp = -1; L.col = x.col; } }
   float S = std::max(1.f, std::round(gfx::winH / 360.f)); float W = (float)gfx::winW, Hh = (float)gfx::winH;
-  if (H.map) { float size = std::min(Hh * 0.86f, W * 0.7f); H.mapSize = size; H.mapPx = (W - size) / 2; H.mapPy = (Hh - size) / 2; xr::MapView mv{0, 0, 1024.f, 0, 1, H.mapPx, H.mapPy, size, P.yaw}; xr::drawMap(mv); float sx, sy; mapToScreen(P.x, P.z, sx, sy); (void)sx; (void)sy; }
+  if (H.map) { float size = std::min(Hh * 0.86f, W * 0.7f); H.mapSize = size; H.mapPx = (W - size) / 2; H.mapPy = (Hh - size) / 2; xr::MapView mv{0, 0, HALF, 0, 1, H.mapPx, H.mapPy, size, P.yaw}; xr::drawMap(mv); float sx, sy; mapToScreen(P.x, P.z, sx, sy); (void)sx; (void)sy; }
   else if (H.show && !CI.in) { float size = 118.f * S; H.mapSize = size; H.mapPx = W - size - 8 * S; H.mapPy = 24 * S; float rot = PI - P.yaw; xr::MapView mv{P.x, P.z, 170.f, rot, 0, H.mapPx, H.mapPy, size, -rot}; xr::drawMap(mv); }
   else if (H.show && CI.in) { H.mapSize = 118.f * S; H.mapPx = W - H.mapSize - 8 * S; H.mapPy = 24 * S; }
   (void)psc;

@@ -55,18 +55,19 @@ SpellProj sproj[MAXSP];
 RiftObj rifts[MAXRIFT];
 NpcK KEX[MAXN];
 std::vector<GNode> gnodes;
-int gCellStart[32 * 32 + 1];
+constexpr int KGN = (int)(WORLD / 64.f);
+int gCellStart[KGN * KGN + 1];
 
 inline int gCellOf(float x, float z) {
-  int cx = std::min(31, std::max(0, (int)((x + HALF) / 64.f)));
-  int cz = std::min(31, std::max(0, (int)((z + HALF) / 64.f)));
-  return cz * 32 + cx;
+  int cx = std::min(KGN - 1, std::max(0, (int)((x + HALF) / 64.f)));
+  int cz = std::min(KGN - 1, std::max(0, (int)((z + HALF) / 64.f)));
+  return cz * KGN + cx;
 }
 
 void initKingdomWorld() {
   // Spawn ore veins along rocky slopes & hills + build spatial resource harvest grid
   Rng kr(7717u);
-  for (int t = 0, made = 0; t < 2400 && made < 85; t++) {
+  for (int t = 0, made = 0; t < 6000 && made < 200; t++) {
     float x = (kr() * 2.f - 1.f) * (HALF - 60.f), z = (kr() * 2.f - 1.f) * (HALF - 60.f);
     float h = height(x, z), sl = slopeAt(x, z);
     if (h < 14.f || h > 105.f || sl < 0.22f || sl > 0.85f || inWater(x, z) || roadDist(x, z) < 9.f || settleNear(x, z, 28.f) >= 0) continue;
@@ -86,11 +87,11 @@ void initKingdomWorld() {
     if (gt <= 1 && (i % 3) != 0) continue;   // keep gnode table compact (~4k nodes across 4 sq km)
     tmp.push_back({gCellOf(o.x, o.z), {o.x, o.z, r, (uint8_t)gt, amt, 0.f}});
   }
-  for (int c = 0; c <= 1024; c++) gCellStart[c] = 0;
+  for (int c = 0; c <= KGN * KGN; c++) gCellStart[c] = 0;
   for (const TmpN& t : tmp) gCellStart[t.cell + 1]++;
-  for (int c = 0; c < 1024; c++) gCellStart[c + 1] += gCellStart[c];
+  for (int c = 0; c < KGN * KGN; c++) gCellStart[c + 1] += gCellStart[c];
   gnodes.resize(tmp.size());
-  int cur[1024]; memcpy(cur, gCellStart, sizeof cur);
+  static int cur[KGN * KGN + 1]; memcpy(cur, gCellStart, sizeof cur);
   for (const TmpN& t : tmp) gnodes[cur[t.cell]++] = t.n;
 }
 
@@ -159,11 +160,11 @@ void pushFloatText(float wx, float wy, float wz, const char* txt, uint32_t col) 
 }
 
 GNode* nearestGNode(float px, float pz, float maxR) {
-  int cx0 = std::max(0, (int)((px - maxR + HALF) / 64.f)), cx1 = std::min(31, (int)((px + maxR + HALF) / 64.f));
-  int cz0 = std::max(0, (int)((pz - maxR + HALF) / 64.f)), cz1 = std::min(31, (int)((pz + maxR + HALF) / 64.f));
+  int cx0 = std::max(0, (int)((px - maxR + HALF) / 64.f)), cx1 = std::min(KGN - 1, (int)((px + maxR + HALF) / 64.f));
+  int cz0 = std::max(0, (int)((pz - maxR + HALF) / 64.f)), cz1 = std::min(KGN - 1, (int)((pz + maxR + HALF) / 64.f));
   GNode* best = nullptr; float bd = maxR * maxR;
   for (int cz = cz0; cz <= cz1; cz++) for (int cx = cx0; cx <= cx1; cx++) {
-    int c = cz * 32 + cx;
+    int c = cz * KGN + cx;
     for (int i = gCellStart[c]; i < gCellStart[c + 1]; i++) {
       GNode& g = gnodes[i]; if (!g.left) continue;
       float d2 = dist2(px, pz, g.x, g.z), lim = (maxR + g.r * 0.4f);
