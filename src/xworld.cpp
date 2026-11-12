@@ -384,7 +384,7 @@ void generate(uint32_t seed) {
       continue; }
     if (h < 1.5f || r > 0.2f) continue; if (roadDist(x, z) < 5.f || settleNear(x, z, 10) >= 0) continue;
     float sl = slopeAt(x, z); float zc, zj, zb, za; zones(x, z, h, zc, zj, zb, za); float fm = forestMask(x, z, h); float rr = rng();
-    if (sl > 0.65f && sl < 1.5f && h > 30.f) { if (rr < 0.06f) { float s = 3.f + rng() * 4.f; Obj* o = put(K_SPIRE, x, z, rng() * TAU, s, 0.85f + rng() * 0.3f, 0.85f + rng() * 0.25f, 0.85f + rng() * 0.25f, -s * 0.25f); o->sy = s * (0.55f + rng() * 0.6f); o->sx = o->sx * 1.5f; } continue; }
+    if (sl > 0.65f && sl < 1.5f && h > 30.f) { if (rr < 0.06f) { float s = 3.f + rng() * 4.f; Obj* o = put(K_SPIRE, x, z, rng() * TAU, s, 0.85f + rng() * 0.3f, 0.85f + rng() * 0.25f, 0.85f + rng() * 0.25f, -s * 0.25f); o->sy = s * (0.8f + rng() * 0.9f); o->sx = o->sz = s * 0.6f; } continue; }
     if (sl > 0.7f) continue;
     if (h < 40.f && rr < 0.30f && wetNear(x, z, 6.f)) put(K_WILLOW, x, z, rng() * TAU, 0.9f + rng() * 0.6f, 0.95f + rng() * 0.2f, 1.f, 0.95f, 0, true, 0.9f + rng() * 0.4f);
     else if (h < 3.6f && sl < 0.3f && rr < 0.30f) put(K_PALM, x, z, rng() * TAU, 0.9f + rng() * 0.4f, 1, 1, 1, 0, true, 0.9f + rng() * 0.6f);

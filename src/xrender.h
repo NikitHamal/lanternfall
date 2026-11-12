@@ -12,5 +12,5 @@ struct Frame { const Dyn* dyn = nullptr; int ndyn = 0; const PtLight* dlights = 
 struct MapView { float cx, cz, half, rot; int mode; float px, py, size; float yaw; };
 bool init(); void resize(int w, int h); void render(const Frame& f, const FigDraw* figs, int nfig); void drawMap(const MapView& v);
 bool project(float x, float y, float z, float& sx, float& sy);
-extern float indoor; extern int drawCalls; extern M4 viewM, projM, vpM; extern float lastDt;
+extern float indoor; extern float weather; extern int drawCalls; extern M4 viewM, projM, vpM; extern float lastDt;
 }

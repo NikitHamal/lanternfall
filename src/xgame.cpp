@@ -16,6 +16,8 @@ namespace ex {
 Hud H; Label labels[44]; int nLabels = 0; bool pending = false;
 namespace {
 using namespace xw;
+static int dayIdx = 0; static int wxForce = 0; static float wxW = 0.f, lightT = 0.f; static float hfr(int n) { float v = std::sin((float)n * 12.9898f + 78.233f) * 43758.5453f; return v - std::floor(v); }
+static void weatherUpdate(float dt);
 bool on = false, built = false; Rng rng(77); float clockH = 9.5f, tMul = 1.f, tAbs = 0, sinceStart = 0;
 enum Role { R_VILL, R_GUARD, R_KNIGHT, R_SOLDIER, R_MON, R_STAG, R_BOAR };
 enum St { S_IDLE, S_WALK, S_PATROL, S_CHASE, S_ATK, S_FLEE, S_RETURN };
@@ -162,6 +164,10 @@ void spawner(float dt) {
   if (cnt >= want) return; for (int t = 0; t < 14; t++) { float a = rng() * 6.28f, d = 70 + rng() * 70; float x = P.x + std::cos(a) * d, z = P.z + std::sin(a) * d; if (!validSpot(x, z, 0.6f) || settleNear(x, z, 80) >= 0) continue; float h = height(x, z); static const int LOW[] = {THORNLING, THORNLING, GLOAMHOUND, PEATWIGHT, GLOAMWISP, RUSTBOUND}, HIGH[] = {CAIRNBACK, GLOAMHOUND, EMBERHOUND, RUSTBOUND}; int type = h > 60 ? HIGH[(int)(rng() * 4) % 4] : LOW[(int)(rng() * 6) % 6]; int pack = 1 + (int)(rng() * 3);
     for (int k = 0; k < pack; k++) { Npc* n = spawnMon(type, x + (rng() - 0.5f) * 6, z + (rng() - 0.5f) * 6, false, false); if (n) { n->aggro *= 1.1f; } } return; }
 }
+static void weatherUpdate(float dt) {
+  float tgt = 0.f; if (wxForce) tgt = 1.f; else if (dayIdx > 0) { float r = hfr(dayIdx * 7 + 3); if (r < 0.5f) { float st = 6.5f + hfr(dayIdx * 13 + 1) * 11.f, ln = 2.5f + hfr(dayIdx * 29 + 5) * 4.5f; if (clockH > st && clockH < st + ln) tgt = 0.5f + 0.5f * hfr(dayIdx * 5 + 9); } }
+  wxW += (tgt - wxW) * std::min(1.f, dt * (wxForce ? 5.f : 0.12f)); if (std::fabs(tgt - wxW) < 0.002f) wxW = tgt; H.rain = CI.in ? 0.f : wxW; xr::weather = wxW;
+  if (lightT > 0) lightT = std::max(0.f, lightT - dt * 1.6f); else if (wxW > 0.8f && !CI.in && fr01() < dt * 0.05f) lightT = 1.f; }
 }  // namespace
 
 // ------------------------------------------------------------------ public
@@ -222,7 +228,7 @@ void keyPress(int key) {
 }
 void debugPlace(float x, float z, float yawDeg, float pitchDeg) { P.x = x; P.z = z; P.y = height(x, z); P.yaw = yawDeg * PI / 180.f; P.face = P.yaw; P.pitch = pitchDeg * PI / 180.f; P.camInit = false; } void debugHour(float h) { clockH = h; } void debugCam(float d) { P.camDist = d; } void debugFly(bool f) { P.fly = f; H.fly = f; } void debugView(int v) { P.view = v; H.view = v; } void debugMap(bool m) { H.map = m; }
 void debugPoi(int i) { if (pois.empty()) return; const Poi& p = pois[((i % (int)pois.size()) + (int)pois.size()) % (int)pois.size()]; float back = p.kind == 3 ? 24.f : p.kind == 0 ? 120.f : p.kind == 4 ? 60.f : 38.f; float a = p.kind == 3 ? 0.f : 0.9f; float x = p.x + std::sin(a) * back, z = p.z + std::cos(a) * back; if (p.kind == 3 && !falls.empty()) { for (const Fall& f : falls) if (std::fabs(f.x - p.x) < 1 && std::fabs(f.z - p.z) < 1) { x = f.x + f.dx * 22.f + f.dz * 6.f; z = f.z + f.dz * 22.f - f.dx * 6.f; } } P.x = x; P.z = z; P.y = height(x, z); P.yaw = std::atan2(p.x - x, p.z - z); P.face = P.yaw; P.pitch = p.kind == 4 ? 0.05f : 0.12f; P.camInit = false; }
-void debugCmd(const char* c) {
+void debugCmd(const char* c) { if (strstr(c, "rain")) { wxForce = 1; wxW = 1.f; }
   if (strstr(c, "bow")) B.weapon = 1; if (strstr(c, "melee")) B.weapon = 0; if (strstr(c, "hold")) dbgDrawHold = true; if (strstr(c, "run")) dbgWalk = 2; else if (strstr(c, "walk")) dbgWalk = 1; if (const char* p = strstr(c, "shoot")) dbgShoot = atoi(p + 5) > 0 ? atoi(p + 5) : 30;
   if (strstr(c, "horde")) startKingdomSiege(true); if (strstr(c, "hostile")) { for (int k = 0; k < 3; k++) bounty[k] = 120; } if (strstr(c, "noai")) for (Npc& n : npcs) if (n.used && n.role >= R_MON && n.role == R_MON) n.used = false;
   if (const char* p = strstr(c, "enter")) { int want = atoi(p + 5), best = -1; float bd = 1e30f; for (size_t i = 0; i < enters.size(); i++) if (enters[i].idx == want) { float d = dist2(enters[i].x, enters[i].z, P.x, P.z); if (d < bd) { bd = d; best = (int)i; } } if (best >= 0) { CI.ox = enters[best].x + enters[best].R; CI.oz = enters[best].z; doEnter(best); } }
@@ -299,7 +305,7 @@ void debugKillDay() { for (Npc& n : npcs) if (n.used && n.role >= R_MON && n.rol
 bool mapToScreen(float wx, float wz, float& sx, float& sy) { if (!H.map) return false; sx = H.mapPx + (wx / 1024.f * 0.5f + 0.5f) * H.mapSize; sy = H.mapPy + (wz / 1024.f * 0.5f + 0.5f) * H.mapSize; return true; }
 
 void update(float dtReal, const pl::Input& in) {
-  float dt = std::min(dtReal, 0.05f); tAbs += dt; sinceStart += dt; clockH += dt * tMul / 60.f; if (restT > 0) { clockH += dt * 2.f; } if (clockH >= 24.f) clockH -= 24.f; H.hour = clockH; H.hurt = hurtFlash; hurtFlash = std::max(0.f, hurtFlash - dt * 1.4f);
+  float dt = std::min(dtReal, 0.05f); tAbs += dt; sinceStart += dt; clockH += dt * tMul / 60.f; if (restT > 0) { clockH += dt * 2.f; } if (clockH >= 24.f) { clockH -= 24.f; dayIdx++; } H.hour = clockH; weatherUpdate(dt); H.hurt = hurtFlash; hurtFlash = std::max(0.f, hurtFlash - dt * 1.4f);
   if (H.bannerT > 0) H.bannerT -= dt; if (H.dlgT > 0) H.dlgT -= dt; if (H.bigT > 0) H.bigT -= dt; H.locT = std::max(0.f, H.locT - dt);
   const roster::Hero& hr = roster::at(roster::sel()); const FigAsset* pa = roster::cur(); float psc = pa ? pa->scale : 1.f;
   // ---- player
@@ -374,7 +380,7 @@ void update(float dtReal, const pl::Input& in) {
   { float dayF = smooth(5.2f, 7.5f, clockH) * (1.f - smooth(18.2f, 20.5f, clockH)); if (CI.in) dayF *= 0.2f; float wat = 0.f;
     if (!CI.in) { static const float RR[3] = {4.f, 10.f, 22.f}; for (int r = 0; r < 3; r++) for (int k = 0; k < 6; k++) { float a = k * 1.047f; if (inWater(P.x + std::cos(a) * RR[r], P.z + std::sin(a) * RR[r])) wat += 0.9f - 0.25f * r; } wat = clampf(wat / 2.5f, 0.f, 1.f);
       for (const Fall& fl : falls) { float d = std::sqrt(dist2(fl.x, fl.z, P.x, P.z)); wat = std::max(wat, clampf(1.f - d / 90.f, 0.f, 1.f)); } }
-    audio::ambience(dayF, wat, CI.in ? 0.f : forestAt(P.x, P.z)); }
+    audio::ambience(dayF * (1.f - 0.75f * wxW), std::max(wat, wxW * 0.8f), CI.in ? 0.f : forestAt(P.x, P.z)); }
   // boss bar
   H.bossHp = -1; for (int k = 0; k < nMonL; k++) { const Npc& m = npcs[monList[k]]; if (m.boss && m.alive && m.lastPlayerD < 60.f) { H.bossHp = m.hp / m.maxHp; snprintf(H.bossName, sizeof H.bossName, "%s", m.name); } }
   // ---- camera
@@ -441,7 +447,7 @@ void draw() {
     FigDraw& fdd = fd[nfd++]; fdd.a = a; fdd.mat = an.mat; fdd.dissolve = n.alive ? 0.f : clampf((n.deadT - 4.5f) / 2.f, 0, 1); fdd.disH = std::max(1.f, a->height); fdd.glow = n.role >= R_MON ? (n.boss ? 3.f : 2.2f) : 1.f; fdd.shadow = d < 70.f; fdd.dim = 1.f; fdd.lantern = a->lant && lampOn && ((i & 1) == 0); fdd.vm = false; for (int k = 0; k < 3; k++) fdd.disCol[k] = a->disCol[k];
     float fl = n.hitT * n.hitT * 4.f; fdd.flash[0] = fl * 1.2f; fdd.flash[1] = fl * 0.7f; fdd.flash[2] = fl * 0.4f; float sc = n.sc; fdd.model = mul(translate(n.x, n.y, n.z), mul(rotY(n.face), scale4(sc, sc, sc)));
     if (n.role < R_MON) { weapon(*a, an, false, wR, fdd.model, fdd.flash, 1.f); weapon(*a, an, true, wL, fdd.model, fdd.flash, 1.f); } }
-  xr::Frame f; f.eye = P.eye; f.tgt = P.tgt; f.fov = P.fov; f.hour = clockH; f.time = tAbs; f.flash = 0; f.fade = 1.f - H.fade * 0.85f * (P.deadT > 0 ? 1.f : 0.f) - (restT > 0 ? 0.6f * std::sin(clampf(restT / 3.2f, 0, 1) * PI) : 0.f);
+  xr::Frame f; f.eye = P.eye; f.tgt = P.tgt; f.fov = P.fov; f.hour = clockH; f.time = tAbs; f.flash = lightT * lightT * 0.55f; f.fade = 1.f - H.fade * 0.85f * (P.deadT > 0 ? 1.f : 0.f) - (restT > 0 ? 0.6f * std::sin(clampf(restT / 3.2f, 0, 1) * PI) : 0.f);
   static xr::Dyn dyn[1400]; static xr::PtLight dlights[24]; int ndl = 0;
   int nd = buildDyn(dyn, 96);
   if (B.weapon == 1 && P.view == 0 && !P.fly && !K.buildMode && !CI.stage && B.arrows > 0 && B.rel < 0.1f && nd < 380) {

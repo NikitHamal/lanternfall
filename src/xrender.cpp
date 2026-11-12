@@ -9,7 +9,7 @@
 #include <cstring>
 #include <cmath>
 namespace xr {
-float indoor = 0.f;
+float indoor = 0.f; float weather = 0.f;
 int drawCalls = 0; M4 viewM, projM, vpM; float lastDt = 0.016f;
 namespace {
 using namespace xw;
@@ -83,7 +83,7 @@ void main(){
   float gk = clamp(A.a*1.4, 0., 1.) * (1. - rockK) * (1. - snowK);
   float pm = vn2(vWp.xz*.012 + 9.), pm2 = vn2(vWp.xz*.045 + 3.);
   col = mix(col, col*vec3(1.16,1.04,.68), gk*smoothstep(.45,.85,pm)*.55);
-  col = mix(col, col*vec3(.78,.98,.9), gk*smoothstep(.55,.2,pm2)*.35);
+  col = mix(col, col*vec3(.78,.98,.9), gk*smoothstep(.55,.2,pm2)*.18);
   col = mix(vec3(dot(col, vec3(.33))), col, mix(1., .9, gk));
   // cliff faces: warm/cool strata, vertical cracks, lichen & moss
   float wob = vn2(vWp.xz*.05)*3.;
@@ -352,7 +352,12 @@ void drawProps(GLuint prog, bool shadow) {
 bool project(float x, float y, float z, float& sx, float& sy) { const float* m = vpM.m; float cx = m[0] * x + m[4] * y + m[8] * z + m[12], cy = m[1] * x + m[5] * y + m[9] * z + m[13], cw = m[3] * x + m[7] * y + m[11] * z + m[15]; if (cw <= 0.01f) return false; sx = (cx / cw * 0.5f + 0.5f) * winW; sy = (1 - (cy / cw * 0.5f + 0.5f)) * winH; return true; }
 
 void render(const Frame& f, const FigDraw* figs, int nfig) {
-  drawCalls = 0; const Q& q = QS[gfx::quality]; E = env(f.hour); if (indoor > 0.01f) { float k = indoor; E.keyCol = E.keyCol * (1 - 0.9f * k); E.sunCol = E.sunCol * (1 - 0.9f * k); E.hemiSky = mix3(E.hemiSky, V3{0.16f, 0.12f, 0.085f}, k * 0.85f); E.hemiGnd = mix3(E.hemiGnd, V3{0.10f, 0.07f, 0.045f}, k * 0.85f); E.night = std::max(E.night, 0.5f * k); E.dens = lerpf(E.dens, 0.0001f, k); } camPos = f.eye; float aspect = (float)W / H;
+  drawCalls = 0; const Q& q = QS[gfx::quality]; E = env(f.hour);
+  if (weather > 0.005f) { float w = weather; auto grey = [&](V3 c, float k) { float l = (c.x * 0.3f + c.y * 0.55f + c.z * 0.15f); return mix3(c, V3{l * 0.96f, l, l * 1.06f}, k); };
+    E.cover = lerpf(E.cover, 1.45f, w); E.keyCol = E.keyCol * (1.f - 0.78f * w); E.sunCol = E.sunCol * (1.f - 0.5f * w); E.sunVis *= 1.f - w;
+    E.zen = grey(E.zen, 0.7f * w) * (1.f - 0.38f * w); E.hor = grey(E.hor, 0.7f * w) * (1.f - 0.22f * w); E.gnd = E.hor * 0.55f; E.fog = grey(E.fog, 0.7f * w) * (1.f - 0.2f * w);
+    E.hemiSky = grey(E.hemiSky, 0.5f * w) * (1.f - 0.15f * w); E.dens *= 1.f + 2.6f * w; E.exposure *= 1.f + 0.18f * w; E.tw *= 1.f - w; }
+  if (indoor > 0.01f) { float k = indoor; E.keyCol = E.keyCol * (1 - 0.9f * k); E.sunCol = E.sunCol * (1 - 0.9f * k); E.hemiSky = mix3(E.hemiSky, V3{0.16f, 0.12f, 0.085f}, k * 0.85f); E.hemiGnd = mix3(E.hemiGnd, V3{0.10f, 0.07f, 0.045f}, k * 0.85f); E.night = std::max(E.night, 0.5f * k); E.dens = lerpf(E.dens, 0.0001f, k); } camPos = f.eye; float aspect = (float)W / H;
   camW = camWorld(f.eye, f.tgt); viewM = rigidInverse(camW); projM = perspective(f.fov, aspect, 0.25f, 9000.f); vpM = mul(projM, viewM); invVP = inverse(vpM); invProj = inverse(projM); extractPlanes(vpM);
   // lights: nearest four lamps / fires / braziers
   float pl[16] = {0}, plc[16] = {0}; { int bi[4] = {-1, -1, -1, -1}; float bd[4] = {1e30f, 1e30f, 1e30f, 1e30f}; int nStat = (int)lights.size(), nTot = nStat + (f.dlights ? f.ndlights : 0);
