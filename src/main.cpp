@@ -82,6 +82,18 @@ static void padMenu() {   // hero select: bumpers change, A selects
 }
 static int lastRuns = -1;
 namespace gfx { extern const char* gArgv0; }
+#if defined(__linux__)
+#include <new>
+#include <malloc.h>
+static void* lfAlloc(size_t n) { void* p = malloc(n ? n : 1); if (!p) abort(); size_t u = malloc_usable_size(p); size_t l = mem::gLive.fetch_add(u, std::memory_order_relaxed) + u; size_t pk = mem::gPeak.load(std::memory_order_relaxed); while (l > pk && !mem::gPeak.compare_exchange_weak(pk, l, std::memory_order_relaxed)) {} return p; }
+static void lfFree(void* p) { if (!p) return; mem::gLive.fetch_sub(malloc_usable_size(p), std::memory_order_relaxed); free(p); }
+void* operator new(size_t n) { return lfAlloc(n); }
+void* operator new[](size_t n) { return lfAlloc(n); }
+void operator delete(void* p) noexcept { lfFree(p); }
+void operator delete[](void* p) noexcept { lfFree(p); }
+void operator delete(void* p, size_t) noexcept { lfFree(p); }
+void operator delete[](void* p, size_t) noexcept { lfFree(p); }
+#endif
 int main(int argc, char** argv) {
   gfx::gArgv0 = argv[0]; mem::mark("process start");
   const char* xcmd = nullptr; const char* scene = nullptr; int heroArg = -1, biomeArg = -1; int quality = 2, shotFrames = 0, simSpeed = 1, W0 = 1280, H0 = 720; const char* shot = nullptr; bool demo = false, noAudio = false; int startMode = 0, startView = 0; bool exStart = false, exAt = false; float exHour = -1, exX = 0, exZ = 0, exYaw = 0, exPitch = 8, exDist = -1; int exPoi = -1; bool exFly = false, exMap = false, exFp = false; bool bestiary = false; bool bot = false; float dbgDraw = -1, dbgYaw = 99, dbgPitch = 0; int ff = 0;

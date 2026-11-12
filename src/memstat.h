@@ -12,7 +12,12 @@
 #else
 #include <malloc.h>
 #endif
+#include <atomic>
 namespace mem {
+// C++-heap accounting (operator new/delete, Linux only): isolates app-owned memory from the GL driver (Mesa llvmpipe keeps textures in malloc).
+inline std::atomic<size_t> gLive{0}, gPeak{0};
+inline double appMB() { return gLive.load(std::memory_order_relaxed) / 1048576.0; }
+inline double appPeakMB() { return gPeak.load(std::memory_order_relaxed) / 1048576.0; }
 struct Snap { double rssMB, peakMB, heapMB; };
 inline Snap snap() {
   Snap s{0, 0, 0};
@@ -29,5 +34,5 @@ inline Snap snap() {
   return s;
 }
 inline bool on() { static int v = -1; if (v < 0) v = getenv("LF_MEM") ? 1 : 0; return v == 1; }
-inline void mark(const char* what) { if (!on()) return; Snap s = snap(); fprintf(stderr, "MEM %-26s rss %7.1f MB  peak %7.1f MB  heap %7.1f MB\n", what, s.rssMB, s.peakMB, s.heapMB); }
+inline void mark(const char* what) { if (!on()) return; Snap s = snap(); fprintf(stderr, "MEM %-26s rss %7.1f MB  peak %7.1f MB  heap %7.1f MB  | app C++ %6.1f MB (peak %6.1f)\n", what, s.rssMB, s.peakMB, s.heapMB, appMB(), appPeakMB()); }
 }
