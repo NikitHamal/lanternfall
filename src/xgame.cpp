@@ -470,8 +470,14 @@ void draw() {
       md.model = mul(translate(P.x, P.y, P.z), mul(rotY(P.face), scale4(msc, msc, msc)));
     }
     if (showBody) { float rideBob = CI.in ? 0.f : K.mounted ? (rideH ? riderLift() : (1.18f + 0.045f * std::sin(tAbs * (P.speed > 2.f ? 11.f : 2.f)))) : (dmT > 0.f ? riderLift() : 0.f);
-      FigDraw& d = fd[nfd++]; d.a = &a; d.mat = an.mat; d.dissolve = 0; d.disH = std::max(1.f, a.height); d.glow = 1; d.shadow = true; d.dim = 1; d.lantern = a.lant && lampOn; d.vm = false; for (int k = 0; k < 3; k++) d.disCol[k] = a.disCol[k]; for (int k = 0; k < 3; k++) d.flash[k] = flash[k];
-      d.model = mul(translate(P.x, P.y + rideBob, P.z), mul(rotY(P.face), scale4(a.scale, a.scale, a.scale))); weapon(a, an, false, wR, d.model, d.flash, 1.f); weapon(a, an, true, wL, d.model, d.flash, 1.f); }
+      FigDraw& d = fd[nfd++]; d.a = &a; d.mat = an.mat; d.dissolve = 0; d.disH = std::max(1.f, a.height); d.glow = 1; d.shadow = true; d.dim = 1; d.lantern = false; d.vm = false; for (int k = 0; k < 3; k++) d.disCol[k] = a.disCol[k]; for (int k = 0; k < 3; k++) d.flash[k] = flash[k];
+      d.model = mul(translate(P.x, P.y + rideBob, P.z), mul(rotY(P.face), scale4(a.scale, a.scale, a.scale))); weapon(a, an, false, wR, d.model, d.flash, 1.f); weapon(a, an, true, wL, d.model, d.flash, 1.f);
+      if (a.lant && lampOn && wL != roster::WP_LANTERN && wR != roster::WP_LANTERN && gFW[roster::WP_LANTERN].ok && nfd < 258) {   // belt lantern on a hook (replaces the baked pole lantern that read as floating)
+        int bh = figBone(a, "hips", 1); V3 hp{an.pose[bh * 7 + 4], an.pose[bh * 7 + 5], an.pose[bh * 7 + 6]}; float sw = std::sin(tAbs * 2.3f + P.x) * (0.05f + 0.10f * clampf(P.speed / 5.f, 0, 1));
+        V3 ya = norm(V3{sw, 1.f, 0.6f * sw * std::cos(tAbs * 1.7f)}), xa = norm(cross(ya, V3{0, 0, 1})), za = cross(xa, ya); M4 loc = ident(); float sc = 0.85f;
+        loc.m[0] = xa.x * sc; loc.m[1] = xa.y * sc; loc.m[2] = xa.z * sc; loc.m[4] = ya.x * sc; loc.m[5] = ya.y * sc; loc.m[6] = ya.z * sc; loc.m[8] = za.x * sc; loc.m[9] = za.y * sc; loc.m[10] = za.z * sc;
+        V3 top = hp + V3{0.29f, 0.02f, 0.05f}; loc.m[12] = top.x - ya.x * 0.30f; loc.m[13] = top.y - ya.y * 0.30f; loc.m[14] = top.z - ya.z * 0.30f;
+        FigDraw& w = fd[nfd++]; w.a = &gFW[roster::WP_LANTERN]; w.model = mul(d.model, loc); w.mat = WID; w.dissolve = 0; w.disH = 1; w.glow = 1; w.shadow = true; w.dim = 1.f; w.lantern = true; w.vm = false; for (int k = 0; k < 3; k++) { w.flash[k] = d.flash[k]; w.disCol[k] = 0; } } }
     else {   // first person: camera-space held bow or melee weapon
       V3 look = norm(P.tgt - P.eye), xx = norm(cross(V3{0, 1, 0}, look)), yy = cross(look, xx); M4 cam = ident(); cam.m[0] = xx.x; cam.m[1] = xx.y; cam.m[2] = xx.z; cam.m[4] = yy.x; cam.m[5] = yy.y; cam.m[6] = yy.z; cam.m[8] = look.x; cam.m[9] = look.y; cam.m[10] = look.z;
       if (bowEq && gFW[roster::WP_BOW].ok && nfd < 258 && !K.buildMode) {
@@ -498,7 +504,7 @@ void draw() {
     figAnimUpdate(an, *a, dtv, spd / std::max(0.3f, n.sc / std::max(0.01f, a->scale) * a->scale), combat, ac, au, n.hitT > 0.05f ? 1.f : 0.f, !n.alive, 0.f, -1.f, 0.f);
     if (n.alive && n.role < R_MON && n.hitT < 0.05f && n.state != S_FLEE && n.atkT < 0 && !combat) { int fm = dbgFx >= 0 ? dbgFx : fxPick(n, i, n.settle >= 0 ? SCH[i].phase : -1, tAbs); float iw = (1.f - an.moveW) * (1.f - an.readyW); if (fm != an.fxMode) { an.fxW -= dtv * 3.f; if (an.fxW <= 0.f) { an.fxW = 0.f; an.fxMode = fm; } } else an.fxW = std::min(1.f, an.fxW + dtv * 3.f); fxApply(an, *a, an.fxMode, tAbs, an.fxW * iw, (float)(i % 17) * 0.9f); }
     figAnimPose(an, *a);
-    FigDraw& fdd = fd[nfd++]; fdd.a = a; fdd.mat = an.mat; fdd.dissolve = n.alive ? 0.f : clampf((n.deadT - 4.5f) / 2.f, 0, 1); fdd.disH = std::max(1.f, a->height); fdd.glow = n.role >= R_MON ? (n.boss ? 3.f : 2.2f) : 1.f; fdd.shadow = d < 70.f; fdd.dim = 1.f; fdd.lantern = a->lant && lampOn && ((i & 1) == 0); fdd.vm = false; for (int k = 0; k < 3; k++) fdd.disCol[k] = a->disCol[k];
+    FigDraw& fdd = fd[nfd++]; fdd.a = a; fdd.mat = an.mat; fdd.dissolve = n.alive ? 0.f : clampf((n.deadT - 4.5f) / 2.f, 0, 1); fdd.disH = std::max(1.f, a->height); fdd.glow = n.role >= R_MON ? (n.boss ? 3.f : 2.2f) : 1.f; fdd.shadow = d < 70.f; fdd.dim = 1.f; fdd.lantern = false; fdd.vm = false; for (int k = 0; k < 3; k++) fdd.disCol[k] = a->disCol[k];
     float fl = n.hitT * n.hitT * 4.f; fdd.flash[0] = fl * 1.2f; fdd.flash[1] = fl * 0.7f; fdd.flash[2] = fl * 0.4f; float sc = n.sc; fdd.model = mul(translate(n.x, n.y, n.z), mul(rotY(n.face), scale4(sc, sc, sc)));
     if (n.role < R_MON) { weapon(*a, an, false, wR, fdd.model, fdd.flash, 1.f); weapon(*a, an, true, wL, fdd.model, fdd.flash, 1.f); } }
   xr::Frame f; f.eye = P.eye; f.tgt = P.tgt; f.fov = P.fov; f.hour = clockH; f.time = tAbs; f.flash = lightT * lightT * 0.55f; f.fade = 1.f - H.fade * 0.85f * (P.deadT > 0 ? 1.f : 0.f) - (restT > 0 ? 0.6f * std::sin(clampf(restT / 3.2f, 0, 1) * PI) : 0.f);
