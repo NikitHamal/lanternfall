@@ -11,7 +11,7 @@ std::vector<Obj> objs; std::vector<Settle> settles; Nation nations[3]; std::vect
 static std::vector<int8_t> flowX, flowZ; static std::vector<uint16_t> gradeW, gradeY; static std::vector<uint8_t> fieldK, fieldA;   // packed gen buffers (peak heap): flow unit vector /127, grade weight 1/65535, grade height like Hq
 static inline uint16_t gEncH(float v) { return (uint16_t)(clampf((v + 128.f) * (1.f / 1024.f), 0.f, 1.f) * 65535.f + 0.5f); } static inline float gDecH(uint16_t q) { return q * (1024.f / 65535.f) - 128.f; }
 static Rng rng(1); static uint32_t SEED = 1; static bool done = false;
-struct Col_ { float x, z, r, top; }; static float curTop = 1e9f; struct Deck { float x, z, c, s, hx, hz, y0, y1; }; static std::vector<Deck> decks; static std::vector<int> deckStart, deckList; int nDecks = 0; static std::vector<Col_> cols; static std::vector<int> colStart, colList; constexpr int CGN = 256; constexpr float CGS = 16.f;
+struct Col_ { float x, z, r, top; float hx = 0, hz = 0, c = 1, s = 0; bool box = false; } /* box: oriented rectangle (half extents hx/hz, rotation c/s); r = bounding radius for the grid */; static float curTop = 1e9f; struct Deck { float x, z, c, s, hx, hz, y0, y1; }; static std::vector<Deck> decks; static std::vector<int> deckStart, deckList; int nDecks = 0; static std::vector<Col_> cols; static std::vector<int> colStart, colList; constexpr int CGN = 256; constexpr float CGS = 16.f;
 
 // ------------------------------------------------------------------ noise
 static uint32_t ih(int x, int y, uint32_t s) { uint32_t h = (uint32_t)x * 374761393u + (uint32_t)y * 668265263u + s * 2246822519u; h = (h ^ (h >> 13)) * 1274126177u; return h ^ (h >> 16); }
@@ -63,6 +63,8 @@ const char* regionName(float x, float z) {
 
 // ------------------------------------------------------------------ colliders
 static void addCircle(float x, float z, float r) { cols.push_back({x, z, r, curTop}); }
+static void addBox(float cx, float cz, float ry, float lx, float lz, float hx, float hz, float sc = 1.f) {   // exact footprint (rotated rectangle) instead of a chain of circles
+  float c = std::cos(ry), sn = std::sin(ry); Col_ k{cx + (lx * c + lz * sn) * sc, cz + (-lx * sn + lz * c) * sc, std::sqrt(hx * hx + hz * hz) * sc, curTop}; k.hx = hx * sc; k.hz = hz * sc; k.c = c; k.s = sn; k.box = true; cols.push_back(k); }
 static void addLocal(float cx, float cz, float ry, float lx, float lz, float r, float s = 1) { float c = std::cos(ry), sn = std::sin(ry); addCircle(cx + (lx * c + lz * sn) * s, cz + (-lx * sn + lz * c) * s, r * s); }
 static void addDeck(float cx, float cz, float ry, float lx, float lz, float hx, float hz, float y0, float y1) {   // local frame like addLocal; centre offset (lx,lz)
   float c = std::cos(ry), sn = std::sin(ry); decks.push_back({cx + lx * c + lz * sn, cz - lx * sn + lz * c, c, sn, hx, hz, y0, y1}); }
@@ -74,17 +76,17 @@ static void addCollider(int k, float x, float z, float ry, float sx, float oy) {
     case K_BIRCH: addCircle(x, z, 0.3f * sx); break; case K_CHERRY: addCircle(x, z, 0.4f * sx); break; case K_JUNGLE: addCircle(x, z, 0.9f * sx); break; case K_WILLOW: addCircle(x, z, 0.55f * sx); break; case K_PALM: addCircle(x, z, 0.25f * sx); break; case K_SPIRE: addCircle(x, z, 1.1f * sx); break;
     case K_PINE: addCircle(x, z, 0.5f * sx); break; case K_PINEY: addCircle(x, z, 0.3f * sx); break; case K_OAK: addCircle(x, z, 0.55f * sx); break; case K_DEAD: addCircle(x, z, 0.4f * sx); break;
     case K_BOULDER: addCircle(x, z, 1.0f * sx); break; case K_BIGROCK: addCircle(x, z, 0.85f * sx); break; case K_CAIRN: addCircle(x, z, 0.6f * sx); break; case K_WELL: addCircle(x, z, 1.0f * sx); break;
-    case K_STALL: addLocal(x, z, ry, 0, 0, 0.8f); break; case K_BRAZIER: addCircle(x, z, 0.4f); break; case K_LAMP: addCircle(x, z, 0.22f); break; case K_POLE: case K_FLAGPOLE: addCircle(x, z, 0.4f); break;
+    case K_STALL: addBox(x, z, ry, 0, 0, 1.0f, 0.62f, sx); break; case K_BRAZIER: addCircle(x, z, 0.4f); break; case K_LAMP: addCircle(x, z, 0.22f); break; case K_POLE: case K_FLAGPOLE: addCircle(x, z, 0.4f); break;
     case K_BARREL: addCircle(x, z, 0.35f * sx); break; case K_CRATE: addCircle(x, z, 0.45f * sx); break; case K_HEAD: addCircle(x, z, 0.33f * sx); break; case K_RUNE: addCircle(x, z, 0.35f * sx); break;
     case K_CGATE: addLocal(x, z, ry, -1.8f, 0, 0.35f, sx); addLocal(x, z, ry, 1.8f, 0, 0.35f, sx); break;
     case K_LWALL: addLocal(x, z, ry, 0, 0, 0.8f, sx); break; case K_FWALL: case K_IFENCE: addLocal(x, z, ry, -1, 0, 0.5f, sx); addLocal(x, z, ry, 1, 0, 0.5f, sx); break;
-    case K_COTTAGE: for (int i = -1; i <= 1; i++) addLocal(x, z, ry, i * 2.0f, 0, 2.1f, sx); break;
-    case K_BARN: for (int i = -1; i <= 1; i++) addLocal(x, z, ry, 0, i * 2.4f, 2.1f, sx); break;
-    case K_CHAPEL: for (int i = -1; i <= 1; i++) addLocal(x, z, ry, 0, i * 2.2f, 2.3f, sx); break;
-    case K_WATCH: addLocal(x, z, ry, 0, 0, 2.4f, sx); break; case K_STOWER: case K_BEACON: case K_RGABLE: addLocal(x, z, ry, 0, 0, 2.5f, sx); break;
-    case K_RWALL: addLocal(x, z, ry, -1.2f, 0, 1.0f, sx); addLocal(x, z, ry, 1.2f, 0, 1.0f, sx); break;
+    case K_COTTAGE: addBox(x, z, ry, 0, 0, 2.97f, 1.98f, sx); break;
+    case K_BARN: addBox(x, z, ry, 0, 0, 2.0f, 3.4f, sx); break;
+    case K_CHAPEL: addBox(x, z, ry, 0, 0, 2.2f, 3.2f, sx); break;
+    case K_WATCH: addBox(x, z, ry, 0, 0, 1.8f, 2.3f, sx); break; case K_STOWER: case K_BEACON: case K_RGABLE: addBox(x, z, ry, 0, 0, 2.0f, 2.0f, sx); break;
+    case K_RWALL: addBox(x, z, ry, 0, 0, 2.0f, 0.72f, sx); break;
     case K_WTOWER: addCircle(x, z, 4.45f * sx); break;
-    case K_GATE: addLocal(x, z, ry, -4.6f, 0, 2.7f, sx); addLocal(x, z, ry, 4.6f, 0, 2.7f, sx); addLocal(x, z, ry, -3.6f, 0, 1.4f, sx); addLocal(x, z, ry, 3.6f, 0, 1.4f, sx); break;
+    case K_GATE: addBox(x, z, ry, -4.9f, 0, 2.9f, 3.0f, sx); addBox(x, z, ry, 4.9f, 0, 2.9f, 3.0f, sx); break;   // two gate towers, passage 4 m wide
     case K_KEEP: for (int i = -2; i <= 2; i++) for (int j = -2; j <= 2; j++) if (std::max(std::abs(i), std::abs(j)) == 2) addLocal(x, z, ry, i * 4.4f, j * 4.4f, 3.5f, sx); break;   // v2.8: ring over the whole 22 m footprint (was one 8.6 m circle)
     case K_HOUSE: for (int i = -1; i <= 2; i++) for (int j = -1; j <= 1; j += 2) addLocal(x, z, ry, i * 2.0f - 1.0f, j * 1.45f, 2.55f, sx); break;
     case K_LONG: for (int i = -2; i <= 2; i++) for (int j = -1; j <= 1; j += 2) addLocal(x, z, ry, i * 2.6f, j * 1.7f, 2.9f, sx); break;
@@ -113,8 +115,29 @@ float deckTop(float x, float z) { float best = -1e9f; if (deckStart.empty()) ret
 bool collide(float& x, float& z, float r, float ey) {
   if (colStart.empty()) return false; bool moved = false; int cx = ci((int)std::floor((x + HALF) / CGS), 0, CGN - 1), cz = ci((int)std::floor((z + HALF) / CGS), 0, CGN - 1);
   for (int it = 0; it < 2; it++) for (int j = std::max(0, cz - 1); j <= std::min(CGN - 1, cz + 1); j++) for (int i = std::max(0, cx - 1); i <= std::min(CGN - 1, cx + 1); i++)
-    for (int q = colStart[j * CGN + i]; q < colStart[j * CGN + i + 1]; q++) { const Col_& c = cols[colList[q]]; if (ey > c.top - 0.4f) continue; float dx = x - c.x, dz = z - c.z, rr = c.r + r, d2 = dx * dx + dz * dz; if (d2 < rr * rr) { float d = std::sqrt(d2); if (d < 1e-4f) { dx = 1; dz = 0; d = 1; } x = c.x + dx / d * rr; z = c.z + dz / d * rr; moved = true; } }
+    for (int q = colStart[j * CGN + i]; q < colStart[j * CGN + i + 1]; q++) { const Col_& c = cols[colList[q]]; if (ey > c.top - 0.4f) continue; float dx = x - c.x, dz = z - c.z, rr = c.r + r, d2 = dx * dx + dz * dz;
+      if (c.box) { if (d2 >= rr * rr) continue; float lx = dx * c.c - dz * c.s, lz = dx * c.s + dz * c.c; float qx = clampf(lx, -c.hx, c.hx), qz = clampf(lz, -c.hz, c.hz); float ex = lx - qx, ez = lz - qz, de2 = ex * ex + ez * ez; float nx, nz, nd;
+        if (de2 > 1e-8f) { if (de2 >= r * r) continue; float de = std::sqrt(de2); nx = ex / de; nz = ez / de; nd = r - de; } else { float px = c.hx - std::fabs(lx), pz = c.hz - std::fabs(lz); if (px < pz) { nx = lx >= 0 ? 1.f : -1.f; nz = 0; nd = px + r; } else { nx = 0; nz = lz >= 0 ? 1.f : -1.f; nd = pz + r; } }
+        float wx = nx * c.c + nz * c.s, wz = -nx * c.s + nz * c.c; x += wx * nd; z += wz * nd; moved = true; continue; } if (d2 < rr * rr) { float d = std::sqrt(d2); if (d < 1e-4f) { dx = 1; dz = 0; d = 1; } x = c.x + dx / d * rr; z = c.z + dz / d * rr; moved = true; } }
   return moved;
+}
+
+void auditKind(int k, const float* vp, size_t nv, size_t stride, const uint16_t* ix, size_t ni) {   // vp: xyz of vertex 0, stride in floats
+  size_t base = cols.size(); curTop = 1e9f; addCollider(k, 0.f, 0.f, 0.f, 1.f, 0.f); size_t n = cols.size() - base; if (!n) return;
+  float x0 = 1e9f, x1 = -1e9f, z0 = 1e9f, z1 = -1e9f; auto P = [&](uint16_t i, float* o) { o[0] = vp[i * stride]; o[1] = vp[i * stride + 1]; o[2] = vp[i * stride + 2]; };
+  for (size_t i = 0; i < nv; i++) { x0 = std::min(x0, vp[i * stride]); x1 = std::max(x1, vp[i * stride]); z0 = std::min(z0, vp[i * stride + 2]); z1 = std::max(z1, vp[i * stride + 2]); }
+  for (size_t i = 0; i < n; i++) { const Col_& c = cols[base + i]; x0 = std::min(x0, c.x - c.r); x1 = std::max(x1, c.x + c.r); z0 = std::min(z0, c.z - c.r); z1 = std::max(z1, c.z + c.r); }
+  if (x1 - x0 > 80.f || z1 - z0 > 80.f) { cols.resize(base); return; }
+  int solid = 0, miss = 0, cover = 0, ghost = 0; const float st = 0.25f;
+  for (float z = z0; z <= z1; z += st) for (float x = x0; x <= x1; x += st) {
+    bool sol = false; for (size_t t = 0; t + 2 < ni && !sol; t += 3) { float a[3], b[3], c[3]; P(ix[t], a); P(ix[t + 1], b); P(ix[t + 2], c); float ymin = std::min({a[1], b[1], c[1]}), ymax = std::max({a[1], b[1], c[1]}); if (ymin > 2.2f || ymax < 0.3f) continue;
+      auto seg = [&](const float* p, const float* q) { float ex = q[0] - p[0], ez = q[2] - p[2], L2 = ex * ex + ez * ez; float u = L2 > 1e-9f ? clampf(((x - p[0]) * ex + (z - p[2]) * ez) / L2, 0.f, 1.f) : 0.f; float dx = x - (p[0] + ex * u), dz = z - (p[2] + ez * u); return dx * dx + dz * dz < 0.14f * 0.14f; };
+      if (seg(a, b) || seg(b, c) || seg(c, a)) { sol = true; break; }
+      float d = (b[2] - c[2]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[2] - c[2]); if (std::fabs(d) < 1e-9f) continue; float l1 = ((b[2] - c[2]) * (x - c[0]) + (c[0] - b[0]) * (z - c[2])) / d, l2 = ((c[2] - a[2]) * (x - c[0]) + (a[0] - c[0]) * (z - c[2])) / d; if (l1 >= 0 && l2 >= 0 && l1 + l2 <= 1) sol = true; }
+    bool cv = false; for (size_t i = 0; i < n; i++) { const Col_& c = cols[base + i]; if (c.box) { float dx = x - c.x, dz = z - c.z; float lx = dx * c.c - dz * c.s, lz = dx * c.s + dz * c.c; if (std::fabs(lx) < c.hx + 0.2f && std::fabs(lz) < c.hz + 0.2f) { cv = true; break; } } else if ((x - c.x) * (x - c.x) + (z - c.z) * (z - c.z) < (c.r + 0.2f) * (c.r + 0.2f)) { cv = true; break; } }
+    if (sol) { solid++; if (!cv) miss++; } if (cv) { cover++; if (!sol) { bool near = false; for (float dz = -1.f; dz <= 1.f && !near; dz += 0.5f) for (float dx = -1.f; dx <= 1.f; dx += 0.5f) { (void)dx; } ghost++; (void)near; } } }
+  fprintf(stderr, "COLAUDIT kind %d circles %zu bbox x %.1f..%.1f z %.1f..%.1f %.1fx%.1f solid %d uncovered %d (%.0f%%) ghost %d (%.0f%% of collider)\n", k, n, x0, x1, z0, z1, x1 - x0, z1 - z0, solid, miss, solid ? 100.f * miss / solid : 0.f, ghost, cover ? 100.f * ghost / cover : 0.f);
+  cols.resize(base);
 }
 
 // ------------------------------------------------------------------ terrain

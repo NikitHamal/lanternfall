@@ -37,7 +37,7 @@ extern std::vector<Light> lights; extern std::vector<Post> posts; extern std::ve
 void generate(uint32_t seed);
 float height(float x, float z); float slopeAt(float x, float z); float waterAt(float x, float z);   // waterAt: level or -1e9
 bool inWater(float x, float z, float* depth = nullptr); float roadDist(float x, float z); int nationAt(float x, float z); int settleNear(float x, float z, float margin = 0);
-const char* regionName(float x, float z); bool collide(float& x, float& z, float r, float y = -1e9f);   // y: entity feet height; colliders with top below y-0.4 are stepped over (wall walks)
+const char* regionName(float x, float z); bool collide(float& x, float& z, float r, float y = -1e9f); void auditKind(int k, const float* vp, size_t nv, size_t stride, const uint16_t* ix, size_t ni);   // y: entity feet height; colliders with top below y-0.4 are stepped over (wall walks)
 float surfaceY(float x, float z, float fromY); float deckTop(float x, float z); extern int nDecks;   // walkable decks: wall walks, stairs, landings
 //   // push out of colliders (returns true if moved)
 float highestPoint(float* hx, float* hz);

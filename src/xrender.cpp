@@ -375,7 +375,7 @@ bool init() {
   glGenVertexArrays(1, &terrVao);
   // props
   for (int k = 0; k < NK; k++) { std::vector<LV> v; std::vector<uint16_t> ix; if (KD[k].key) { FigAsset& a = propAsset[k]; if (!figLoad(a, KD[k].key)) { fprintf(stderr, "missing prop %s\n", KD[k].key); continue; } pm[k].vao = 0; pm[k].vbo = a.vbo; pm[k].ibo = a.ibo; pm[k].ni = a.ni; glGenVertexArrays(1, &pm[k].vao); glBindVertexArray(pm[k].vao); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, a.ibo); glBindVertexArray(0); pm[k].ok = true; }
-    else if (xmBuild(k, v, ix)) { buildMeshSlot(k, v, ix); pm[k].ok = true; } }
+    else if (xmBuild(k, v, ix)) { if (getenv("LF_COLAUDIT")) xw::auditKind(k, v.empty() ? nullptr : &v[0].p[0], v.size(), sizeof(LV) / 4, ix.data(), ix.size()); buildMeshSlot(k, v, ix); pm[k].ok = true; } }
   { std::vector<LV> v; std::vector<uint16_t> ix; if (xmBuild(XM_LOCONI, v, ix)) { buildMeshSlot(SLOT_CONI, v, ix); pm[SLOT_CONI].ok = true; } if (xmBuild(XM_LOBROAD, v, ix)) { buildMeshSlot(SLOT_BROAD, v, ix); pm[SLOT_BROAD].ok = true; } if (xmBuild(XM_LOBIRCH, v, ix)) { buildMeshSlot(SLOT_BIRCH, v, ix); pm[SLOT_BIRCH].ok = true; } if (xmBuild(XM_LOCHERRY, v, ix)) { buildMeshSlot(SLOT_CHERRY, v, ix); pm[SLOT_CHERRY].ok = true; } if (xmBuild(XM_LOJUNGLE, v, ix)) { buildMeshSlot(SLOT_JUNGLE, v, ix); pm[SLOT_JUNGLE].ok = true; } if (xmBuild(XM_LOWILLOW, v, ix)) { buildMeshSlot(SLOT_WILLOW, v, ix); pm[SLOT_WILLOW].ok = true; } if (xmBuild(XM_LOROCK, v, ix)) { buildMeshSlot(SLOT_ROCK, v, ix); pm[SLOT_ROCK].ok = true; } }
   // bucket instances per kind per 64 m cell
   std::vector<std::vector<int>> per(NK); for (size_t i = 0; i < objs.size(); i++) per[objs[i].kind].push_back((int)i);
