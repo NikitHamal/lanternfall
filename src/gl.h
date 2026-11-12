@@ -96,7 +96,7 @@ typedef ptrdiff_t GLsizeiptr, GLintptr;
  X(void,UseProgram,(GLuint)) X(void,DeleteShader,(GLuint)) X(GLint,GetUniformLocation,(GLuint,const GLchar*)) \
  X(void,Uniform1f,(GLint,GLfloat)) X(void,Uniform2f,(GLint,GLfloat,GLfloat)) X(void,Uniform3f,(GLint,GLfloat,GLfloat,GLfloat)) X(void,Uniform4f,(GLint,GLfloat,GLfloat,GLfloat,GLfloat)) \
  X(void,Uniform1i,(GLint,GLint)) X(void,Uniform3fv,(GLint,GLsizei,const GLfloat*)) X(void,Uniform4fv,(GLint,GLsizei,const GLfloat*)) X(void,UniformMatrix4fv,(GLint,GLsizei,GLboolean,const GLfloat*)) \
- X(void,GenVertexArrays,(GLsizei,GLuint*)) X(void,BindVertexArray,(GLuint)) X(void,GenBuffers,(GLsizei,GLuint*)) X(void,BindBuffer,(GLenum,GLuint)) \
+ X(void,DeleteVertexArrays,(GLsizei,const GLuint*)) X(void,DeleteBuffers,(GLsizei,const GLuint*)) X(void,GenVertexArrays,(GLsizei,GLuint*)) X(void,BindVertexArray,(GLuint)) X(void,GenBuffers,(GLsizei,GLuint*)) X(void,BindBuffer,(GLenum,GLuint)) \
  X(void,BufferData,(GLenum,GLsizeiptr,const void*,GLenum)) X(void,BufferSubData,(GLenum,GLintptr,GLsizeiptr,const void*)) \
  X(void,EnableVertexAttribArray,(GLuint)) X(void,VertexAttribPointer,(GLuint,GLint,GLenum,GLboolean,GLsizei,const void*)) X(void,VertexAttribDivisor,(GLuint,GLuint)) \
  X(void,GenFramebuffers,(GLsizei,GLuint*)) X(void,BindFramebuffer,(GLenum,GLuint)) X(void,FramebufferTexture2D,(GLenum,GLenum,GLenum,GLuint,GLint)) \

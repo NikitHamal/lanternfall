@@ -291,3 +291,7 @@ void main(){
   float sh = shadowAt(vWp, N); vec3 c = shade(col, rough, metal, N, vWp, sh) + em;
   oC = vec4(c, 1.); }
 )GLSL";
+// ---- roster support: on-demand load / release of extra characters (Polyfork rigs), bone lookup by name
+bool figLoad(FigAsset& a, const char* key) { a = FigAsset(); if (!loadFig(a, key)) { free(a.clipMem); a = FigAsset(); return false; } return true; }
+void figFree(FigAsset& a) { if (a.vao) glDeleteVertexArrays(1, &a.vao); if (a.vbo) glDeleteBuffers(1, &a.vbo); if (a.ibo) glDeleteBuffers(1, &a.ibo); free(a.clipMem); a = FigAsset(); }
+int figBone(const FigAsset& a, const char* name, int fallback) { for (int i = 0; i < a.nb; i++) if (!strcmp(a.bone[i], name)) return i; return fallback; }

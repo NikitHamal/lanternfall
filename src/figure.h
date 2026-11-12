@@ -17,6 +17,7 @@ struct FigAsset {
 extern FigAsset gFH[NCLS], gFM[NMON];
 bool figInit(const char* argv0); const char* figAssetDir();
 void figShutdown();
+bool figLoad(FigAsset& a, const char* key); void figFree(FigAsset& a); int figBone(const FigAsset& a, const char* name, int fallback);
 struct FigAnim {
   uint32_t id = 0xffffffffu; float t = 0, ph = 0, moveW = 0, readyW = 0, downW = 0, stagK = 9, dim = 1, pose[FMAXB * 7]; bool have = false, shat = false, dying = false;
   float fR[FMAXB * 9], fp[FMAXB * 3], fv[FMAXB * 3], fax[FMAXB * 3], fw[FMAXB], ffl[FMAXB]; bool frest[FMAXB];
