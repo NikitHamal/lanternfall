@@ -159,7 +159,7 @@ static void carveRivers() {
       for (int j = z0; j <= z1; j++) for (int k = x0; k <= x1; k++) { float x = -HALF + (k + 0.5f) * CS, z = -HALF + (j + 0.5f) * CS; float t = clampf(((x - a.x) * sx + (z - a.z) * sz) / sl2, 0.f, 1.f); float px = a.x + sx * t - x, pz = a.z + sz * t - z; float d = std::sqrt(px * px + pz * pz);
         float w = lerpf(a.w, b.w, t) * 0.5f, bed = lerpf(a.bed, b.bed, t), dep = lerpf(a.dep, b.dep, t); if (d > w + 14.f) continue; float over = std::max(0.f, d - w);
         float prof = bed + 0.35f * (d / w) * (d / w) * (d < w ? 1.f : 0.f) + (d >= w ? 0.35f + over * 0.62f + over * over * 0.012f : 0.f); float& h = Hh[j * GS + k]; h = smin(h, prof, 1.6f);
-        if (d < w + 1.0f) { float lvl = lerpf(a.lvl, b.lvl, t); if (a.lvl - b.lvl > 1.5f) lvl = (t < 0.5f && d < std::min(a.w, b.w) * 0.5f) ? a.lvl : b.lvl; if (h < lvl + 0.02f) { Wl[j * GS + k] = std::max(Wl[j * GS + k], lvl); flowX[j * GS + k] = sx / sl; flowZ[j * GS + k] = sz / sl; } } } } }
+        if (d < w + 1.0f) { float lvl = lerpf(a.lvl, b.lvl, t); if (a.lvl - b.lvl > 1.5f) lvl = (t < 0.5f && d < std::min(a.w, b.w) * 0.5f) ? a.lvl : b.lvl; if (h < lvl + 0.02f && lvl - h < 5.5f) { Wl[j * GS + k] = std::max(Wl[j * GS + k], lvl); flowX[j * GS + k] = sx / sl; flowZ[j * GS + k] = sz / sl; } } } } }
 }
 
 // ------------------------------------------------------------------ objects

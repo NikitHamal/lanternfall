@@ -1,4 +1,5 @@
 #include "xrender.h"
+#include "memstat.h"
 #include "xworld.h"
 #include "xmesh.h"
 #include "render.h"
@@ -37,7 +38,7 @@ const KindDef KD[NK] = {
   // v2.6 anatomy fauna parts (23)
   {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}};
 static_assert(sizeof(KD) / sizeof(KD[0]) == NK, "kind table size");
-PMesh pm[NSLOT]; FigAsset propAsset[NK]; std::vector<IData> data[NK]; std::vector<int> cellStart[NK]; std::vector<IData> stage[NSLOT]; int stageN[NSLOT];
+PMesh pm[NSLOT]; FigAsset propAsset[NK]; std::vector<uint32_t> ids[NK]; std::vector<int> cellStart[NK]; int stageMax[NSLOT]; std::vector<IData> stage[NSLOT]; int stageN[NSLOT];
 GLuint pTerr, pWater, pSky, pProp, pPropShadow, pGrass, pFall, pMist, pFogP, pDownP, pFinalP, pMapP, pFigX, vaoEmpty;
 GLuint texH, texInfoA, texInfoB, texWater, texMap, texSh, fboSh; GLuint terrIbo[2], terrVao; int terrNI[2];
 GLuint grassVao, grassVbo, grassIbo, flowerVao, flowerVbo, flowerIbo, fallVao, fallVbo, mistVao, mistVbo; int grassNI, flowerNI, fallNI;
@@ -136,7 +137,7 @@ in vec3 vWp; out vec4 oC; uniform sampler2D uHeight, uWater, uInfoA; uniform flo
 vec3 skyR(vec3 r){ vec3 c = mix(uHor, uZen, pow(clamp(r.y,0.,1.), .45)); float sd = max(dot(r,uSunDir),0.); c += uSunCol*(pow(sd,6.)*.12)*uSunVis; return c; }
 void main(){
   vec2 uv = vWp.xz/uWorld+.5; float th = texture(uHeight, uv).r*1024.-128.; float depth = vWp.y - th; if (depth < 0.) discard;
-  vec4 Wt = texture(uWater, uv); Wt = vec4(Wt.r*1024.-128., Wt.gb*2.-1., Wt.a); vec2 flow = Wt.gb; float spd = length(flow); vec2 fd = spd > .02 ? flow/spd : vec2(0.); float river = smoothstep(.02,.6,spd);
+  vec4 Wt = texture(uWater, uv); Wt = vec4(Wt.r*1024.-128., Wt.gb*2.-1., Wt.a); if (vWp.y - Wt.r > .4) discard; vec2 flow = Wt.gb; float spd = length(flow); vec2 fd = spd > .02 ? flow/spd : vec2(0.); float river = smoothstep(.02,.6,spd);
   float t = uTime; vec2 p = vWp.xz; float v1 = mix(.25, 2.2, river), v2 = mix(.4, 3.4, river);
   vec2 q1 = p*.42 - fd*t*v1 + vec2(t*.05, t*.03), q2 = p*1.15 - fd*t*v2 + vec2(-t*.06, t*.04), q3 = p*3.1 - fd*t*v2*1.4;
   float e = .08; float a1 = mix(.35, .6, river);
@@ -158,8 +159,9 @@ void main(){
   float alpha = mix(.45, .97, 1. - exp(-depth*1.5)); alpha = mix(alpha, 1., max(foam*.8, fres*.4)); oC = vec4(col, alpha); }
 )GLSL";
 const char* FALL_VS = R"GLSL(
-layout(location=0) in vec2 aP; uniform mat4 uVP; uniform vec4 uPos; uniform vec4 uDir; uniform vec3 uRight, uUp; uniform int uMode; out vec2 vUv; out float vY; out vec3 vWp;
+layout(location=0) in vec2 aP; uniform mat4 uVP; uniform vec4 uPos; uniform vec4 uDir; uniform vec3 uRight, uUp; uniform int uMode; out vec2 vUv; out float vY; out vec3 vWp; out float vUS;
 void main(){
+  vUS = aP.x;
   if (uMode == 0) { float u = aP.x, v = aP.y; float fall = (1.-v); float out_ = .5 + fall*uDir.w*.25 + sin(fall*3.14159*.5)*.6; vec3 p = vec3(uPos.x, mix(uDir.z, uPos.y, v), uPos.z); vec3 hd = vec3(uDir.x, 0., uDir.y); vec3 rt = vec3(-uDir.y, 0., uDir.x);
     p += rt*u*uPos.w + hd*out_; vWp = p; vUv = vec2(u*uPos.w, fall*(uPos.y-uDir.z)); vY = v; gl_Position = uVP*vec4(p,1.); }
   else { int id = gl_InstanceID; float fi = float(id); float a = fi*2.399, r = 1.2 + 2.6*fract(fi*.618); vec3 hd = vec3(uDir.x, 0., uDir.y); vec3 rt = vec3(-uDir.y, 0., uDir.x);
@@ -167,14 +169,16 @@ void main(){
     vec3 p = base + (uRight*aP.x + uUp*aP.y)*sz; vWp = p; vUv = aP; vY = fi; gl_Position = uVP*vec4(p,1.); } }
 )GLSL";
 const char* FALL_FS = R"GLSL(
-in vec2 vUv; in float vY; in vec3 vWp; out vec4 oC; uniform int uMode; uniform float uTime, uAmb; uniform vec3 uSunCol;
+in vec2 vUv; in float vY; in vec3 vWp; in float vUS; out vec4 oC; uniform int uMode; uniform float uTime, uAmb; uniform vec3 uSunCol;
 void main(){
   if (uMode == 0) { float t = uTime, x = vUv.x, y = vUv.y;
     float a1 = vn2(vec2(x*3.1, y*.22 - t*3.4)), a2 = vn2(vec2(x*8.7 + 3., y*.35 - t*5.1)), a3 = vn2(vec2(x*19. + 9., y*.6 - t*7.5)), lump = vn2(vec2(x*1.4 + 7., y*.12 - t*1.9));
     float st = a1*.45 + a2*.35 + a3*.25; float white = smoothstep(.5, .86, st + .3*lump - .1);
     vec3 col = mix(vec3(.14,.33,.42), vec3(.52,.74,.84), st); col = mix(col, vec3(.95,.97,.98), white*.72); col *= uAmb*1.05; col += uSunCol*.03;
     float foam = smoothstep(.22, .0, vY) * (.55 + .6*vn2(vUv*4.2 - vec2(0., t*2.))); col = mix(col, vec3(1.)*uAmb*1.15, clamp(foam, 0., 1.)*.85);
-    float a = clamp(.2 + .34*st + .42*white + foam*.4, .2, .9); oC = vec4(col, a); }
+    float a = clamp(.2 + .34*st + .42*white + foam*.4, .2, .9);
+    float eg = abs(vUS) + .22*(vn2(vec2(vUS*4.5 + 2., y*.11 - t*1.1)) - .5) + .1*(vn2(vec2(vUS*13., y*.3 - t*2.3)) - .5); float edge = 1. - smoothstep(.5, .98, eg); a *= edge * edge; col = mix(col, vec3(1.)*uAmb*1.1, (1.-edge)*.5);
+    oC = vec4(col, a); }
   else { float r = length(vUv); if (r > 1.) discard; float n = vn2(vUv*2.5 + vY); float a = pow(1.-r, 2.)*(.14 + .1*n); oC = vec4(vec3(.92,.96,1.)*uAmb*1.05, a); } }
 )GLSL";
 const char* PROP_VS = R"GLSL(
@@ -337,6 +341,7 @@ Env env(float hour) {
 }
 
 // ------------------------------------------------------------------ init
+static size_t stageBytes = 0;
 bool init() {
   if (inited) return true; inited = true; winW = gfx::winW; winH = gfx::winH; const Q& q = QS[gfx::quality]; (void)q;
   std::string XL = xlight();
@@ -358,9 +363,10 @@ bool init() {
   // bucket instances per kind per 64 m cell
   std::vector<std::vector<int>> per(NK); for (size_t i = 0; i < objs.size(); i++) per[objs[i].kind].push_back((int)i);
   for (int k = 0; k < NK; k++) { cellStart[k].assign(NC * NC + 1, 0); std::vector<int>& L = per[k]; auto cellId = [&](const Obj& o) { int cx = std::min(NC - 1, std::max(0, (int)((o.x + HALF) / CELL))), cz = std::min(NC - 1, std::max(0, (int)((o.z + HALF) / CELL))); return cz * NC + cx; };
-    for (int id : L) cellStart[k][cellId(objs[id]) + 1]++; for (int c = 0; c < NC * NC; c++) cellStart[k][c + 1] += cellStart[k][c]; data[k].resize(L.size()); std::vector<int> fill(cellStart[k].begin(), cellStart[k].end() - 1);
-    for (int id : L) { const Obj& o = objs[id]; M4 m = mul(translate(o.x, o.y, o.z), mul(rotY(o.ry), scale4(o.sx, o.sy, o.sz))); IData& d = data[k][fill[cellId(o)]++]; memcpy(d.m, m.m, 64); d.tint[0] = o.r / 128.f; d.tint[1] = o.g / 128.f; d.tint[2] = o.b / 128.f; d.tint[3] = o.sway ? 1.f : 0.f; } }
-  for (int s = 0; s < NSLOT; s++) { if (!pm[s].ok) continue; int cap = s < NK ? std::min<int>(7200, std::max<int>(s >= (int)K_FA_DOG ? 1000 : 160, (int)data[s].size() + 160)) : 14000; stage[s].resize(cap); setupInstVao(pm[s], cap); }
+    for (int id : L) cellStart[k][cellId(objs[id]) + 1]++; for (int c = 0; c < NC * NC; c++) cellStart[k][c + 1] += cellStart[k][c]; ids[k].resize(L.size()); std::vector<int> fill(cellStart[k].begin(), cellStart[k].end() - 1);
+    for (int id : L) ids[k][fill[cellId(objs[id])]++] = (uint32_t)id; }
+  for (int s = 0; s < NSLOT; s++) { if (!pm[s].ok) continue; int cap = s < NK ? std::min<int>(7200, std::max<int>(s >= (int)K_FA_DOG ? 1000 : 160, (int)ids[s].size() + 160)) : 14000; stageMax[s] = cap; int c0 = std::min(cap, 256); stage[s].resize(c0); setupInstVao(pm[s], c0); stageBytes += (size_t)c0 * sizeof(IData); }
+  if (mem::on()) fprintf(stderr, "instance staging: %.1f MB CPU + %.1f MB GPU, %d slots, world instances %zu, IData %zu B\n", stageBytes / 1048576.0, stageBytes / 1048576.0, (int)NSLOT, objs.size(), sizeof(IData));
   // grass clump (5 blades x 7 verts) and flower meshes
   { std::vector<float> v; std::vector<uint16_t> ix; for (int b = 0; b < 5; b++) { int base = (int)v.size() / 4; for (int r = 0; r < 3; r++) { float y = r / 3.f; for (int sd = -1; sd <= 1; sd += 2) { v.push_back((float)sd); v.push_back(y); v.push_back(0); v.push_back((float)b); } } v.push_back(0); v.push_back(1); v.push_back(0); v.push_back((float)b);
       uint16_t t[15] = {0, 1, 2, 1, 3, 2, 2, 3, 4, 3, 5, 4, 4, 5, 6}; for (int k = 0; k < 15; k++) ix.push_back((uint16_t)(base + t[k])); }
@@ -396,16 +402,20 @@ void setLitX(GLuint p, const float* pl, const float* plc) {
   glUniform4fv(U(p, "uPL"), 4, pl); glUniform4fv(U(p, "uPLC"), 4, plc); sm(p, "uShadowVP", shadowVP); si(p, "uShadowTex", 5); s1(p, "uShadowOn", gfx::quality > 0 ? 1.f : 0.f); sm(p, "uVP", vpM);
   s3(p, "uSkyZen", E.zen); s3(p, "uSkyHor", E.hor); s3(p, "uSkyGnd", E.gnd); s3(p, "uSunDirE", E.sunDir); s3(p, "uSunColE", E.sunCol * E.sunVis);
 }
+static void objToI(IData& d, const Obj& o) { M4 m = mul(translate(o.x, o.y, o.z), mul(rotY(o.ry), scale4(o.sx, o.sy, o.sz))); memcpy(d.m, m.m, 64); d.tint[0] = o.r / 128.f; d.tint[1] = o.g / 128.f; d.tint[2] = o.b / 128.f; d.tint[3] = o.sway ? 1.f : 0.f; }
+// instance staging grows on demand (rare, doubles up to the old fixed capacity) instead of reserving the worst case for 110 slots up front
+static bool growStage(int s) { int cur = (int)stage[s].size(); if (cur >= stageMax[s]) return false; int nc = std::min(stageMax[s], std::max(cur * 2, 256)); stage[s].resize(nc); glBindBuffer(GL_ARRAY_BUFFER, pm[s].inst); glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)nc * sizeof(IData), nullptr, GL_STREAM_DRAW); return true; }
+static inline IData* stagePush(int s) { if (stageN[s] >= (int)stage[s].size() && !growStage(s)) return nullptr; return &stage[s][stageN[s]++]; }
 void gather(const Frame& f, bool shadowOnly) {
   for (int s = 0; s < NSLOT; s++) stageN[s] = 0; float cx = f.eye.x, cz = f.eye.z;
-  for (int k = 0; k < NK; k++) { if (!pm[k].ok || data[k].empty()) continue; const KindDef& kd = KD[k]; if (shadowOnly && !kd.shadow) continue; float rMax = (kd.lo >= 0 ? kd.rLo : kd.rHi); if (shadowOnly) rMax = 90.f; int c0x = std::max(0, (int)((cx - rMax - CELL + HALF) / CELL)), c1x = std::min(NC - 1, (int)((cx + rMax + CELL + HALF) / CELL)), c0z = std::max(0, (int)((cz - rMax - CELL + HALF) / CELL)), c1z = std::min(NC - 1, (int)((cz + rMax + CELL + HALF) / CELL));
-    float hiR2 = (shadowOnly ? std::min(kd.rHi, 90.f) : kd.rHi) * (shadowOnly ? std::min(kd.rHi, 90.f) : kd.rHi), loR2 = kd.rLo * kd.rLo; bool hasLo = kd.lo >= 0 && !shadowOnly; int cap = (int)stage[k].size(), capLo = kd.lo >= 0 ? (int)stage[kd.lo].size() : 0;
+  for (int k = 0; k < NK; k++) { if (!pm[k].ok || ids[k].empty()) continue; const KindDef& kd = KD[k]; if (shadowOnly && !kd.shadow) continue; float rMax = (kd.lo >= 0 ? kd.rLo : kd.rHi); if (shadowOnly) rMax = 90.f; int c0x = std::max(0, (int)((cx - rMax - CELL + HALF) / CELL)), c1x = std::min(NC - 1, (int)((cx + rMax + CELL + HALF) / CELL)), c0z = std::max(0, (int)((cz - rMax - CELL + HALF) / CELL)), c1z = std::min(NC - 1, (int)((cz + rMax + CELL + HALF) / CELL));
+    float hiR2 = (shadowOnly ? std::min(kd.rHi, 90.f) : kd.rHi) * (shadowOnly ? std::min(kd.rHi, 90.f) : kd.rHi), loR2 = kd.rLo * kd.rLo; bool hasLo = kd.lo >= 0 && !shadowOnly;
     for (int cz2 = c0z; cz2 <= c1z; cz2++) for (int cx2 = c0x; cx2 <= c1x; cx2++) { int c = cz2 * NC + cx2; int a = cellStart[k][c], b = cellStart[k][c + 1]; if (a == b) continue; float mx = -HALF + (cx2 + 0.5f) * CELL, mz = -HALF + (cz2 + 0.5f) * CELL; float dc = std::sqrt((mx - cx) * (mx - cx) + (mz - cz) * (mz - cz)); if (dc - CELL * 0.75f > rMax) continue; if (!shadowOnly && !sphereVis(mx, f.eye.y > 400.f ? f.eye.y : 40.f, mz, CELL * 0.8f + 60.f)) continue;
-      for (int i = a; i < b; i++) { const IData& d = data[k][i]; float dx = d.m[12] - cx, dz = d.m[14] - cz, d2 = dx * dx + dz * dz; if (d2 < hiR2) { if (stageN[k] < cap) stage[k][stageN[k]++] = d; } else if (hasLo && d2 < loR2) { if (stageN[kd.lo] < capLo) stage[kd.lo][stageN[kd.lo]++] = d; } } } }
+      for (int i = a; i < b; i++) { const Obj& o = objs[ids[k][i]]; float dx = o.x - cx, dz = o.z - cz, d2 = dx * dx + dz * dz; if (d2 < hiR2) { if (IData* d = stagePush(k)) objToI(*d, o); } else if (hasLo && d2 < loR2) { if (IData* d = stagePush(kd.lo)) objToI(*d, o); } } } }
   if (f.dyn) for (int i = 0; i < f.ndyn; i++) {
     int k = f.dyn[i].kind < 0 ? (int)K_ARROW : f.dyn[i].kind; if (k < 0 || k >= NK || !pm[k].ok) continue;
     if (shadowOnly) { if (!KD[k].shadow || f.dyn[i].mode < -0.5f) continue; float dx = f.dyn[i].m.m[12] - cx, dz = f.dyn[i].m.m[14] - cz; if (dx * dx + dz * dz > 95.f * 95.f) continue; }
-    if (stageN[k] < (int)stage[k].size()) { IData& d = stage[k][stageN[k]++]; memcpy(d.m, f.dyn[i].m.m, 64); d.tint[0] = f.dyn[i].tint[0]; d.tint[1] = f.dyn[i].tint[1]; d.tint[2] = f.dyn[i].tint[2]; d.tint[3] = f.dyn[i].mode; }
+    if (IData* dp = stagePush(k)) { IData& d = *dp; memcpy(d.m, f.dyn[i].m.m, 64); d.tint[0] = f.dyn[i].tint[0]; d.tint[1] = f.dyn[i].tint[1]; d.tint[2] = f.dyn[i].tint[2]; d.tint[3] = f.dyn[i].mode; }
   }
 }
 void drawProps(GLuint prog, bool shadow) {
