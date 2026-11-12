@@ -146,7 +146,7 @@ out vec3 vWp; out vec3 vN; out vec3 vCol; out vec3 vRest; out vec4 vMat; out vec
 void main(){ mat4 M = mat4(iM0,iM1,iM2,iM3); vec4 wp = M*vec4(aPos,1.);
   if (iT.a > .5) { float k = smoothstep(1.5, 9., aPos.y)*.07; wp.x += sin(uTime*1.25 + wp.x*.17 + wp.z*.11)*k*iM1.y*1.0; wp.z += cos(uTime*1.05 + wp.z*.15 + wp.x*.09)*k*iM1.y; }
   vWp = wp.xyz; vN = normalize(mat3(M)*aNrm); vCol = aCol.rgb*aCol.rgb*iT.rgb; vAO = aCol.a; vCav = aBn.w/255.*2.-1.; vMat = vec4(aMat.xy, aMat.z*255., aMat.w*2.);
-  if (iT.a < -.5) { vCol = mix(aCol.rgb*aCol.rgb, vec3(.85), .65) * iT.rgb * (1.05 + .20*sin(uTime*6.)); vAO = 1.; vMat = vec4(.35, .05, 1., 0.); }
+  if (iT.a < -.5) { vCol = (aCol.rgb*aCol.rgb*.65 + vec3(.14)) * iT.rgb * (1.0 + .16*sin(uTime*6.)); vAO = mix(aCol.a, 1., .30); vMat = vec4(.45, .08, 8., 0.); }
   vUvS = aUv; vRest = aPos; gl_Position = uVP*wp; }
 )GLSL";
 const char* PROP_SHADOW_VS = R"GLSL(

@@ -224,46 +224,72 @@ void debugCmd(const char* c) {
   if (strstr(c, "bow")) B.weapon = 1; if (strstr(c, "melee")) B.weapon = 0; if (strstr(c, "hold")) dbgDrawHold = true; if (strstr(c, "run")) dbgWalk = 2; else if (strstr(c, "walk")) dbgWalk = 1; if (const char* p = strstr(c, "shoot")) dbgShoot = atoi(p + 5) > 0 ? atoi(p + 5) : 30;
   if (strstr(c, "horde")) startKingdomSiege(true); if (strstr(c, "hostile")) { for (int k = 0; k < 3; k++) bounty[k] = 120; } if (strstr(c, "noai")) for (Npc& n : npcs) if (n.used && n.role >= R_MON && n.role == R_MON) n.used = false;
   if (const char* p = strstr(c, "enter")) { int want = atoi(p + 5), best = -1; float bd = 1e30f; for (size_t i = 0; i < enters.size(); i++) if (enters[i].idx == want) { float d = dist2(enters[i].x, enters[i].z, P.x, P.z); if (d < bd) { bd = d; best = (int)i; } } if (best >= 0) { CI.ox = enters[best].x + enters[best].R; CI.oz = enters[best].z; doEnter(best); } }
-  if (strstr(c, "mount")) { K.mounted = true; for (int k = 0; k < 3; k++) { Npc* s = spawnHuman(k == 0 ? R_KNIGHT : R_SOLDIER, P.x + (k - 1) * 2.2f, P.z - 3.f, P.yaw, -1); if (s) makeSworn(*s); } }
+  if (strstr(c, "mount")) {
+    // Place on open sunlit meadow road outside capital facing the countryside so full stag + warband shine
+    const Settle& s = settles[nations[0].capital >= 0 ? nations[0].capital : 0];
+    P.x = s.x + s.gateX * 92.f; P.z = s.z + s.gateZ * 92.f; P.y = height(P.x, P.z);
+    P.yaw = std::atan2(s.gateX, s.gateZ); P.face = P.yaw; P.pitch = -0.06f; P.camDist = 5.8f; P.camInit = false;
+    for (Poi& p : pois) if (dist2(p.x, p.z, P.x, P.z) < 160.f * 160.f) { p.found = true; H.disc++; }
+    K.mounted = true;
+    for (int k = 0; k < 3; k++) {
+      float rx = std::cos(P.yaw), rz = -std::sin(P.yaw);
+      Npc* sw = spawnHuman(k == 0 ? R_KNIGHT : R_SOLDIER, P.x - std::sin(P.yaw) * 3.2f + rx * (k - 1) * 2.4f, P.z - std::cos(P.yaw) * 3.2f + rz * (k - 1) * 2.4f, P.yaw, -1);
+      if (sw) makeSworn(*sw);
+    }
+    banner("NOBLE HART SUMMONED", "GALLOP ACROSS THE REALM WITH YOUR SWORN WARBAND", 4.5f);
+  }
   if (strstr(c, "buildmode")) {
+    const Settle& s = settles[nations[0].capital >= 0 ? nations[0].capital : 0];
+    P.x = s.x + s.gateX * 96.f; P.z = s.z + s.gateZ * 96.f; P.y = height(P.x, P.z);
+    P.yaw = std::atan2(-s.gateX, -s.gateZ); P.face = P.yaw; P.pitch = -0.14f; P.camDist = 5.6f; P.camInit = false;
+    for (Poi& p : pois) if (dist2(p.x, p.z, P.x, P.z) < 160.f * 160.f) { p.found = true; H.disc++; }
     float fx = std::sin(P.yaw), fz = std::cos(P.yaw), rx = std::cos(P.yaw), rz = -std::sin(P.yaw);
-    placeBuilding(BT_GATE, P.x + fx * 15.f, P.z + fz * 15.f, P.yaw, true);
-    placeBuilding(BT_WALL, P.x + fx * 15.f - rx * 6.5f, P.z + fz * 15.f - rz * 6.5f, P.yaw, true);
-    placeBuilding(BT_TOWER, P.x + fx * 14.5f + rx * 7.2f, P.z + fz * 14.5f + rz * 7.2f, P.yaw, true);
-    placeBuilding(BT_BEACON, P.x + fx * 11.f - rx * 4.2f, P.z + fz * 11.f - rz * 4.2f, P.yaw, true);
-    K.buildMode = true; K.bsel = BT_WALL; K.bYaw = 0;
+    placeBuilding(BT_WALL, P.x + fx * 8.5f - rx * 5.2f, P.z + fz * 8.5f - rz * 5.2f, P.yaw, true);
+    placeBuilding(BT_TOWER, P.x + fx * 9.5f + rx * 6.2f, P.z + fz * 9.5f + rz * 6.2f, P.yaw, true);
+    placeBuilding(BT_BARRACKS, P.x + fx * 14.f - rx * 8.5f, P.z + fz * 14.f - rz * 8.5f, P.yaw + 0.4f, true);
+    placeBuilding(BT_BEACON, P.x + fx * 7.5f + rx * 3.2f, P.z + fz * 7.5f + rz * 3.2f, P.yaw, true);
+    K.buildMode = true; K.bsel = BT_WALL; K.bYaw = 0; H.bannerT = 0.f;
   }
   if (strstr(c, "siege")) {
     clockH = 21.2f; prevHour = 21.2f;
+    const Settle& s = settles[nations[0].capital >= 0 ? nations[0].capital : 0];
+    P.x = s.x + s.gateX * 88.f; P.z = s.z + s.gateZ * 88.f; P.y = height(P.x, P.z);
+    P.yaw = std::atan2(s.gateX, s.gateZ); P.face = P.yaw; P.pitch = -0.16f; P.camDist = 6.8f; P.camInit = false;
+    for (Poi& p : pois) if (dist2(p.x, p.z, P.x, P.z) < 180.f * 180.f) { p.found = true; H.disc++; }
     float fx = std::sin(P.yaw), fz = std::cos(P.yaw), rx = std::cos(P.yaw), rz = -std::sin(P.yaw);
-    placeBuilding(BT_GATE, P.x + fx * 12.f, P.z + fz * 12.f, P.yaw, true);
-    placeBuilding(BT_WALL, P.x + fx * 12.f - rx * 6.4f, P.z + fz * 12.f - rz * 6.4f, P.yaw, true);
-    placeBuilding(BT_WALL, P.x + fx * 12.f + rx * 6.4f, P.z + fz * 12.f + rz * 6.4f, P.yaw, true);
-    placeBuilding(BT_TOWER, P.x + fx * 10.f - rx * 9.5f, P.z + fz * 10.f - rz * 9.5f, P.yaw, true);
-    placeBuilding(BT_TOWER, P.x + fx * 10.f + rx * 9.5f, P.z + fz * 10.f + rz * 9.5f, P.yaw, true);
-    placeBuilding(BT_BEACON, P.x + fx * 8.f - rx * 3.8f, P.z + fz * 8.f - rz * 3.8f, P.yaw, true);
-    placeBuilding(BT_BEACON, P.x + fx * 8.f + rx * 3.8f, P.z + fz * 8.f + rz * 3.8f, P.yaw, true);
-    for (int k = 0; k < 4; k++) { Npc* s = spawnHuman(k < 2 ? R_KNIGHT : R_SOLDIER, P.x + fx * 7.f + rx * (k - 1.5f) * 2.2f, P.z + fz * 7.f + rz * (k - 1.5f) * 2.2f, P.yaw, -1); if (s) makeSworn(*s); }
-    K.order = ORD_HOLD; K.holdX = P.x + fx * 9.f; K.holdZ = P.z + fz * 9.f; K.holdYaw = P.yaw;
+    placeBuilding(BT_GATE, P.x + fx * 9.5f, P.z + fz * 9.5f, P.yaw, true);
+    placeBuilding(BT_WALL, P.x + fx * 9.5f - rx * 6.6f, P.z + fz * 9.5f - rz * 6.6f, P.yaw, true);
+    placeBuilding(BT_WALL, P.x + fx * 9.5f + rx * 6.6f, P.z + fz * 9.5f + rz * 6.6f, P.yaw, true);
+    placeBuilding(BT_TOWER, P.x + fx * 8.0f - rx * 10.2f, P.z + fz * 8.0f - rz * 10.2f, P.yaw, true);
+    placeBuilding(BT_TOWER, P.x + fx * 8.0f + rx * 10.2f, P.z + fz * 8.0f + rz * 10.2f, P.yaw, true);
+    placeBuilding(BT_BEACON, P.x + fx * 6.2f - rx * 3.8f, P.z + fz * 6.2f - rz * 3.8f, P.yaw, true);
+    placeBuilding(BT_BEACON, P.x + fx * 6.2f + rx * 3.8f, P.z + fz * 6.2f + rz * 3.8f, P.yaw, true);
+    for (int k = 0; k < 4; k++) { Npc* sw = spawnHuman(k < 2 ? R_KNIGHT : R_SOLDIER, P.x + fx * 7.8f + rx * (k - 1.5f) * 2.0f, P.z + fz * 7.8f + rz * (k - 1.5f) * 2.0f, P.yaw, -1); if (sw) makeSworn(*sw); }
+    K.order = ORD_HOLD; K.holdX = P.x + fx * 8.2f; K.holdZ = P.z + fz * 8.2f; K.holdYaw = P.yaw;
     for (int k = 0; k < 9; k++) {
-      float ox = (k - 4) * 2.6f, d = 22.f + (k % 3) * 4.5f;
+      float ox = (k - 4) * 2.4f, d = 17.5f + (k % 3) * 3.2f;
       int mt = k == 4 ? BARROWKING : (k % 3 == 0 ? CAIRNBACK : (k % 2 == 0 ? RUSTBOUND : PEATWIGHT));
       Npc* m = spawnMon(mt, P.x + fx * d + rx * ox, P.z + fz * d + rz * ox, false, k == 4);
-      if (m) { int mi = (int)(m - npcs); KEX[mi].siegeUnit = true; m->homeX = P.x + fx * 10.f; m->homeZ = P.z + fz * 10.f; m->aggro = 60.f; }
+      if (m) { int mi = (int)(m - npcs); KEX[mi].siegeUnit = true; m->homeX = P.x + fx * 9.5f; m->homeZ = P.z + fz * 9.5f; m->aggro = 60.f; }
     }
     K.nightWave = 1; K.siegeActive = true; K.siegeTotal = 9; K.siegeLeft = 9;
     banner("NIGHT 1 DEMON SIEGE", "DEFEND YOUR WALLS & ARCHER TOWERS!", 5.f);
   }
   if (strstr(c, "spells")) {
+    for (Poi& p : pois) if (dist2(p.x, p.z, P.x, P.z) < 160.f * 160.f) { p.found = true; H.disc++; }
     float fx = std::sin(P.yaw), fz = std::cos(P.yaw), rx = std::cos(P.yaw), rz = -std::sin(P.yaw);
-    for (int k = 0; k < 5; k++) { Npc* m = spawnMon(k == 2 ? CAIRNBACK : RUSTBOUND, P.x + fx * (11.f + (k % 2) * 3.f) + rx * (k - 2) * 2.4f, P.z + fz * (11.f + (k % 2) * 3.f) + rz * (k - 2) * 2.4f, false, false); (void)m; }
+    for (int k = 0; k < 5; k++) { Npc* m = spawnMon(k == 2 ? CAIRNBACK : RUSTBOUND, P.x + fx * (10.f + (k % 2) * 2.5f) + rx * (k - 2) * 2.2f, P.z + fz * (10.f + (k % 2) * 2.5f) + rz * (k - 2) * 2.2f, false, false); (void)m; }
     K.spell = SP_FROST; K.mana = 100.f; castSpell();
     K.spell = SP_FIREBALL; K.spCd = 0.f; K.mana = 100.f; castSpell();
+    banner("ARCANE SPELLCRAFT", "SOLAR FIREBALL & GLACIAL FROST NOVA", 4.f);
   }
   if (strstr(c, "rift")) {
     for (int i = 0; i < MAXRIFT; i++) if (rifts[i].used) {
-      P.x = rifts[i].x - 9.f; P.z = rifts[i].z + 9.f; P.y = height(P.x, P.z);
-      P.yaw = std::atan2(rifts[i].x - P.x, rifts[i].z - P.z); P.face = P.yaw; P.pitch = 0.08f; P.camInit = false; break;
+      P.x = rifts[i].x - 3.6f; P.z = rifts[i].z + 3.6f; P.y = height(P.x, P.z);
+      P.yaw = std::atan2(rifts[i].x - P.x, rifts[i].z - P.z); P.face = P.yaw; P.pitch = 0.08f; P.camInit = false;
+      for (Poi& p : pois) if (dist2(p.x, p.z, P.x, P.z) < 160.f * 160.f) { p.found = true; H.disc++; }
+      banner("CORRUPTED REALM SANCTUM", "SLAY THE GUARDIANS & PURIFY THE RIFT", 4.5f);
+      break;
     }
   }
 }
@@ -323,7 +349,7 @@ void update(float dtReal, const pl::Input& in) {
   if (!CI.in) { int sid = settleNear(P.x, P.z, 6.f); int pid = sid >= 0 ? sid : -1 - nationAt(P.x, P.z) * 100 - (int)(height(P.x, P.z) / 40.f); if (pid != lastPlaceId && sinceStart > 0.5f) { lastPlaceId = pid; if (sid >= 0 && settles[sid].type != ST_BORDER) snprintf(H.place, sizeof H.place, "%s", settles[sid].name); else snprintf(H.place, sizeof H.place, "%s", regionName(P.x, P.z)); snprintf(H.nation, sizeof H.nation, "%s", nations[nationAt(P.x, P.z)].title); H.locT = 4.5f; } if (!H.place[0]) { snprintf(H.place, sizeof H.place, "%s", regionName(P.x, P.z)); snprintf(H.nation, sizeof H.nation, "%s", nations[nationAt(P.x, P.z)].title); } }
   // ---- prompt
   H.prompt[0] = 0; if (!H.map && P.deadT <= 0 && restT <= 0 && !K.buildMode) {
-    int ri = nearestRift(4.5f, true);
+    int ri = nearestRift(6.0f, true);
     int bi = !CI.in ? nearestBarracks(5.5f) : -1;
     Npc* best = nullptr; int bestIdx = -1; float bd = 3.6f * 3.6f;
     for (int i = 0; i < MAXN; i++) { Npc& n = npcs[i]; if (!n.used || !n.alive || n.role >= R_MON) continue; float d = dist2(n.x, n.z, P.x, P.z); if (d < bd) { bd = d; best = &n; bestIdx = i; } }
@@ -345,7 +371,7 @@ void update(float dtReal, const pl::Input& in) {
   // boss bar
   H.bossHp = -1; for (int k = 0; k < nMonL; k++) { const Npc& m = npcs[monList[k]]; if (m.boss && m.alive && m.lastPlayerD < 60.f) { H.bossHp = m.hp / m.maxHp; snprintf(H.bossName, sizeof H.bossName, "%s", m.name); } }
   // ---- camera
-  { float cp = std::cos(P.pitch), sp = std::sin(P.pitch); V3 look{std::sin(P.yaw) * cp, sp, std::cos(P.yaw) * cp}; float head = (pa ? pa->scale : 1.f) * 1.58f + (K.mounted ? 0.88f : 0.f); V3 pv{P.x, P.y + head, P.z}; V3 eye, tg; float fov = 1.14f + (P.speed > 5.5f ? 0.07f : 0.f);
+  { float cp = std::cos(P.pitch), sp = std::sin(P.pitch); V3 look{std::sin(P.yaw) * cp, sp, std::cos(P.yaw) * cp}; float head = (pa ? pa->scale : 1.f) * 1.58f + (K.mounted ? 1.18f : 0.f); V3 pv{P.x, P.y + head, P.z}; V3 eye, tg; float fov = 1.14f + (P.speed > 5.5f ? 0.07f : 0.f);
     if (P.view == 0 && !P.fly) { eye = pv + look * 0.12f; tg = eye + look * 6.f; fov = 1.22f; }
     else { float dist = (CI.in ? std::min(P.camDist, 3.4f) : P.camDist * (K.mounted ? 1.22f : 1.f) * (K.buildMode ? 1.35f : 1.f)) * (P.fly ? 1.8f : 1.f); V3 right{-std::cos(P.yaw), 0, std::sin(P.yaw)}; V3 piv = pv + right * (P.fly ? 0.f : 0.55f) + V3{0, K.buildMode ? 0.65f : 0.1f, 0}; float use = dist; for (float s = 0.5f; s <= dist; s += 0.35f) { V3 p = piv - look * s; float g = gH(p.x, p.z) + 0.45f; float wl = waterAt(p.x, p.z); if (wl > -1e8f) g = std::max(g, wl + 0.25f); float cx = p.x, cz = p.z; bool hit = p.y < g; if (!hit && p.y < gH(p.x, p.z) + 7.f && collideAny(cx, cz, 0.3f) && dist2(cx, cz, p.x, p.z) > 0.25f) hit = true; if (hit) { use = std::max(0.9f, s - 0.45f); break; } }
       eye = piv - look * use; float g = gH(eye.x, eye.z) + 0.5f; if (eye.y < g) eye.y = g; tg = piv + look * 10.f; if (CI.in) { const xi::Def& d = xi::DEFS[CI.idx]; eye.x = clampf(eye.x, d.cx - d.hx + 0.3f, d.cx + d.hx - 0.3f); eye.z = clampf(eye.z, d.cz - d.hz + 0.3f, d.cz + d.hz - 0.3f); eye.y = std::min(eye.y, xi::BASEY + d.h - 0.25f); } }
@@ -371,21 +397,34 @@ void draw() {
     }
     figAnimPose(an, a); float fl = P.hurtT > 0 ? P.hurtT * 0.5f : 0.f; float flash[3] = {fl * 1.2f, fl * 0.5f, fl * 0.3f}; int wR = bowEq ? -1 : hr.wpR, wL = bowEq ? roster::WP_BOW : hr.wpL;
     if (showBody && K.mounted && !CI.in && gFM[HOLLOWSTAG].ok && nfd < 256) {
-      const FigAsset& ma = gFM[HOLLOWSTAG]; float msc = 0.88f;
+      const FigAsset& ma = gFM[HOLLOWSTAG]; float msc = std::max(1.55f, ma.scale * 0.76f);
       if (K.mountAnim.id != 8888u) { K.mountAnim = FigAnim(); K.mountAnim.id = 8888u; }
-      figAnimUpdate(K.mountAnim, ma, dtv, P.speed / msc, false, -1, -1.f, 0.f, false, 0.f, -1.f, 0.f); figAnimPose(K.mountAnim, ma);
-      FigDraw& md = fd[nfd++]; md.a = &ma; md.mat = K.mountAnim.mat; md.dissolve = 0; md.disH = std::max(1.f, ma.height); md.glow = 1.6f; md.shadow = true; md.dim = 1.05f; md.lantern = false; md.vm = false;
+      figAnimUpdate(K.mountAnim, ma, dtv, P.speed / std::max(0.8f, msc * 0.65f), false, -1, -1.f, 0.f, false, 0.f, -1.f, 0.f); figAnimPose(K.mountAnim, ma);
+      FigDraw& md = fd[nfd++]; md.a = &ma; md.mat = K.mountAnim.mat; md.dissolve = 0; md.disH = std::max(1.f, ma.height); md.glow = 1.4f; md.shadow = true; md.dim = 1.08f; md.lantern = false; md.vm = false;
       for (int k = 0; k < 3; k++) { md.disCol[k] = 0; md.flash[k] = flash[k] * 0.5f; }
       md.model = mul(translate(P.x, P.y, P.z), mul(rotY(P.face), scale4(msc, msc, msc)));
     }
-    if (showBody) { float rideBob = (K.mounted && !CI.in) ? (0.94f + 0.04f * std::sin(tAbs * (P.speed > 2.f ? 11.f : 2.f))) : 0.f;
+    if (showBody) { float rideBob = (K.mounted && !CI.in) ? (1.18f + 0.045f * std::sin(tAbs * (P.speed > 2.f ? 11.f : 2.f))) : 0.f;
       FigDraw& d = fd[nfd++]; d.a = &a; d.mat = an.mat; d.dissolve = 0; d.disH = std::max(1.f, a.height); d.glow = 1; d.shadow = true; d.dim = 1; d.lantern = a.lant && lampOn; d.vm = false; for (int k = 0; k < 3; k++) d.disCol[k] = a.disCol[k]; for (int k = 0; k < 3; k++) d.flash[k] = flash[k];
       d.model = mul(translate(P.x, P.y + rideBob, P.z), mul(rotY(P.face), scale4(a.scale, a.scale, a.scale))); weapon(a, an, false, wR, d.model, d.flash, 1.f); weapon(a, an, true, wL, d.model, d.flash, 1.f); }
-    else {   // first person: the held weapon in the camera frame, driven by the live pose (swing / draw animate for free)
-      V3 look = norm(P.tgt - P.eye), xx = norm(cross(V3{0, 1, 0}, look)), yy = cross(look, xx); M4 cam = ident(); cam.m[0] = xx.x; cam.m[1] = xx.y; cam.m[2] = xx.z; cam.m[4] = yy.x; cam.m[5] = yy.y; cam.m[6] = yy.z; cam.m[8] = look.x; cam.m[9] = look.y; cam.m[10] = look.z; M4 um0 = scale4(a.scale * 0.85f, a.scale * 0.85f, a.scale * 0.85f); bool idle = P.atkT < 0 && !bowAct;
-      auto vmW = [&](bool left, int wp, V3 off) { if (wp < 0 || wp >= NWEAP || !gFW[wp].ok || nfd >= 258) return; M4 m; figWeaponMat(a, an, left, wp, um0, tAbs, m); V3& ref = vmRef[left ? 0 : 1]; V3 cur{m.m[12], m.m[13], m.m[14]}; if (idle) ref = ref + (cur - ref) * 0.15f;
-        V3 anc = P.eye + xx * off.x + yy * off.y + look * off.z; M4 w2 = mul(translate(anc.x, anc.y, anc.z), mul(cam, mul(translate(-ref.x, -ref.y, -ref.z), m))); FigDraw& w = fd[nfd++]; w.a = &gFW[wp]; w.model = w2; w.mat = WID; w.dissolve = 0; w.disH = 1; w.glow = 1; w.shadow = false; w.dim = 1.f; w.lantern = false; w.vm = true; for (int k = 0; k < 3; k++) { w.flash[k] = flash[k]; w.disCol[k] = 0; } };
-      vmW(true, wL, V3{0.5f, -0.2f, 0.72f}); vmW(false, wR, V3{-0.3f, -0.34f, 0.7f}); } }
+    else {   // first person: camera-space held bow or melee weapon
+      V3 look = norm(P.tgt - P.eye), xx = norm(cross(V3{0, 1, 0}, look)), yy = cross(look, xx); M4 cam = ident(); cam.m[0] = xx.x; cam.m[1] = xx.y; cam.m[2] = xx.z; cam.m[4] = yy.x; cam.m[5] = yy.y; cam.m[6] = yy.z; cam.m[8] = look.x; cam.m[9] = look.y; cam.m[10] = look.z;
+      if (bowEq && gFW[roster::WP_BOW].ok && nfd < 258 && !K.buildMode) {
+        float pull = B.draw, recoil = B.rel >= 0 ? std::sin(clampf(B.rel / 0.25f, 0, 1) * PI) * 0.06f : 0.f;
+        float swayX = 0.008f * std::sin(tAbs * 1.9f), swayY = 0.008f * std::cos(tAbs * 1.5f);
+        V3 anc = P.eye + xx * (0.20f + swayX) + yy * (-0.72f + swayY) + look * (0.66f - 0.05f * pull + recoil);
+        float cant = -0.34f; float cc = std::cos(cant), sc2 = std::sin(cant);
+        M4 rotC = ident(); rotC.m[0] = cc; rotC.m[1] = sc2; rotC.m[4] = -sc2; rotC.m[5] = cc;
+        M4 w2 = mul(translate(anc.x, anc.y, anc.z), mul(cam, mul(rotC, scale4(0.88f, 0.88f, 0.88f))));
+        FigDraw& w = fd[nfd++]; w.a = &gFW[roster::WP_BOW]; w.model = w2; w.mat = WID; w.dissolve = 0; w.disH = 1; w.glow = 1; w.shadow = false; w.dim = 1.f; w.lantern = false; w.vm = true;
+        for (int k = 0; k < 3; k++) { w.flash[k] = flash[k]; w.disCol[k] = 0; }
+      } else {
+        M4 um0 = scale4(a.scale * 0.85f, a.scale * 0.85f, a.scale * 0.85f); bool idle = P.atkT < 0 && !bowAct;
+        auto vmW = [&](bool left, int wp, V3 off) { if (wp < 0 || wp >= NWEAP || !gFW[wp].ok || nfd >= 258) return; M4 m; figWeaponMat(a, an, left, wp, um0, tAbs, m); V3& ref = vmRef[left ? 0 : 1]; V3 cur{m.m[12], m.m[13], m.m[14]}; if (idle) ref = ref + (cur - ref) * 0.15f;
+          V3 anc = P.eye + xx * off.x + yy * off.y + look * off.z; M4 w2 = mul(translate(anc.x, anc.y, anc.z), mul(cam, mul(translate(-ref.x, -ref.y, -ref.z), m))); FigDraw& w = fd[nfd++]; w.a = &gFW[wp]; w.model = w2; w.mat = WID; w.dissolve = 0; w.disH = 1; w.glow = 1; w.shadow = false; w.dim = 1.f; w.lantern = false; w.vm = true; for (int k = 0; k < 3; k++) { w.flash[k] = flash[k]; w.disCol[k] = 0; } };
+        vmW(true, wL, V3{0.34f, -0.26f, 0.68f}); vmW(false, wR, V3{-0.30f, -0.34f, 0.70f});
+      }
+    } }
   // npcs within range (nearest first by cell; capped)
   V3 cf = norm(P.tgt - P.eye); int drawn = 0; for (int pass = 0; pass < 2; pass++) for (int i = 0; i < MAXN && nfd < 230; i++) { Npc& n = npcs[i]; if (!n.used) continue; n.vis = false; float dx = n.x - P.eye.x, dz = n.z - P.eye.z, d2 = dx * dx + dz * dz; float lim = n.role >= R_MON ? 150.f : 125.f; if (n.boss) lim = 320.f; if (d2 > lim * lim) continue; float d = std::sqrt(d2) + 1e-3f; if (d > 12.f && (dx * cf.x + dz * cf.z) / d < -0.05f) continue; if ((pass == 0) != (d < 60.f)) continue; if (drawn > 150) continue; drawn++; n.vis = true;
     const FigAsset* a; int wR = -1, wL = -1; if (n.role >= R_MON) a = &gFM[n.mon]; else { const RigDef& rd = rigs[n.rig]; a = rd.a; wR = rd.wR; wL = rd.wL; } if (!a || !a->ok) continue; FigAnim& an = n.an; int ac = -1; float au = -1;
@@ -430,7 +469,8 @@ void draw() {
   for (DmgTxt& x : DT) { if (x.t < 0) continue; x.t += 1.f / 60.f; if (x.t > 1.1f) { x.t = -1; continue; } float sx, sy; if (nLabels < 42 && xr::project(x.x, x.y + x.t * 0.8f, x.z, sx, sy)) { Label& L = labels[nLabels++]; L.x = sx; L.y = sy - x.t * 8.f; memcpy(L.text, x.txt, sizeof x.txt); L.text[19] = 0; L.hp = -1; L.col = x.col; } }
   float S = std::max(1.f, std::round(gfx::winH / 360.f)); float W = (float)gfx::winW, Hh = (float)gfx::winH;
   if (H.map) { float size = std::min(Hh * 0.86f, W * 0.7f); H.mapSize = size; H.mapPx = (W - size) / 2; H.mapPy = (Hh - size) / 2; xr::MapView mv{0, 0, 1024.f, 0, 1, H.mapPx, H.mapPy, size, P.yaw}; xr::drawMap(mv); float sx, sy; mapToScreen(P.x, P.z, sx, sy); (void)sx; (void)sy; }
-  else if (H.show) { float size = 118.f * S; H.mapSize = size; H.mapPx = W - size - 8 * S; H.mapPy = 24 * S; float rot = PI - P.yaw; xr::MapView mv{P.x, P.z, 170.f, rot, 0, H.mapPx, H.mapPy, size, -rot}; xr::drawMap(mv); }
+  else if (H.show && !CI.in) { float size = 118.f * S; H.mapSize = size; H.mapPx = W - size - 8 * S; H.mapPy = 24 * S; float rot = PI - P.yaw; xr::MapView mv{P.x, P.z, 170.f, rot, 0, H.mapPx, H.mapPy, size, -rot}; xr::drawMap(mv); }
+  else if (H.show && CI.in) { H.mapSize = 118.f * S; H.mapPx = W - H.mapSize - 8 * S; H.mapPy = 24 * S; }
   (void)psc;
 }
 }  // namespace ex

@@ -27,7 +27,7 @@ static void drawExploreHud() {
   // ---- clock + minimap frame
   { float cx = H.mapPx + H.mapSize / 2; int hh = (int)H.hour, mm = (int)((H.hour - hh) * 60); static char cl[24]; static int lm = -1; if (lm != hh * 60 + mm) { lm = hh * 60 + mm; snprintf(cl, 24, "%02d:%02d", hh, mm); } bool day = H.hour > 6.f && H.hour < 18.f; text(cl, cx + 6 * S, 7 * S, S * 1.2f, hexc(day ? 0xf6d58a : 0x9ab4ff), 1); text(day ? "DAY" : "NIGHT", cx - 24 * S, 8 * S, S * 0.7f, hexc(day ? 0xe0a33c : 0x7f9cd6), 1);
     if (H.timeMul > 1.5f) { text("TIME >>", cx + 38 * S, 8 * S, S * 0.7f, hexc(0xff9a5a), 1); } }
-  { float r = H.mapSize / 2, cx = H.mapPx + r, cy = H.mapPy + r; text("N", cx, H.mapPy + 1 * S, S * 0.8f, hexc(0xff7a5a), 1); (void)cy; }
+  if (!H.inside) { float r = H.mapSize / 2, cx = H.mapPx + r, cy = H.mapPy + r; text("N", cx, H.mapPy + 1 * S, S * 0.8f, hexc(0xff7a5a), 1); (void)cy; }
   // ---- vitals: HP + Stamina + Arcane Mana (bottom-left)
   { float x = M, y = H_ - 48 * S; text(H.hero, x, y - 12 * S, S * 1.0f, hexc(0xe9c98a));
     rect(x - 2, y - 2, 132 * S + 4, 16 * S + 4, {0, 0, 0, 0.48f});
@@ -56,7 +56,7 @@ static void drawExploreHud() {
     if (ltr != H.troops || lor != H.order || lmt != (int)H.mounted) { ltr = H.troops; lor = H.order; lmt = (int)H.mounted; snprintf(wb, 64, "WARBAND %d [%s]  %s", H.troops, ORDN[H.order & 3], H.mounted ? "HART MOUNTED" : "[K] MOUNT"); }
     text(wb, x, y - 11 * S, S * 0.72f, hexc(H.troops > 0 ? 0x86d8ff : 0xa8a08e));
     if (H.wanted > 0) { float p = 0.6f + 0.4f * std::sin(gfx::time_ * 8.f); for (int i = 0; i < H.wanted; i++) text("*", x + i * 9 * S, y - 24 * S, S * 1.8f, hexc(0xff4a3a, p)); text("WANTED", x + (H.wanted * 9 + 4) * S, y - 20 * S, S * 0.8f, hexc(0xff7a5a, p)); } }
-  if (H.inside) { text("INSIDE", H.mapPx + H.mapSize / 2, H.mapPy + H.mapSize + 3 * S, S * 0.9f, hexc(0xe9c98a), 1); }
+  if (H.inside) { float cx = H.mapPx + H.mapSize / 2; rect(cx - 42 * S, 24 * S, 84 * S, 13 * S, {0.04f, 0.04f, 0.05f, 0.65f}); frame(cx - 42 * S, 24 * S, 84 * S, 13 * S, hexc(0x6a5a3c)); text("INDOORS", cx, 26 * S, S * 0.85f, hexc(0xe9c98a), 1); }
   // ---- nightly siege indicator & boss bar (top-centre)
   if (H.siegeLeft > 0) {
     float y = 24 * S; static char sb[56]; static int lsl = -1, lnw = -1;
@@ -69,7 +69,7 @@ static void drawExploreHud() {
   if (H.buildMode) {
     static const char* BN[6] = {"1 WALL", "2 TOWER", "3 GATE", "4 BARRACKS", "5 FARM", "6 BEACON"};
     static const char* BC[6] = {"12W 18S", "24W 28S 10G", "20W 32S 10G", "32W 24S 20G", "18W 10S", "14W 20S 15G"};
-    float cw = 54 * S, gap = 3 * S, tot = 6 * cw + 5 * gap, x0 = W_ / 2 - tot / 2, y0 = H_ - 46 * S;
+    float cw = 48 * S, gap = 2.5f * S, tot = 6 * cw + 5 * gap, x0 = W_ / 2 - tot / 2 + 12 * S, y0 = H_ - 46 * S;
     text("KINGDOM BUILD MODE   -   R ROTATE   LMB PLACE   RMB REPAIR   C EXIT", W_ / 2, y0 - 12 * S, S * 0.72f, hexc(H.ghostOk ? 0x98f0a8 : 0xff9a8a), 1);
     for (int i = 0; i < 6; i++) {
       float cx = x0 + i * (cw + gap); bool sel = (H.bsel == i);
