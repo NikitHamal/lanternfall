@@ -11,7 +11,7 @@ inline const ClassDef CL[NCLS] = {
  {"lamplighter","LAMPLIGHTER","FIRE CASTER",130,19,1.6f,11,3.2f,0.06f,true,{-1.7f,-1.1f},"Carries the last lit lantern.",{{"flare","FLARE",7,"a bolt that bursts",false},{"kindle","KINDLE",14,"warm light mends the party",false},{"cinder","CINDERFALL",16,"embers rain on an area",false}}},
  {"apothecary","APOTHECARY","SUPPORT",135,13,1.8f,9,3.2f,0.06f,true,{-2.6f,0.1f},"Tonics, firepots and quick hands.",{{"tonic","TONIC",5,"heals the most hurt",false},{"firepot","FIREPOT",9,"leaves a burning patch",false},{"quick","QUICKSILVER",20,"speeds the party",false}}},
  {"rimebinder","RIMEBINDER","FROST CASTER",118,18,1.7f,11,3.2f,0.05f,true,{-1.8f,1.5f},"Binds the cold of the moor to a pale shard.",{{"lance","FROST LANCE",6,"pierces a line",false},{"hoar","HOARFROST",12,"ground that slows",false},{"shatter","SHATTER",14,"chilled foes burst",false}}}};
-enum { THORNLING, PEATWIGHT, GLOAMHOUND, GLOAMWISP, RUSTBOUND, CAIRNBACK, BARROWKING, MOSSJAW, HOLLOWSTAG, NMON };
+enum { THORNLING, PEATWIGHT, GLOAMHOUND, GLOAMWISP, RUSTBOUND, CAIRNBACK, BARROWKING, MOSSJAW, HOLLOWSTAG, EMBERHOUND, THORNBOAR, ROOTCOLOSSUS, NMON };
 enum Mat { MW, MP, MC, MM, MS };  // wood peat cloth metal stone
 struct MonDef { const char* name; float hp, dmg, atk, range, speed, armor, xp, cost, wind; int from; bool flank, ranged, elite, boss; int mat; int spec; float radius, hpY, scale; };
 // spec: 1 sweep, 2 slam, 3 charge
@@ -24,7 +24,10 @@ inline const MonDef MON[NMON] = {
  {"Cairnback",430,34,2.9f,2.6f,1.3f,0.2f,40,26,0.52f,6,false,false,true,false,MS,0,0.75f,2.7f,1.5f},
  {"THE BARROW KING",1500,30,2.3f,3.6f,1.6f,0.25f,60,0,0.5f,0,false,false,false,true,MM,1,0.8f,3.6f,1.95f},
  {"OLD MOSSJAW",1900,34,2.9f,3.9f,1.2f,0.2f,60,0,0.5f,0,false,false,false,true,MS,2,1.0f,4.4f,2.35f},
- {"THE HOLLOW STAG",1350,27,1.9f,3.4f,2.4f,0.1f,60,0,0.5f,0,false,false,false,true,MW,3,1.0f,3.6f,2.2f}};
+ {"THE HOLLOW STAG",1350,27,1.9f,3.4f,2.4f,0.1f,60,0,0.5f,0,false,false,false,true,MW,3,1.0f,3.6f,2.2f},
+ {"Emberhound",92,13,1.25f,5.5f,4.9f,0.05f,13,9,0.44f,2,true,true,false,false,MW,0,0.42f,1.15f,1.28f},
+ {"Thornboar",190,20,1.75f,2.2f,4.3f,0.22f,18,12,0.50f,3,true,false,false,false,MP,3,0.55f,1.35f,1.34f},
+ {"Root Colossus",520,38,2.8f,2.8f,1.35f,0.28f,46,28,0.55f,5,false,false,true,false,MW,2,0.85f,3.1f,1.65f}};
 inline const int BOSS_ORDER[3] = {BARROWKING, MOSSJAW, HOLLOWSTAG};
 inline const char* BOSS_TITLES[3][4] = {{"THE BARROW KING","THE KING UNDER RUST","THE CROWNLESS","LORD OF THE LONG DARK"},{"OLD MOSSJAW","THE WALKING CAIRN","GRANDFATHER STONE","THE TOR THAT WOKE"},{"THE HOLLOW STAG","THE ANTLERED GLOAM","WINTER'S HART","THE WHITE RUN"}};
 struct Grade { const char* n; uint32_t c; float m; };

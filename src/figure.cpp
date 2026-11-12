@@ -7,12 +7,32 @@
 #ifndef _WIN32
 #include <unistd.h>
 #endif
-FigAsset gFH[NCLS], gFM[NMON];
+FigAsset gFH[NCLS], gFM[NMON], gFMAlt[9], gFW[NWEAP], gFP[NPFP];
+const float IDENT_BONE[12] = {1, 0, 0, 0,  0, 1, 0, 0,  0, 0, 1, 0};
 GLuint pFig = 0, pFigShadow = 0;
 
 // ------------------------------------------------------------------ loading
 static const char* HERO_KEYS[NCLS] = {"warden", "reaver", "fletcher", "lamplighter", "apothecary", "rimebinder"};
-static const char* MON_KEYS[NMON] = {"thornling", "peatwight", "gloamhound", "gloamwisp", "rustbound", "cairnback", "barrowking", "mossjaw", "hollowstag"};
+static const char* MON_KEYS[NMON] = {
+  "thornling", "peatwight", "gloamhound", "gloamwisp", "rustbound", "cairnback",
+  "barrowking", "mossjaw", "hollowstag",
+  "polyfork/emberhound", "polyfork/thornboar", "polyfork/rootcolossus"
+};
+static const char* MON_ALT_KEYS[9] = {
+  "polyfork/thornling", "polyfork/peatwight", "polyfork/gloamhound", "polyfork/gloamwisp",
+  "polyfork/rustbound", "polyfork/cairnback", "polyfork/barrowking", "polyfork/mossjaw", "polyfork/hollowstag"
+};
+static const char* WEAP_KEYS[NWEAP] = {
+  "polyfork/w_arming_sword", "polyfork/w_greatsword", "polyfork/w_bow", "polyfork/w_kite_shield",
+  "polyfork/w_round_shield", "polyfork/w_staff", "polyfork/w_cleaver", "polyfork/w_lantern"
+};
+static const char* PROP_KEYS[NPFP] = {
+  "polyfork/p_pine_tall", "polyfork/p_pine_young", "polyfork/p_twisted_oak", "polyfork/p_dead_tree",
+  "polyfork/p_boulder", "polyfork/p_cairn", "polyfork/p_thorn_bush", "polyfork/p_round_bush",
+  "polyfork/p_fallen_log", "polyfork/p_plank_bridge", "polyfork/p_brazier", "polyfork/p_lamp_post",
+  "polyfork/p_signpost", "polyfork/p_campfire_tripod", "polyfork/p_banner_pole", "polyfork/p_iron_fence",
+  "polyfork/p_cemetery_gate", "polyfork/b_stone_chapel", "polyfork/b_watchtower", "polyfork/b_thatch_cottage"
+};
 static char gDir[1024];
 static bool exists(const char* p) { FILE* f = fopen(p, "rb"); if (f) { fclose(f); return true; } return false; }
 static bool findDir(const char* argv0) {
@@ -41,7 +61,7 @@ static bool loadFig(FigAsset& a, const char* key) {
   memcpy(a.death, p, 12); a.death[12] = 0; p += 12; memcpy(a.key, p, 16); a.key[16] = 0; p += 16;
   for (int i = 0; i < a.nb; i++) { memcpy(a.bone[i], p, 12); a.bone[i][12] = 0; p += 12; }
   for (int i = 0; i < a.nb; i++) a.parent[i] = (int8_t)p[i]; p += (a.nb + 3) / 4 * 4;
-  memcpy(a.head, p, a.nb * 12); p += a.nb * 12; p += (a.nb + 3) / 4 * 4;   // abs flags are baked into the poses
+  memcpy(a.head, p, a.nb * 12); p += a.nb * 12; p += (a.nb + 3) / 4 * 4;
   for (int i = 0; i < a.nfx; i++) { memcpy(a.fx[i].name, p, 12); a.fx[i].name[12] = 0; p += 12; a.fx[i].bone = rd<int32_t>(p); for (int k = 0; k < 3; k++) a.fx[i].p[k] = rd<float>(p); }
   glGenVertexArrays(1, &a.vao); glBindVertexArray(a.vao); glGenBuffers(1, &a.vbo); glBindBuffer(GL_ARRAY_BUFFER, a.vbo); glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)a.nv * 36, p, GL_STATIC_DRAW); p += (size_t)a.nv * 36;
   glEnableVertexAttribArray(0); glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, (void*)0);
@@ -51,30 +71,41 @@ static bool loadFig(FigAsset& a, const char* key) {
   glEnableVertexAttribArray(4); glVertexAttribPointer(4, 4, GL_UNSIGNED_BYTE, GL_TRUE, 36, (void*)28);
   glEnableVertexAttribArray(5); glVertexAttribPointer(5, 4, GL_UNSIGNED_BYTE, GL_FALSE, 36, (void*)32);
   glGenBuffers(1, &a.ibo); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, a.ibo); glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)a.ni * 2, p, GL_STATIC_DRAW); p += (size_t)a.ni * 2; glBindVertexArray(0);
-  // clips: compact copy so the big vertex buffer can be released
-  const uint8_t* q = p; size_t total = 0; for (int i = 0; i < a.nclips; i++) { q += 12; uint16_t fr; memcpy(&fr, q, 2); q += 4 + 16; size_t bytes = (size_t)fr * a.nb * 14; q += bytes; total += bytes; }
-  a.clipMem = (int16_t*)malloc(total); size_t off = 0;
+  const uint8_t* q = p; size_t total = 0;
+  for (int i = 0; i < a.nclips; i++) { q += 12; uint16_t fr; memcpy(&fr, q, 2); q += 4 + 16; size_t bytes = (size_t)fr * a.nb * 14; q += bytes; total += bytes; }
+  a.clipMem = total ? (int16_t*)malloc(total) : nullptr; size_t off = 0;
   for (int i = 0; i < a.nclips; i++) {
     FigClip& c = a.clips[i]; memcpy(c.name, p, 12); c.name[12] = 0; p += 12; c.frames = rd<uint16_t>(p); c.loop = rd<uint8_t>(p); p++; c.fps = rd<float>(p); c.hit = rd<float>(p); c.speed = rd<float>(p); c.T = rd<float>(p);
-    size_t bytes = (size_t)c.frames * a.nb * 14; memcpy((uint8_t*)a.clipMem + off, p, bytes); c.d = (const int16_t*)((uint8_t*)a.clipMem + off); off += bytes; p += bytes;
+    size_t bytes = (size_t)c.frames * a.nb * 14; if (a.clipMem && bytes) memcpy((uint8_t*)a.clipMem + off, p, bytes); c.d = a.clipMem ? (const int16_t*)((uint8_t*)a.clipMem + off) : nullptr; off += bytes; p += bytes;
   }
   free(buf); a.ok = true; return true;
 }
 const char* figAssetDir() { return gDir; }
 bool figInit(const char* argv0) {
   if (!findDir(argv0)) { fprintf(stderr, "lanternfall: assets/ folder not found (expected next to the executable)\n"); return false; }
-  bool all = true;
-  for (int i = 0; i < NCLS; i++) all &= loadFig(gFH[i], HERO_KEYS[i]);
-  for (int i = 0; i < NMON; i++) all &= loadFig(gFM[i], MON_KEYS[i]);
-  if (!all) fprintf(stderr, "lanternfall: some figure assets failed to load from %s\n", gDir);
-  return all;
+  bool core = true;
+  for (int i = 0; i < NCLS; i++) core &= loadFig(gFH[i], HERO_KEYS[i]);
+  for (int i = 0; i < 9; i++) core &= loadFig(gFM[i], MON_KEYS[i]);
+  for (int i = 9; i < NMON; i++) { if (loadFig(gFM[i], MON_KEYS[i])) gFM[i].scale = MON[i].scale; }
+  for (int i = 0; i < 9; i++) loadFig(gFMAlt[i], MON_ALT_KEYS[i]);
+  for (int i = 0; i < NWEAP; i++) loadFig(gFW[i], WEAP_KEYS[i]);
+  for (int i = 0; i < NPFP; i++) loadFig(gFP[i], PROP_KEYS[i]);
+  if (!core) fprintf(stderr, "lanternfall: some core figure assets failed to load from %s\n", gDir);
+  return core;
 }
-void figShutdown() { for (auto& a : gFH) free(a.clipMem); for (auto& a : gFM) free(a.clipMem); }
+void figShutdown() {
+  for (auto& a : gFH) figFree(a);
+  for (auto& a : gFM) figFree(a);
+  for (auto& a : gFMAlt) figFree(a);
+  for (auto& a : gFW) figFree(a);
+  for (auto& a : gFP) figFree(a);
+}
 
 // ------------------------------------------------------------------ animation
 static inline float sat01(float x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
 static inline float smth(float a, float b, float x) { x = sat01((x - a) / (b - a)); return x * x * (3 - 2 * x); }
 static void sampleClip(const FigAsset& a, const FigClip& c, float fr, float* out) {
+  if (!c.d || c.frames <= 0) return;
   int n = c.frames, i0, i1; float w;
   if (c.loop) { fr = std::fmod(fr, (float)n); if (fr < 0) fr += n; i0 = (int)fr; w = fr - i0; i1 = (i0 + 1) % n; }
   else { fr = fr < 0 ? 0 : (fr > n - 1 ? (float)(n - 1) : fr); i0 = (int)fr; w = fr - i0; i1 = std::min(i0 + 1, n - 1); }
@@ -96,35 +127,103 @@ static void blendPose(float* a, const float* b, float w, int nb) {
   }
 }
 int figActClip(const FigAsset& a, int kind) {
-  // ActKind: NONE BASIC BASH HOLD CLEAVE SUNDER AIMED VOLLEY PIN FLARE KINDLE CINDER TONIC FIREPOT QUICK LANCE HOAR SHATTER RIPOSTE MONATK MONCAST SPECIAL RELIGHT
-  static const char* H[] = {"", "attack", "bash", "guard", "cleave", "sunder", "aimed", "volley", "aimed", "attack", "kindle", "cinder", "tonic", "firepot", "quick", "attack", "hoar", "hoar", "attack", "attack", "attack", "special", "kindle"};
-  if (kind < 0 || kind > 22) kind = 1; int i = a.clipIx(H[kind]); if (i < 0) i = a.clipIx("attack"); return i;
+  static const char* H[] = {"", "attack", "bash", "guard", "cleave", "sunder", "aimed", "volley", "aimed", "attack", "kindle", "cinder", "tonic", "firepot", "quick", "lance", "hoar", "hoar", "attack", "attack", "attack", "special", "kindle"};
+  if (kind < 0 || kind > 22) kind = 1;
+  int i = a.clipIx(H[kind]);
+  if (i < 0 && kind == 3) i = a.clipIx("defend");
+  if (i < 0) i = a.clipIx("attack");
+  return i;
 }
-void figAnimUpdate(FigAnim& an, const FigAsset& a, float dt, float speed, bool combat, int actClip, float actU, float stagV, bool down) {
+void figAnimUpdate(FigAnim& an, const FigAsset& a, float dt, float speed, bool combat, int actClip, float actU, float stagV, bool down, float guard, float dodgeU, float hitDir) {
+  if (a.nclips <= 0) {
+    for (int b = 0; b < a.nb; b++) { float* o = an.pose + b * 7; o[0] = o[1] = o[2] = 0; o[3] = 1; o[4] = a.head[b][0]; o[5] = a.head[b][1]; o[6] = a.head[b][2]; }
+    an.have = true; return;
+  }
   const int nb = a.nb; float tmp[FMAXB * 7], tmp2[FMAXB * 7];
-  an.t += dt; float as = std::fabs(speed), mv = std::min(1.3f, as / 1.5f);
-  an.moveW += ((mv > 0.05f ? 1.f : 0.f) - an.moveW) * (1 - std::exp(-dt * (mv > 0.05f ? 6.f : 5.f)));
-  an.readyW += ((combat ? 1.f : 0.f) - an.readyW) * (1 - std::exp(-dt * 6.f));
+  an.t += dt; float as = std::fabs(speed), mv = std::min(1.35f, as / 1.45f);
+  an.moveW += ((mv > 0.04f ? 1.f : 0.f) - an.moveW) * (1 - std::exp(-dt * (mv > 0.04f ? 8.f : 6.f)));
+  an.readyW += ((combat ? 1.f : 0.f) - an.readyW) * (1 - std::exp(-dt * 7.f));
+  an.guardW += (sat01(guard) - an.guardW) * (1 - std::exp(-dt * 14.f));
   int ci = a.clipIx("idle"), cr = a.clipIx("ready"), cw = a.clipIx("walk"), cn = a.clipIx("run");
   if (ci < 0) ci = 0; if (cr < 0) cr = ci;
   const FigClip& I = a.clips[ci]; const FigClip& R = a.clips[cr];
-  sampleClip(a, I, an.t * (I.frames / I.T), an.pose);
-  if (an.readyW > 0.002f) { sampleClip(a, R, an.t * (R.frames / R.T), tmp); blendPose(an.pose, tmp, an.readyW, nb); }
+  sampleClip(a, I, an.t * (I.frames / std::max(0.1f, I.T)), an.pose);
+  if (an.readyW > 0.002f) { sampleClip(a, R, an.t * (R.frames / std::max(0.1f, R.T)), tmp); blendPose(an.pose, tmp, an.readyW, nb); }
   if (an.moveW > 0.002f && (cw >= 0 || cn >= 0)) {
     float wk = 0; const FigClip *W = nullptr, *N = nullptr;
-    if (a.hero) { W = cw >= 0 ? &a.clips[cw] : nullptr; N = cn >= 0 ? &a.clips[cn] : W; if (!W) W = N; wk = smth(1.6f, 3.0f, as); }
-    else { N = cn >= 0 ? &a.clips[cn] : &a.clips[cw]; W = cw >= 0 ? &a.clips[cw] : N; wk = smth(N->speed * 0.62f, N->speed * 0.92f, as); }
-    float dist = W->T * W->speed + (N->T * N->speed - W->T * W->speed) * wk; if (dist < 0.2f) dist = 0.2f;
+    if (a.hero) { W = cw >= 0 ? &a.clips[cw] : nullptr; N = cn >= 0 ? &a.clips[cn] : W; if (!W) W = N; wk = smth(1.5f, 3.1f, as); }
+    else { N = cn >= 0 ? &a.clips[cn] : &a.clips[cw]; W = cw >= 0 ? &a.clips[cw] : N; wk = smth(N->speed * 0.58f, N->speed * 0.90f, as); }
+    float dist = W->T * W->speed + (N->T * N->speed - W->T * W->speed) * wk; if (dist < 0.22f) dist = 0.22f;
     an.ph += as * dt / dist; an.ph -= std::floor(an.ph);
     sampleClip(a, *W, an.ph * W->frames, tmp); if (wk > 0.001f && N != W) { sampleClip(a, *N, an.ph * N->frames, tmp2); blendPose(tmp, tmp2, wk, nb); }
     blendPose(an.pose, tmp, an.moveW, nb);
   }
-  if (actClip >= 0 && actU >= 0 && actU < 1) {
-    const FigClip& c = a.clips[actClip]; sampleClip(a, c, actU * (c.frames - 1), tmp); blendPose(an.pose, tmp, std::min(1.f, actU / 0.03f) * std::min(1.f, (1 - actU) / 0.06f), nb);
+  // Defensive guard / shield block clip blend
+  if (an.guardW > 0.005f) {
+    int cg = a.clipIx("defend"); if (cg < 0) cg = a.clipIx("guard");
+    if (cg >= 0) { const FigClip& c = a.clips[cg]; sampleClip(a, c, c.hit > 0.01f ? c.hit * (c.frames - 1) : 0.35f * (c.frames - 1), tmp); blendPose(an.pose, tmp, an.guardW * 0.88f, nb); }
   }
-  int cs = a.clipIx("stag");
-  if (cs >= 0) { if (stagV > 0.2f && an.stagK > 0.45f) an.stagK = 0; if (an.stagK < 1.f) { an.stagK += dt; const FigClip& c = a.clips[cs]; sampleClip(a, c, std::min(an.stagK / 0.05f, (float)(c.frames - 1)), tmp); blendPose(an.pose, tmp, 1.f, nb); } }
-  an.downW += ((down ? 1.f : 0.f) - an.downW) * (1 - std::exp(-dt * (down ? 3.2f : 4.f)));
+  // Evasive dodge clip blend when authored on rig
+  if (dodgeU >= 0.f && dodgeU < 1.f) {
+    int cdg = a.clipIx("dodge");
+    if (cdg >= 0) { const FigClip& c = a.clips[cdg]; sampleClip(a, c, dodgeU * (c.frames - 1), tmp); blendPose(an.pose, tmp, std::sin(dodgeU * PI) * 0.92f, nb); }
+  }
+  // Smooth action clip blending with graceful blend-out tail + Polyfork high-arm strike arc polish
+  bool actOn = actClip >= 0 && actU >= 0.f && actU < 1.f;
+  if (actOn) { an.actLast = actClip; an.actLastU = actU; an.actW = std::min(1.f, actU / 0.06f) * std::min(1.f, (1.f - actU) / 0.10f); }
+  else { an.actW *= std::exp(-dt * 14.f); }
+  if (an.actW > 0.004f && an.actLast >= 0 && an.actLast < a.nclips) {
+    const FigClip& c = a.clips[an.actLast];
+    sampleClip(a, c, sat01(an.actLastU) * (c.frames - 1), tmp);
+    // Upper-body blend during locomotion so legs keep striding naturally when attacking on the move!
+    float legKeep = an.moveW * 0.65f;
+    for (int b = 0; b < nb; b++) {
+      bool isLeg = (strstr(a.bone[b], "Thigh") || strstr(a.bone[b], "Shin") || strstr(a.bone[b], "Foot") || strstr(a.bone[b], "Toe"));
+      float bw = an.actW * (isLeg ? (1.f - legKeep) : 1.f);
+      blendPose(an.pose + b * 7 - b * 7, tmp, 0, 0); (void)bw;
+    }
+    if (legKeep > 0.02f) {
+      for (int b = 0; b < nb; b++) {
+        bool isLeg = (strstr(a.bone[b], "Thigh") || strstr(a.bone[b], "Shin") || strstr(a.bone[b], "Foot") || strstr(a.bone[b], "Toe"));
+        float bw = an.actW * (isLeg ? (1.f - legKeep) : 1.f);
+        float* p = an.pose + b * 7; const float* q = tmp + b * 7;
+        float d = p[0] * q[0] + p[1] * q[1] + p[2] * q[2] + p[3] * q[3], s = d < 0 ? -1.f : 1.f;
+        float x = p[0] + (s * q[0] - p[0]) * bw, y = p[1] + (s * q[1] - p[1]) * bw, z = p[2] + (s * q[2] - p[2]) * bw, ww = p[3] + (s * q[3] - p[3]) * bw;
+        float l = 1.f / std::sqrt(x * x + y * y + z * z + ww * ww + 1e-12f);
+        p[0] = x * l; p[1] = y * l; p[2] = z * l; p[3] = ww * l;
+        for (int k = 4; k < 7; k++) p[k] += (q[k] - p[k]) * bw;
+      }
+    } else {
+      blendPose(an.pose, tmp, an.actW, nb);
+    }
+    // Polyfork 25-bone authored melee/cast strike-height polish (fixes arm-too-high hit frame noted in ASSETS_STATUS)
+    if (nb == 25 && strcmp(c.name, "aimed") != 0 && strcmp(c.name, "volley") != 0) {
+      float hit = c.hit > 0.01f ? c.hit : 0.45f;
+      float bell = std::exp(-std::pow((an.actLastU - hit) / 0.26f, 2.f)) * an.actW;
+      int rU = figBone(a, "rUp", 12), sp = figBone(a, "spine", 2);
+      if (bell > 0.01f) {
+        figAddRot(an, a, rU, 1, 0, 0, 0.56f * bell, a.head[rU]);
+        figAddRot(an, a, sp, 1, 0.35f, 0, 0.16f * bell, a.head[sp]);
+      }
+    }
+  }
+  // Directional hit reaction (uses authored hit_f / hit_l / hit_r on Polyfork rigs, fallback to stag)
+  if (stagV > 0.2f && an.stagK > 0.38f) {
+    an.stagK = 0;
+    int cs = -1;
+    if (std::fabs(hitDir) > 0.65f) cs = a.clipIx(hitDir > 0 ? "hit_r" : "hit_l");
+    if (cs < 0) cs = a.clipIx("hit_f");
+    if (cs < 0) cs = a.clipIx("stag");
+    an.stagClip = cs;
+  }
+  if (an.stagClip >= 0 && an.stagK < 0.55f) {
+    an.stagK += dt;
+    const FigClip& c = a.clips[an.stagClip];
+    float u = sat01(an.stagK / 0.45f);
+    sampleClip(a, c, u * (c.frames - 1), tmp);
+    blendPose(an.pose, tmp, std::sin(sat01(1.f - u * 0.85f) * PI * 0.5f), nb);
+  }
+  an.downW += ((down ? 1.f : 0.f) - an.downW) * (1 - std::exp(-dt * (down ? 3.5f : 4.5f)));
   int cd = a.clipIx("down");
   if (cd >= 0 && an.downW > 0.002f) { const FigClip& c = a.clips[cd]; sampleClip(a, c, an.downW * (c.frames - 1), tmp); blendPose(an.pose, tmp, sat01(an.downW * 5.f), nb); }
   an.have = true;
@@ -182,6 +281,51 @@ void figStepFree(FigAnim& an, const FigAsset& a, float dt) {
 void figPoint(const FigAsset&, const float* m, int b, float x, float y, float z, float* o) {
   const float* r = m + b * 12; o[0] = r[0] * x + r[1] * y + r[2] * z + r[3]; o[1] = r[4] * x + r[5] * y + r[6] * z + r[7]; o[2] = r[8] * x + r[9] * y + r[10] * z + r[11];
 }
+// Build orthonormal model-to-world matrix for a 1-bone Polyfork weapon socketed onto rHand/lHand
+void figWeaponMat(const FigAsset& rig, const FigAnim& an, bool left, int wpId, const M4& unitModel, float time, M4& out) {
+  int bf = figBone(rig, left ? "lFore" : "rFore", left ? 9 : 13);
+  int bh = figBone(rig, left ? "lHand" : "rHand", left ? 10 : 14);
+  V3 pf{an.pose[bf * 7 + 4], an.pose[bf * 7 + 5], an.pose[bf * 7 + 6]};
+  V3 ph{an.pose[bh * 7 + 4], an.pose[bh * 7 + 5], an.pose[bh * 7 + 6]};
+  V3 arm = ph - pf; float al = len(arm);
+  arm = al > 1e-4f ? arm * (1.f / al) : V3{0, -0.85f, 0.5f};
+  V3 yAxis{0, 1, 0}, zAxis{0, 0, 1}, xAxis{1, 0, 0}, pos = ph; float sc = 1.f;
+  if (wpId == 3 || wpId == 4) {  // WP_KITE / WP_ROUND shield strapped to forearm
+    pos = ph * 0.62f + pf * 0.38f;
+    zAxis = norm(V3{left ? 0.52f : -0.52f, 0.08f, 0.85f});
+    yAxis = norm(V3{0, 1.f, 0.15f} - zAxis * dot(V3{0, 1.f, 0.15f}, zAxis));
+    xAxis = norm(cross(yAxis, zAxis));
+    pos = pos - yAxis * (wpId == 3 ? 0.46f : 0.39f) + zAxis * 0.07f;
+    sc = 0.95f;
+  } else if (wpId == 2) {  // WP_BOW held in bow hand
+    yAxis = norm(V3{0.12f, 0.98f, 0.1f} - arm * (0.35f * arm.y));
+    zAxis = norm(V3{0, 0.05f, 1.f} - yAxis * dot(V3{0, 0.05f, 1.f}, yAxis));
+    xAxis = norm(cross(yAxis, zAxis));
+    pos = ph - yAxis * 0.72f + zAxis * 0.04f;
+  } else if (wpId == 7) {  // WP_LANTERN hanging from hand with pendulum sway
+    yAxis = norm(V3{-0.08f * std::sin(time * 3.1f), 1.f, -0.07f * std::cos(time * 2.6f)});
+    xAxis = norm(cross(yAxis, V3{0, 0, 1}));
+    zAxis = cross(xAxis, yAxis);
+    pos = ph - yAxis * 0.34f + arm * 0.04f;
+    sc = 1.15f;
+  } else {  // WP_SWORD (0), WP_GREATSWORD (1), WP_STAFF (5), WP_CLEAVER (6)
+    V3 ref = left ? V3{0.92f, 0.25f, 0.1f} : V3{-0.92f, 0.25f, 0.1f};
+    if (std::fabs(dot(arm, ref)) > 0.88f) ref = {0, 0, 1};
+    yAxis = norm(cross(ref, arm));
+    if (yAxis.z < -0.25f && yAxis.y < 0.2f) yAxis = yAxis * -1.f;
+    zAxis = norm(arm - yAxis * dot(arm, yAxis));
+    xAxis = norm(cross(yAxis, zAxis));
+    float grip = wpId == 5 ? 0.62f : (wpId == 1 ? 0.18f : 0.12f);
+    pos = ph - yAxis * grip;
+    sc = wpId == 1 ? 1.05f : 1.0f;
+  }
+  M4 loc = ident();
+  loc.m[0] = xAxis.x * sc; loc.m[1] = xAxis.y * sc; loc.m[2] = xAxis.z * sc;
+  loc.m[4] = yAxis.x * sc; loc.m[5] = yAxis.y * sc; loc.m[6] = yAxis.z * sc;
+  loc.m[8] = zAxis.x * sc; loc.m[9] = zAxis.y * sc; loc.m[10] = zAxis.z * sc;
+  loc.m[12] = pos.x; loc.m[13] = pos.y; loc.m[14] = pos.z;
+  out = mul(unitModel, loc);
+}
 // ------------------------------------------------------------------ drawing
 void figDraw(GLuint prog, const FigDraw* d, int n, bool shadowPass) {
   static GLint lM = -1, lB, lD, lH, lC, lF, lDim, lG; static GLuint last = 0;
@@ -213,13 +357,12 @@ layout(location=0) in vec3 aPos; layout(location=5) in vec4 aBn; uniform mat4 uV
 vec3 skinP(int b, vec3 x){ return vec3(dot(uBones[b*3].xyz,x)+uBones[b*3].w, dot(uBones[b*3+1].xyz,x)+uBones[b*3+1].w, dot(uBones[b*3+2].xyz,x)+uBones[b*3+2].w); }
 void main(){ int ba = int(aBn.x+.5), bb = int(aBn.y+.5); float w = aBn.z/255.; vec3 p = skinP(ba,aPos); if (w > 0.) p = mix(p, skinP(bb,aPos), w); gl_Position = uVP*(uModel*vec4(p,1.)); }
 )GLSL";
-// Surface material: port of SURF_FMAIN / SURF_FNORMAL (10-kit.js) - skin, cloth, quilt, mail, leather, plate, fur, wood, stone, peat, glow, bone
 const char* FIG_FS_BODY = R"GLSL(
 in vec3 vWp; in vec3 vN; in vec3 vCol; in vec3 vRest; in vec4 vMat; in vec2 vUvS; in float vAO; in float vCav; out vec4 oC;
 uniform float uDissolve; uniform float uDisH; uniform vec3 uDisCol; uniform vec3 uFlash; uniform float uDim; uniform float uGlow;
 float h12(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 float h13(vec3 p3){ p3 = fract(p3 * .1031); p3 += dot(p3, p3.zyx + 31.32); return fract((p3.x + p3.y) * p3.z); }
-float n2(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); return mix(mix(h12(i),h12(i+vec2(1.,0.)),f.x),mix(h12(i+vec2(0.,1.)),h12(i+vec2(1.,1.)),f.x),f.y); }
+float n2(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); return mix(mix(h12(i),h12(i+vec2(1.,0.)),f.x),mix(h12(i+vec2(0.,1.)),f.x),f.y); }
 float n3(vec3 p){ vec3 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
   return mix(mix(mix(h13(i),h13(i+vec3(1.,0.,0.)),f.x),mix(h13(i+vec3(0.,1.,0.)),h13(i+vec3(1.,1.,0.)),f.x),f.y),
              mix(mix(h13(i+vec3(0.,0.,1.)),h13(i+vec3(1.,0.,1.)),f.x),mix(h13(i+vec3(0.,1.,1.)),h13(i+vec3(1.,1.,1.)),f.x),f.y),f.z); }
@@ -291,7 +434,6 @@ void main(){
   float sh = shadowAt(vWp, N); vec3 c = shade(col, rough, metal, N, vWp, sh) + em;
   oC = vec4(c, 1.); }
 )GLSL";
-// ---- roster support: on-demand load / release of extra characters (Polyfork rigs), bone lookup by name
 bool figLoad(FigAsset& a, const char* key) { a = FigAsset(); if (!loadFig(a, key)) { free(a.clipMem); a = FigAsset(); return false; } return true; }
 void figFree(FigAsset& a) { if (a.vao) glDeleteVertexArrays(1, &a.vao); if (a.vbo) glDeleteBuffers(1, &a.vbo); if (a.ibo) glDeleteBuffers(1, &a.ibo); free(a.clipMem); a = FigAsset(); }
 int figBone(const FigAsset& a, const char* name, int fallback) { for (int i = 0; i < a.nb; i++) if (!strcmp(a.bone[i], name)) return i; return fallback; }

@@ -1,5 +1,6 @@
 // Port of the Lanternfall simulation (61-game.js). Deterministic fixed step, pooled storage.
 #include "game.h"
+#include "roster.h"
 #include <cstdlib>
 #include <cctype>
 #include <cstring>
@@ -43,8 +44,13 @@ bool Game::load() { char p[512]; savePath(p, sizeof p); FILE* f = fopen(p, "rb")
 /* ---------- runs ---------- */
 void Game::newRun() {
   Run r; int pool[4], np = 0; const int cand[4] = {REAVER, FLETCHER, APOTHECARY, RIMEBINDER}; for (int c : cand) if (P.unlocked[c]) pool[np++] = c;
-  r.party[0] = WARDEN; r.party[3] = LAMPLIGHTER;
-  if (np <= 2) { r.party[1] = REAVER; r.party[2] = FLETCHER; } else { int k = P.runs % np; r.party[1] = pool[k]; r.party[2] = pool[(k + 1) % np]; }
+  roster::init(); int lead = roster::at(roster::sel()).clsIx;
+  r.party[0] = lead; r.party[3] = (lead == LAMPLIGHTER) ? WARDEN : LAMPLIGHTER;
+  int p1 = REAVER, p2 = FLETCHER;
+  if (np > 2) { int k = P.runs % np; p1 = pool[k]; p2 = pool[(k + 1) % np]; }
+  if (p1 == lead || p1 == r.party[3]) p1 = (lead != WARDEN && r.party[3] != WARDEN) ? WARDEN : FLETCHER;
+  if (p2 == lead || p2 == r.party[3] || p2 == p1) { for (int c = 0; c < NCLS; c++) if (c != lead && c != r.party[3] && c != p1) { p2 = c; break; } }
+  r.party[1] = p1; r.party[2] = p2;
   int s0 = 1 + std::min(boon(B_START), std::max(0, P.bestStage - 3));
   r.stage = s0; r.maxStage = s0 - 1; r.flames = 3; r.tonics = 2; run = r; hasRun = true;
   rng = Rng((uint32_t)(seed + P.runs * 7919)); P.runs++;

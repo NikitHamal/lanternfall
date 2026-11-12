@@ -3,42 +3,81 @@
 #include <cstdio>
 namespace roster {
 using H = Hero;
-// key, name, role, weapon, active, activeDesc, passive, passiveDesc,  draw stab dmg move hp quiver abil pass cd dur nativeIx
+// key, name, role, weapon, active, activeDesc, passive, passiveDesc, spd stab dmg move hp ammo style abil pass cd dur nativeIx clsIx wpR wpL
 static const H TAB[] = {
- {"fletcher", "FLETCHER", "RANGER", "LONGBOW", "RAPID VOLLEY", "DRAW SPEED X1.8 FOR 5 S", "STEADY HANDS", "AIM SWAY REDUCED BY A THIRD", 1.00f, 1.25f, 1.00f, 1.00f, 100, 16, AB_VOLLEY, PS_STEADY, 14, 5, FLETCHER},
- {"warden", "WARDEN", "TANK", "SWORD, SHIELD, LASHED BOW", "BULWARK", "TAKE 70% LESS FOR 4 S, SHOVE FOES BACK", "STEEL SKIN", "ALL DAMAGE TAKEN -15%", 0.85f, 1.00f, 1.15f, 0.92f, 135, 12, AB_BULWARK, PS_STEEL, 16, 4, WARDEN},
- {"reaver", "REAVER", "HEAVY MELEE", "GREATSWORD, HEAVY DRAW", "SURGE", "DASH 9 M WITH I-FRAMES, CRUSH FOES IN THE WAY", "BLOODLUST", "+12% MOVE SPEED, +20% HEAD DAMAGE", 0.90f, 0.85f, 1.35f, 1.05f, 120, 10, AB_SURGE, PS_BLOOD, 9, 0.45f, REAVER},
- {"lamplighter", "LAMPLIGHTER", "FIRE CASTER", "LANTERN POLE", "EMBER BURST", "RING OF FIRE: 40 DAMAGE WITHIN 7 M", "KINDLED", "ARROWS IGNITE FOES FOR EXTRA DAMAGE", 1.00f, 1.00f, 1.00f, 1.00f, 100, 14, AB_EMBER, PS_KINDLED, 12, 0.4f, LAMPLIGHTER},
- {"apothecary", "APOTHECARY", "SUPPORT", "FLASK BELT", "TONIC", "HEAL 40, REFILL STAMINA, REGEN 4 S", "FIELD MEDIC", "SLOW HEALTH REGENERATION", 1.05f, 1.10f, 0.85f, 1.05f, 100, 18, AB_TONIC, PS_MEDIC, 15, 4, APOTHECARY},
- {"rimebinder", "RIMEBINDER", "FROST CASTER", "SHARD STAFF", "FROST NOVA", "SLOW AND STAGGER FOES WITHIN 10 M", "RIME TIP", "ARROWS CHILL FOES ON HIT", 0.95f, 1.10f, 1.00f, 1.00f, 95, 14, AB_FROST, PS_RIME, 14, 4, RIMEBINDER},
- {"polyfork/fletcher", "ASHEN ASSASSIN", "RANGER", "SHORTBOW", "RAPID VOLLEY", "DRAW SPEED X1.8 FOR 5 S", "STEADY HANDS", "AIM SWAY REDUCED BY A THIRD", 1.15f, 1.00f, 0.95f, 1.08f, 90, 15, AB_VOLLEY, PS_STEADY, 13, 5, -1},
- {"polyfork/warden", "KNIGHT OF THE FORGE", "TANK", "SWORD AND KITE SHIELD", "BULWARK", "TAKE 70% LESS FOR 4 S, SHOVE FOES BACK", "STEEL SKIN", "ALL DAMAGE TAKEN -15%", 0.80f, 1.10f, 1.20f, 0.90f, 140, 12, AB_BULWARK, PS_STEEL, 16, 4, -1},
- {"polyfork/reaver", "VARKA", "HEAVY MELEE", "GREAT CLEAVER", "SURGE", "DASH 9 M WITH I-FRAMES, CRUSH FOES IN THE WAY", "BLOODLUST", "+12% MOVE SPEED, +20% HEAD DAMAGE", 0.85f, 0.90f, 1.40f, 1.05f, 125, 10, AB_SURGE, PS_BLOOD, 9, 0.45f, -1},
- {"polyfork/lamplighter", "FIRE CULTIST", "FIRE CASTER", "EMBER LANTERN", "EMBER BURST", "RING OF FIRE: 40 DAMAGE WITHIN 7 M", "KINDLED", "ARROWS IGNITE FOES FOR EXTRA DAMAGE", 1.00f, 0.95f, 1.05f, 1.00f, 95, 14, AB_EMBER, PS_KINDLED, 12, 0.4f, -1},
- {"polyfork/apothecary", "FOREST WITCH", "SUPPORT", "HERB FLASKS", "TONIC", "HEAL 40, REFILL STAMINA, REGEN 4 S", "FIELD MEDIC", "SLOW HEALTH REGENERATION", 1.10f, 1.05f, 0.85f, 1.08f, 95, 18, AB_TONIC, PS_MEDIC, 15, 4, -1},
- {"polyfork/rimebinder", "ORDER JUDGE", "FROST CASTER", "RIME STAFF", "FROST NOVA", "SLOW AND STAGGER FOES WITHIN 10 M", "RIME TIP", "ARROWS CHILL FOES ON HIT", 0.95f, 1.15f, 1.00f, 0.98f, 100, 14, AB_FROST, PS_RIME, 14, 4, -1},
- {"polyfork/thornling", "BLOOM ELEMENTAL", "SKIRMISHER", "THORN BOW", "RAPID VOLLEY", "DRAW SPEED X1.8 FOR 5 S", "LIGHT FOOT", "+15% MOVE SPEED", 1.20f, 0.90f, 0.80f, 1.15f, 80, 20, AB_VOLLEY, PS_BLOOD, 12, 5, -1},
- {"polyfork/peatwight", "BOG FIEND", "BRUISER", "BOG BOW", "QUAKE", "GROUND SLAM: 30 DAMAGE AND STAGGER WITHIN 8 M", "PEAT HIDE", "ALL DAMAGE TAKEN -15%", 0.80f, 0.95f, 1.25f, 0.92f, 150, 10, AB_QUAKE, PS_STEEL, 15, 0.5f, -1},
- {"polyfork/rustbound", "BELL WARDEN", "SENTINEL", "IRON BOW", "BULWARK", "TAKE 70% LESS FOR 4 S, SHOVE FOES BACK", "STEEL SKIN", "ALL DAMAGE TAKEN -15%", 0.78f, 1.20f, 1.30f, 0.90f, 150, 10, AB_BULWARK, PS_STEEL, 16, 4, -1},
- {"polyfork/cairnback", "CATHEDRAL STATUE", "SENTINEL", "STONE BOW", "QUAKE", "GROUND SLAM: 30 DAMAGE AND STAGGER WITHIN 8 M", "TITAN", "AIM SWAY REDUCED, HEAVY ARROWS", 0.75f, 1.30f, 1.35f, 0.88f, 160, 8, AB_QUAKE, PS_TITAN, 15, 0.5f, -1},
- {"polyfork/rootcolossus", "ROOT COLOSSUS", "JUGGERNAUT", "ROOT LONGBOW", "QUAKE", "GROUND SLAM: 30 DAMAGE AND STAGGER WITHIN 8 M", "TITAN", "AIM SWAY REDUCED, HEAVY ARROWS", 0.70f, 1.20f, 1.45f, 0.85f, 180, 8, AB_QUAKE, PS_TITAN, 15, 0.5f, -1},
+ {"fletcher", "FLETCHER", "RANGER", "YEW LONGBOW", "RAPID VOLLEY", "DRAW SPEED X1.8 & RAIN ARROWS FOR 5 S", "STEADY HANDS", "AIM SWAY REDUCED BY A THIRD",
+  1.05f, 1.25f, 1.05f, 1.02f, 110, 16, ST_BOW, AB_VOLLEY, PS_STEADY, 13, 5.f, FLETCHER, FLETCHER, WP_NONE, WP_NONE},
+ {"warden", "WARDEN", "VANGUARD TANK", "ARMING SWORD & SHIELD", "BULWARK", "70% GUARD FOR 4 S & SHIELD BASH SHOCKWAVE", "STEEL SKIN", "-18% DAMAGE TAKEN, RIPOSTE ON PARRY",
+  1.05f, 1.15f, 1.15f, 0.96f, 155, 0, ST_SWORD, AB_BULWARK, PS_STEEL, 14, 4.f, WARDEN, WARDEN, WP_NONE, WP_NONE},
+ {"reaver", "REAVER", "HEAVY BERSERKER", "IRON GREATSWORD", "SURGE", "DASH 9 M WITH I-FRAMES, CLEAVE ALL IN PATH", "BLOODLUST", "+12% SPEED, UP TO +35% DAMAGE WHEN HURT",
+  0.92f, 1.00f, 1.38f, 1.06f, 135, 0, ST_HEAVY, AB_SURGE, PS_BLOOD, 9, 0.45f, REAVER, REAVER, WP_NONE, WP_NONE},
+ {"lamplighter", "LAMPLIGHTER", "PYROMANCER", "LANTERN POLE & EMBER", "CINDERFALL", "ERUPT A 7 M RING OF SEARING LANTERN FIRE", "KINDLED", "SPELLS IGNITE FOES FOR BURNING DAMAGE",
+  1.08f, 1.10f, 1.12f, 1.00f, 110, 12, ST_FIRE, AB_EMBER, PS_KINDLED, 11, 0.5f, LAMPLIGHTER, LAMPLIGHTER, WP_NONE, WP_NONE},
+ {"apothecary", "APOTHECARY", "ALCHEMIST", "VOLATILE FLASKS", "PANACEA TONIC", "HEAL 45 HP, REFILL STAMINA, REGEN FOR 4 S", "FIELD MEDIC", "PASSIVE HEALTH REGEN & CORROSIVE SPLASH",
+  1.10f, 1.15f, 1.00f, 1.06f, 115, 10, ST_ALCH, AB_TONIC, PS_MEDIC, 14, 4.f, APOTHECARY, APOTHECARY, WP_NONE, WP_NONE},
+ {"rimebinder", "RIMEBINDER", "CRYOMANCER", "PALE SHARD STAFF", "HOARFROST NOVA", "FREEZE & STAGGER ALL FOES WITHIN 10 M", "RIME SHATTER", "SPELLS CHILL FOES; HEAVY LANCES SHATTER",
+  1.02f, 1.20f, 1.15f, 1.00f, 105, 12, ST_FROST, AB_FROST, PS_RIME, 13, 4.f, RIMEBINDER, RIMEBINDER, WP_NONE, WP_NONE},
+
+ {"polyfork/fletcher", "ASHEN ASSASSIN", "SHADOW RANGER", "RECURVE SHORTBOW", "RAPID VOLLEY", "DRAW SPEED X1.8 & MULTI-SHOT FOR 5 S", "STEADY HANDS", "AIM SWAY REDUCED, FASTER FOOTWORK",
+  1.22f, 1.10f, 1.00f, 1.12f, 100, 18, ST_BOW, AB_VOLLEY, PS_STEADY, 12, 5.f, -1, FLETCHER, WP_NONE, WP_BOW},
+ {"polyfork/warden", "KNIGHT OF THE FORGE", "FORGE PALADIN", "BLADE & KITE SHIELD", "BULWARK", "70% GUARD FOR 4 S & SHIELD BASH SHOCKWAVE", "STEEL SKIN", "-18% DAMAGE TAKEN, RIPOSTE ON PARRY",
+  1.00f, 1.25f, 1.22f, 0.94f, 165, 0, ST_SWORD, AB_BULWARK, PS_STEEL, 14, 4.f, -1, WARDEN, WP_SWORD, WP_KITE},
+ {"polyfork/reaver", "VARKA", "WARLORD MELEE", "RUNE GREATSWORD", "SURGE", "DASH 9 M WITH I-FRAMES, CRUSH FOES IN PATH", "BLOODLUST", "+12% SPEED, UP TO +35% DAMAGE WHEN HURT",
+  0.95f, 1.05f, 1.45f, 1.06f, 145, 0, ST_HEAVY, AB_SURGE, PS_BLOOD, 9, 0.45f, -1, REAVER, WP_GREATSWORD, WP_NONE},
+ {"polyfork/lamplighter", "FIRE CULTIST", "FLAME ZEALOT", "RITUAL LANTERN & STAFF", "CINDERFALL", "ERUPT A 7 M RING OF CULTIST HELLFIRE", "KINDLED", "SPELLS IGNITE FOES FOR BURNING DAMAGE",
+  1.12f, 1.05f, 1.18f, 1.02f, 105, 12, ST_FIRE, AB_EMBER, PS_KINDLED, 11, 0.5f, -1, LAMPLIGHTER, WP_LANTERN, WP_STAFF},
+ {"polyfork/apothecary", "FOREST WITCH", "HEX ALCHEMIST", "WITCH STAFF & BREWS", "PANACEA TONIC", "HEAL 45 HP, REFILL STAMINA, REGEN FOR 4 S", "FIELD MEDIC", "PASSIVE HEALTH REGEN & CORROSIVE SPLASH",
+  1.15f, 1.10f, 1.05f, 1.08f, 110, 10, ST_ALCH, AB_TONIC, PS_MEDIC, 14, 4.f, -1, APOTHECARY, WP_STAFF, WP_LANTERN},
+ {"polyfork/rimebinder", "ORDER JUDGE", "GLACIAL INQUISITOR", "INQUISITOR RIME STAFF", "HOARFROST NOVA", "FREEZE & STAGGER ALL FOES WITHIN 10 M", "RIME SHATTER", "SPELLS CHILL FOES; HEAVY LANCES SHATTER",
+  1.05f, 1.25f, 1.20f, 0.98f, 115, 12, ST_FROST, AB_FROST, PS_RIME, 13, 4.f, -1, RIMEBINDER, WP_STAFF, WP_NONE},
+
+ {"polyfork/thornling", "BLOOM ELEMENTAL", "THORN SKIRMISHER", "BRIAR LONGBOW", "RAPID VOLLEY", "THORN BARRAGE & X1.8 DRAW FOR 5 S", "FLEET BRIAR", "+15% MOVE SPEED & CRIT HEADSHOTS",
+  1.28f, 1.00f, 0.92f, 1.18f, 95, 20, ST_BOW, AB_VOLLEY, PS_BLOOD, 11, 5.f, -1, FLETCHER, WP_NONE, WP_BOW},
+ {"polyfork/peatwight", "BOG FIEND", "MIRE BRUISER", "BOG CLEAVER", "EARTHQUAKE", "8 M MIRE SLAM: HEAVY DAMAGE & STAGGER", "PEAT HIDE", "-18% DAMAGE TAKEN, HEAVY POISE",
+  0.96f, 1.05f, 1.32f, 0.96f, 165, 0, ST_HEAVY, AB_QUAKE, PS_STEEL, 13, 0.5f, -1, REAVER, WP_CLEAVER, WP_ROUND},
+ {"polyfork/rustbound", "BELL WARDEN", "IRON SENTINEL", "CLEAVER & IRON SHIELD", "BULWARK", "70% GUARD FOR 4 S & IRON TOLL BASH", "STEEL SKIN", "-18% DAMAGE TAKEN, RIPOSTE ON PARRY",
+  0.94f, 1.25f, 1.28f, 0.92f, 170, 0, ST_SWORD, AB_BULWARK, PS_STEEL, 15, 4.f, -1, WARDEN, WP_CLEAVER, WP_ROUND},
+ {"polyfork/cairnback", "CATHEDRAL STATUE", "GARGOYLE TITAN", "MONOLITH GREATBLADE", "EARTHQUAKE", "8 M STONE SLAM: CRUSHING STAGGER WAVE", "TITAN POISE", "HIGH STABILITY & CRUSHING SHOCKWAVES",
+  0.86f, 1.35f, 1.48f, 0.90f, 185, 0, ST_HEAVY, AB_QUAKE, PS_TITAN, 14, 0.5f, -1, REAVER, WP_GREATSWORD, WP_NONE},
+ {"polyfork/rootcolossus", "ROOT COLOSSUS", "ANCIENT JUGGERNAUT", "HEARTWOOD GREATBLADE", "EARTHQUAKE", "8 M ROOT QUAKE: MASSIVE KNOCKBACK SLAM", "TITAN POISE", "UNYIELDING ARMOR & SEISMIC CLEAVES",
+  0.82f, 1.35f, 1.58f, 0.88f, 205, 0, ST_HEAVY, AB_QUAKE, PS_TITAN, 14, 0.5f, -1, REAVER, WP_GREATSWORD, WP_NONE},
+ {"polyfork/barrowking", "CROWNLESS REVENANT", "DEATH KNIGHT", "BARROW KING'S BLADE", "SURGE", "SPECTRAL REAPER DASH THROUGH ALL FOES", "BLOODLUST", "+12% SPEED & EXECUTION CRITS",
+  0.94f, 1.20f, 1.50f, 1.00f, 175, 0, ST_SWORD, AB_SURGE, PS_BLOOD, 10, 0.5f, -1, WARDEN, WP_GREATSWORD, WP_KITE},
 };
 const int N = (int)(sizeof TAB / sizeof TAB[0]);
-static int cur_ = 0; static struct Slot { int idx = -1; FigAsset a; } slot[2]; static bool inited = false;
+static int cur_ = 0;
+static struct Slot { int idx = -1; FigAsset a; } slot[2];
+static bool inited = false;
 const Hero& at(int i) { return TAB[((i % N) + N) % N]; }
 int sel() { return cur_; }
-static FigAsset* resident(int i) { i = ((i % N) + N) % N; if (TAB[i].nativeIx >= 0) return gFH[TAB[i].nativeIx].ok ? &gFH[TAB[i].nativeIx] : nullptr; for (auto& s : slot) if (s.idx == i && s.a.ok) return &s.a; return nullptr; }
+const char* styleName(int st) {
+  static const char* S[NSTYLE] = {"MARKSMAN BOW", "SWORD & SHIELD", "2H HEAVY MELEE", "FIRE CASTER", "ALCHEMIST", "FROST CASTER"};
+  return S[(st >= 0 && st < NSTYLE) ? st : 0];
+}
+static FigAsset* resident(int i) {
+  i = ((i % N) + N) % N;
+  if (TAB[i].nativeIx >= 0) return gFH[TAB[i].nativeIx].ok ? &gFH[TAB[i].nativeIx] : nullptr;
+  for (auto& s : slot) if (s.idx == i && s.a.ok) return &s.a;
+  return nullptr;
+}
 static void need(int i, int keep) {
-  i = ((i % N) + N) % N; if (TAB[i].nativeIx >= 0 || resident(i)) return;
-  Slot* s = nullptr; for (auto& q : slot) if (q.idx < 0) { s = &q; break; }
+  i = ((i % N) + N) % N;
+  if (TAB[i].nativeIx >= 0 || resident(i)) return;
+  Slot* s = nullptr;
+  for (auto& q : slot) if (q.idx < 0) { s = &q; break; }
   if (!s) for (auto& q : slot) if (q.idx != keep) { s = &q; break; }
-  if (!s) s = &slot[0]; if (s->a.ok || s->a.vao) figFree(s->a); s->idx = i;
-  char path[128]; snprintf(path, sizeof path, "%s", TAB[i].key); if (!figLoad(s->a, path)) { fprintf(stderr, "roster: %s failed to load, falling back\n", path); s->idx = -1; }
+  if (!s) s = &slot[0];
+  if (s->a.ok || s->a.vao) figFree(s->a);
+  s->idx = i;
+  char path[128]; snprintf(path, sizeof path, "%s", TAB[i].key);
+  if (!figLoad(s->a, path)) { fprintf(stderr, "roster: %s failed to load, falling back\n", path); s->idx = -1; }
 }
 void select(int i) {
   int prev = cur_;
-  cur_ = ((i % N) + N) % N; cfg::S.hero = cur_; need(cur_, cur_); need(cur_ + 1, cur_);
-  // release anything that is neither current nor next so memory stays flat
+  cur_ = ((i % N) + N) % N;
+  cfg::S.hero = cur_;
+  need(cur_, cur_);
+  need(cur_ + 1, cur_);
   for (auto& s : slot) if (s.idx >= 0 && s.idx != cur_ && s.idx != (cur_ + 1) % N) { figFree(s.a); s.idx = -1; }
   if (inited && cur_ != prev) cfg::save();
 }
