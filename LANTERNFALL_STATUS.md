@@ -188,3 +188,5 @@ Shipped v2.2.0 ("Living Bodies"):
 - Gait review (r_70/75/80 side-view run): stride, lean and arm swing read correctly; no change needed beyond fixes above. Slope foot IK still TODO.
 Unverified in-engine: NPC activity poses on real NPCs (the capture spots lost the NPC), landing crouch visuals. Notebook never connected (410 at tool call 11). QA shots Read: b_tpv, b2_tpv, b2_fpv, r_70, r_75, r_80, a_talk, fy1, fy3, fx1/fx3/fx5 (looked at the wall top - bad camera spot), pf1, pf3, pf5.
 Doc: see docs/TODO.md.
+
+CI: tag run 43243078141 (commit e7fbb4e) - Windows/Linux/macOS + release all success; release v2.2.0 published with 3 assets (linux 10.1 MB, macOS 10.7 MB, windows 10.3 MB). Main run 43243073274 green; earlier main runs 43242131032 (4121f6e) and 43240734933 (eba93dd) green.
