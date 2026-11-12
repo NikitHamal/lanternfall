@@ -1,0 +1,86 @@
+{
+ "key": "p_thorn_bush",
+ "polyfork_id": "bare-thorn-bush-91a238",
+ "name": "Bare Thorn Bush",
+ "category": "prop",
+ "role": "bush (moor thorn)",
+ "kit": "halloween-night-46ade4",
+ "triangles": 813,
+ "size_m": {
+  "x": 1.41,
+  "y": 1.02,
+  "z": 0.42
+ },
+ "palette_src": [
+  {
+   "hex": "#594c4d",
+   "share": 0.82
+  },
+  {
+   "hex": "#a93206",
+   "share": 0.098
+  },
+  {
+   "hex": "#b3693e",
+   "share": 0.081
+  }
+ ],
+ "has_rig": false,
+ "ik_type": null,
+ "licence": "Polyfork free low-poly: commercial use, no attribution",
+ "page": "https://polyfork.dev/asset/bare-thorn-bush-91a238",
+ "glb_url": "https://polyfork.dev/cdn/bare-thorn-bush-91a238.glb",
+ "glb_sha256": "a77056b73b03953ef292b9cde661b2bb9078fa866219b84b319d12614e354b1b",
+ "thumb_dhash": "2050d848e1e06220",
+ "origin": "polyfork-batch3",
+ "version": 1,
+ "variant_of": null,
+ "states": [
+  "static"
+ ],
+ "verts_baked": 2439,
+ "tris_baked": 813,
+ "palette_theme": [
+  "woodDk",
+  "root",
+  "thorn",
+  "peat",
+  "rust"
+ ],
+ "lum_scale": 0.6,
+ "biomes": [
+  "moor"
+ ],
+ "collision": {
+  "aabb": [
+   [
+    -0.7053818629313335,
+    0.0,
+    -0.20780720182899481
+   ],
+   [
+    0.7053818629313335,
+    1.0223526385914927,
+    0.20780720182899481
+   ]
+  ],
+  "radius": 0.7353552921441956,
+  "height": 1.0223526385914927,
+  "footprint_pts": 9
+ },
+ "lfm": "assets/polyfork/p_thorn_bush.lfm",
+ "col": "assets/polyfork/p_thorn_bush.col.json",
+ "preview_glb": "assets/polyfork/preview/p_thorn_bush.glb",
+ "thumb": "assets/polyfork/thumbs/p_thorn_bush.png",
+ "meta": "assets/polyfork/meta/p_thorn_bush.json",
+ "baked": {
+  "ao": "vertex Col.a",
+  "cavity": "aBn.w",
+  "origin": "ground y=0",
+  "up": "+Y",
+  "front": "+Z",
+  "units": "metres"
+ },
+ "added": "2026-11-12",
+ "class": "prop"
+}

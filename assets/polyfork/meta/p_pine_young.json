@@ -1,0 +1,81 @@
+{
+ "key": "p_pine_young",
+ "polyfork_id": "young-pine-0d7695",
+ "name": "Young Pine",
+ "category": "prop",
+ "role": "tree (pine highland)",
+ "kit": "nature-forest-kit-f29d6a",
+ "triangles": 270,
+ "size_m": {
+  "x": 1.84,
+  "y": 3,
+  "z": 1.87
+ },
+ "palette_src": [
+  {
+   "hex": "#5f9a4b",
+   "share": 0.844
+  },
+  {
+   "hex": "#5d4430",
+   "share": 0.156
+  }
+ ],
+ "has_rig": false,
+ "ik_type": null,
+ "licence": "Polyfork free low-poly: commercial use, no attribution",
+ "page": "https://polyfork.dev/asset/young-pine-0d7695",
+ "glb_url": "https://polyfork.dev/cdn/young-pine-0d7695.glb",
+ "glb_sha256": "9bf72146a74e005aae80ea5962623b9810279426ab605570190607e0d0cde352",
+ "thumb_dhash": "1432706161e07171",
+ "origin": "polyfork-batch3",
+ "version": 1,
+ "variant_of": null,
+ "states": [
+  "static"
+ ],
+ "verts_baked": 810,
+ "tris_baked": 270,
+ "palette_theme": [
+  "woodDk",
+  "turf",
+  "lichen",
+  "peat"
+ ],
+ "lum_scale": 0.12,
+ "biomes": [
+  "highland"
+ ],
+ "collision": {
+  "aabb": [
+   [
+    -0.9189528226852417,
+    0.0,
+    -0.9326502680778503
+   ],
+   [
+    0.9189528226852417,
+    3.0,
+    0.9326502680778503
+   ]
+  ],
+  "radius": 1.3093169260598672,
+  "height": 3.0,
+  "footprint_pts": 12
+ },
+ "lfm": "assets/polyfork/p_pine_young.lfm",
+ "col": "assets/polyfork/p_pine_young.col.json",
+ "preview_glb": "assets/polyfork/preview/p_pine_young.glb",
+ "thumb": "assets/polyfork/thumbs/p_pine_young.png",
+ "meta": "assets/polyfork/meta/p_pine_young.json",
+ "baked": {
+  "ao": "vertex Col.a",
+  "cavity": "aBn.w",
+  "origin": "ground y=0",
+  "up": "+Y",
+  "front": "+Z",
+  "units": "metres"
+ },
+ "added": "2026-11-12",
+ "class": "prop"
+}

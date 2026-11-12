@@ -1,0 +1,1 @@
+{"key": "p_cemetery_gate", "aabb": [[-2.0, 0.0, -0.3050000071525574], [2.0, 3.740000009536743, 0.3050000071525574]], "radius": 2.0231225875767045, "height": 3.740000009536743, "footprint": [[-2.0, -0.31], [2.0, -0.31], [2.0, 0.31], [-2.0, 0.31]], "note": "collision proxy: AABB + circle + <=12-pt convex footprint, game space (Y up, origin on ground)"}

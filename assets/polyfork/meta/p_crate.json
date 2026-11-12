@@ -1,0 +1,98 @@
+{
+ "key": "p_crate",
+ "polyfork_id": "timber-crate-ba0739",
+ "name": "Timber Crate",
+ "category": "prop",
+ "role": "crate",
+ "kit": "dungeon-crypt-c27d93",
+ "triangles": 588,
+ "size_m": {
+  "x": 0.79,
+  "y": 0.66,
+  "z": 0.79
+ },
+ "palette_src": [
+  {
+   "hex": "#6f5e4f",
+   "share": 0.184
+  },
+  {
+   "hex": "#b09767",
+   "share": 0.156
+  },
+  {
+   "hex": "#bfa675",
+   "share": 0.15
+  },
+  {
+   "hex": "#c6ad7c",
+   "share": 0.102
+  },
+  {
+   "hex": "#b59c6c",
+   "share": 0.088
+  },
+  {
+   "hex": "#695045",
+   "share": 0.071
+  }
+ ],
+ "has_rig": true,
+ "ik_type": null,
+ "licence": "Polyfork free low-poly: commercial use, no attribution",
+ "page": "https://polyfork.dev/asset/timber-crate-ba0739",
+ "glb_url": "https://polyfork.dev/cdn/timber-crate-ba0739.glb",
+ "glb_sha256": "b2b37406ed353613e174598fe5da39a91bf929989097ee353e19583870ce51a5",
+ "thumb_dhash": "e2ce88b898f87919",
+ "origin": "polyfork-batch3",
+ "version": 1,
+ "variant_of": null,
+ "states": [
+  "static"
+ ],
+ "verts_baked": 1764,
+ "tris_baked": 588,
+ "palette_theme": [
+  "woodDk",
+  "wood",
+  "iron",
+  "rust",
+  "leatherDk"
+ ],
+ "lum_scale": 1.0,
+ "biomes": [
+  "village"
+ ],
+ "collision": {
+  "aabb": [
+   [
+    -0.39572834968566895,
+    0.0,
+    -0.39634984731674194
+   ],
+   [
+    0.39572834968566895,
+    0.6631727783679962,
+    0.39634984731674194
+   ]
+  ],
+  "radius": 0.5600840367417623,
+  "height": 0.6631727783679962,
+  "footprint_pts": 12
+ },
+ "lfm": "assets/polyfork/p_crate.lfm",
+ "col": "assets/polyfork/p_crate.col.json",
+ "preview_glb": "assets/polyfork/preview/p_crate.glb",
+ "thumb": "assets/polyfork/thumbs/p_crate.png",
+ "meta": "assets/polyfork/meta/p_crate.json",
+ "baked": {
+  "ao": "vertex Col.a",
+  "cavity": "aBn.w",
+  "origin": "ground y=0",
+  "up": "+Y",
+  "front": "+Z",
+  "units": "metres"
+ },
+ "added": "2026-11-12",
+ "class": "prop"
+}

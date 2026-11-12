@@ -1,0 +1,101 @@
+{
+ "key": "p_banner_pole",
+ "polyfork_id": "faction-banner-pole-39835b",
+ "name": "Faction Banner Pole",
+ "category": "prop",
+ "role": "banner",
+ "kit": "three-kingdoms-settlements-a-1e817b",
+ "triangles": 766,
+ "size_m": {
+  "x": 2.12,
+  "y": 6.05,
+  "z": 1.57
+ },
+ "palette_src": [
+  {
+   "hex": "#c99e49",
+   "share": 0.319
+  },
+  {
+   "hex": "#69b252",
+   "share": 0.235
+  },
+  {
+   "hex": "#6b4326",
+   "share": 0.219
+  },
+  {
+   "hex": "#987a5a",
+   "share": 0.073
+  },
+  {
+   "hex": "#867b72",
+   "share": 0.065
+  },
+  {
+   "hex": "#6d6660",
+   "share": 0.042
+  }
+ ],
+ "has_rig": false,
+ "ik_type": null,
+ "licence": "Polyfork free low-poly: commercial use, no attribution",
+ "page": "https://polyfork.dev/asset/faction-banner-pole-39835b",
+ "glb_url": "https://polyfork.dev/cdn/faction-banner-pole-39835b.glb",
+ "glb_sha256": "f52ed0b8bbc44aa50a0b648346453341ef0daf179325e4ed1837912ecb0bb9fc",
+ "thumb_dhash": "1432323232343232",
+ "origin": "polyfork-batch3",
+ "version": 1,
+ "variant_of": null,
+ "states": [
+  "static"
+ ],
+ "verts_baked": 2298,
+ "tris_baked": 766,
+ "palette_theme": [
+  "woodDk",
+  "wood",
+  "murrey",
+  "brass",
+  "stone",
+  "lichen",
+  "iron"
+ ],
+ "lum_scale": 0.6,
+ "biomes": [
+  "village",
+  "camp"
+ ],
+ "collision": {
+  "aabb": [
+   [
+    -1.059999942779541,
+    0.0,
+    -0.7852976322174072
+   ],
+   [
+    1.059999942779541,
+    6.050000190734863,
+    0.7852976322174072
+   ]
+  ],
+  "radius": 1.3192013681992967,
+  "height": 6.050000190734863,
+  "footprint_pts": 12
+ },
+ "lfm": "assets/polyfork/p_banner_pole.lfm",
+ "col": "assets/polyfork/p_banner_pole.col.json",
+ "preview_glb": "assets/polyfork/preview/p_banner_pole.glb",
+ "thumb": "assets/polyfork/thumbs/p_banner_pole.png",
+ "meta": "assets/polyfork/meta/p_banner_pole.json",
+ "baked": {
+  "ao": "vertex Col.a",
+  "cavity": "aBn.w",
+  "origin": "ground y=0",
+  "up": "+Y",
+  "front": "+Z",
+  "units": "metres"
+ },
+ "added": "2026-11-12",
+ "class": "prop"
+}

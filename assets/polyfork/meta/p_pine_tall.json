@@ -1,0 +1,81 @@
+{
+ "key": "p_pine_tall",
+ "polyfork_id": "tall-pine-tree-ab4108",
+ "name": "Tall Pine Tree",
+ "category": "prop",
+ "role": "tree (pine highland)",
+ "kit": "nature-forest-kit-f29d6a",
+ "triangles": 350,
+ "size_m": {
+  "x": 3.67,
+  "y": 9,
+  "z": 3.56
+ },
+ "palette_src": [
+  {
+   "hex": "#4c8140",
+   "share": 0.886
+  },
+  {
+   "hex": "#4a3527",
+   "share": 0.114
+  }
+ ],
+ "has_rig": false,
+ "ik_type": null,
+ "licence": "Polyfork free low-poly: commercial use, no attribution",
+ "page": "https://polyfork.dev/asset/tall-pine-tree-ab4108",
+ "glb_url": "https://polyfork.dev/cdn/tall-pine-tree-ab4108.glb",
+ "glb_sha256": "32081cc8c954233d04b9e4ee1569efc4df2a2f8e97f8e30f9e55e63ee9d6171e",
+ "thumb_dhash": "1032323232327132",
+ "origin": "polyfork-batch3",
+ "version": 1,
+ "variant_of": null,
+ "states": [
+  "static"
+ ],
+ "verts_baked": 1050,
+ "tris_baked": 350,
+ "palette_theme": [
+  "woodDk",
+  "turf",
+  "lichen",
+  "peat"
+ ],
+ "lum_scale": 0.12,
+ "biomes": [
+  "highland"
+ ],
+ "collision": {
+  "aabb": [
+   [
+    -1.8332557678222656,
+    0.0,
+    -1.7817618250846863
+   ],
+   [
+    1.8332557678222656,
+    9.0,
+    1.7817618250846863
+   ]
+  ],
+  "radius": 2.556462773361411,
+  "height": 9.0,
+  "footprint_pts": 10
+ },
+ "lfm": "assets/polyfork/p_pine_tall.lfm",
+ "col": "assets/polyfork/p_pine_tall.col.json",
+ "preview_glb": "assets/polyfork/preview/p_pine_tall.glb",
+ "thumb": "assets/polyfork/thumbs/p_pine_tall.png",
+ "meta": "assets/polyfork/meta/p_pine_tall.json",
+ "baked": {
+  "ao": "vertex Col.a",
+  "cavity": "aBn.w",
+  "origin": "ground y=0",
+  "up": "+Y",
+  "front": "+Z",
+  "units": "metres"
+ },
+ "added": "2026-11-12",
+ "class": "prop"
+}

@@ -1,0 +1,100 @@
+{
+ "key": "b_market_stall",
+ "polyfork_id": "market-stall-94937d",
+ "name": "Market Stall",
+ "category": "building",
+ "role": "market stall",
+ "kit": "medieval-village-kit-ca0b43",
+ "triangles": 592,
+ "size_m": {
+  "x": 1.96,
+  "y": 2.02,
+  "z": 1.13
+ },
+ "palette_src": [
+  {
+   "hex": "#8c6a4a",
+   "share": 0.284
+  },
+  {
+   "hex": "#7a563d",
+   "share": 0.243
+  },
+  {
+   "hex": "#6f4e37",
+   "share": 0.108
+  },
+  {
+   "hex": "#a5423a",
+   "share": 0.101
+  },
+  {
+   "hex": "#7d8a5a",
+   "share": 0.095
+  },
+  {
+   "hex": "#9a3b32",
+   "share": 0.054
+  }
+ ],
+ "has_rig": false,
+ "ik_type": null,
+ "licence": "Polyfork free low-poly: commercial use, no attribution",
+ "page": "https://polyfork.dev/asset/market-stall-94937d",
+ "glb_url": "https://polyfork.dev/cdn/market-stall-94937d.glb",
+ "glb_sha256": "0b64e308814f83ac98769b4a50d4b277c6ced7183751e941ed6b3b2d03a4af35",
+ "thumb_dhash": "e6d6ace0e8f8b84d",
+ "origin": "polyfork-batch3",
+ "version": 1,
+ "variant_of": null,
+ "states": [
+  "static"
+ ],
+ "verts_baked": 1776,
+ "tris_baked": 592,
+ "palette_theme": [
+  "woodDk",
+  "wood",
+  "murrey",
+  "buff",
+  "linen",
+  "woolBrown",
+  "rope"
+ ],
+ "lum_scale": 0.7,
+ "biomes": [
+  "village"
+ ],
+ "collision": {
+  "aabb": [
+   [
+    -0.9800000190734863,
+    0.0,
+    -0.5659999847412109
+   ],
+   [
+    0.9800000190734863,
+    2.019999964237213,
+    0.5659999847412109
+   ]
+  ],
+  "radius": 1.1317049174193266,
+  "height": 2.019999964237213,
+  "footprint_pts": 4
+ },
+ "lfm": "assets/polyfork/b_market_stall.lfm",
+ "col": "assets/polyfork/b_market_stall.col.json",
+ "preview_glb": "assets/polyfork/preview/b_market_stall.glb",
+ "thumb": "assets/polyfork/thumbs/b_market_stall.png",
+ "meta": "assets/polyfork/meta/b_market_stall.json",
+ "baked": {
+  "ao": "vertex Col.a",
+  "cavity": "aBn.w",
+  "origin": "ground y=0",
+  "up": "+Y",
+  "front": "+Z",
+  "units": "metres"
+ },
+ "added": "2026-11-12",
+ "class": "building"
+}

@@ -1,0 +1,82 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>LANTERNFALL asset viewer (QA only)</title>
+<style>
+html,body{margin:0;background:#0b0f16;color:#c9c2ae;font:13px/1.35 ui-monospace,Menlo,Consolas,monospace;overflow:hidden}
+#wrap{width:1280px;height:720px;position:relative;margin:0 auto}
+#bar{position:absolute;left:0;top:0;right:0;z-index:2;display:flex;gap:8px;align-items:center;padding:6px 8px;background:#10161fcc;flex-wrap:wrap}
+select,button{background:#1b2230;color:#d8cfb4;border:1px solid #3a4558;border-radius:3px;padding:3px 7px;font:inherit;cursor:pointer}
+button.on{background:#7a5a22;border-color:#e0a33c;color:#fff}
+#states{position:absolute;left:0;right:0;bottom:0;z-index:2;display:flex;gap:5px;flex-wrap:wrap;padding:6px 8px;background:#10161fcc;max-height:96px;overflow:auto}
+#hud{position:absolute;right:10px;top:46px;z-index:2;text-align:right;color:#e0a33c;text-shadow:0 1px 2px #000}
+#info{position:absolute;left:10px;top:46px;z-index:2;color:#9aa4b2;text-shadow:0 1px 2px #000}
+canvas{display:block}
+</style>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+</head><body>
+<div id="wrap">
+  <div id="bar"><b style="color:#e0a33c">LANTERNFALL</b>
+    <select id="kit" title="kit"></select><select id="asset" title="asset"></select>
+    <button id="turn" class="on">turntable</button><button id="wire">wireframe</button><button id="loop">loop clip</button>
+    <span id="live" style="margin-left:auto;color:#6c9">● live</span></div>
+  <div id="info"></div><div id="hud"></div><div id="states"></div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+const W = 1280, H = 720, FPS = 24, LOOPS = new Set(['idle', 'ready', 'walk', 'run']);
+const $ = id => document.getElementById(id), qs = new URLSearchParams(location.search);
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); renderer.setSize(W, H); renderer.setPixelRatio(1);
+renderer.outputColorSpace = THREE.SRGBColorSpace; $('wrap').prepend(renderer.domElement);
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x0b1018); scene.fog = new THREE.Fog(0x0b1018, 14, 40);
+const cam = new THREE.PerspectiveCamera(32, W / H, 0.05, 200); const ctl = new OrbitControls(cam, renderer.domElement); ctl.enableDamping = true;
+scene.add(new THREE.HemisphereLight(0x8fa6d8, 0x2a2218, 1.1));
+const moon = new THREE.DirectionalLight(0xaec4ff, 2.2); moon.position.set(3, 6, -4); scene.add(moon);
+const warm = new THREE.PointLight(0xff9a40, 25, 14); warm.position.set(-2.2, 2.4, 2.4); scene.add(warm);
+const ground = new THREE.Mesh(new THREE.CircleGeometry(30, 48).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x14110c, roughness: 1 })); scene.add(ground);
+const grid = new THREE.GridHelper(20, 20, 0x2a3140, 0x1a2029); grid.position.y = 0.002; scene.add(grid);
+let list = [], cur = null, model = null, mixer = null, actions = {}, active = null, wire = false, turn = qs.get('turn') !== '0', loopClip = false, mtimes = {}, loader = new GLTFLoader(), clock = new THREE.Clock();
+function fit() {
+  const b = new THREE.Box3().setFromObject(model), s = b.getSize(new THREE.Vector3()), c = b.getCenter(new THREE.Vector3()), r = Math.max(s.y * 1.1, Math.max(s.x, s.z) * .8, .3);
+  ctl.target.set(0, s.y * .5, 0); cam.position.set(r * 1.5, s.y * .62 + r * .3, r * 2.1); cam.near = r / 50; cam.updateProjectionMatrix(); ctl.update(); $('info').dataset.h = s.y.toFixed(2);
+}
+function play(name) {
+  if (!actions[name]) return; if (active) active.fadeOut(.15); const a = actions[name]; a.reset().fadeIn(.15).play(); active = a; a.clampWhenFinished = true;
+  a.setLoop(LOOPS.has(name) || loopClip ? THREE.LoopRepeat : THREE.LoopOnce, Infinity); document.querySelectorAll('#states button').forEach(b => b.classList.toggle('on', b.dataset.n === name)); a.name_ = name;
+}
+function load(key, keepClip) {
+  const it = list.find(x => x.key === key); if (!it) return; cur = key; const prevClip = keepClip && active ? active.name_ : (qs.get('clip') || 'idle');
+  loader.load(`m/${key}.glb?v=${it.mtime}`, g => {
+    if (model) { scene.remove(model); model.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
+    model = g.scene; scene.add(model); model.traverse(o => { if (o.isMesh) { o.material.wireframe = wire; o.material.roughness = .85; o.material.metalness = 0; o.frustumCulled = false; } });
+    mixer = new THREE.AnimationMixer(model); actions = {}; active = null; const st = $('states'); st.innerHTML = '';
+    const order = ['idle', 'ready', 'walk', 'run'], names = g.animations.map(a => a.name).sort((a, b) => (order.indexOf(a) < 0 ? 99 : order.indexOf(a)) - (order.indexOf(b) < 0 ? 99 : order.indexOf(b)));
+    for (const n of names) { const clip = g.animations.find(a => a.name === n); actions[n] = mixer.clipAction(clip); const b = document.createElement('button'); b.textContent = n; b.dataset.n = n; b.onclick = () => play(n); st.appendChild(b); }
+    if (!names.length) st.innerHTML = '<span style="color:#7d8794">static mesh (baked AO + collision proxy) — no states</span>';
+    fit(); if (names.length) play(actions[prevClip] ? prevClip : names[0]);
+    $('info').textContent = `${it.title || key} · ${it.kit} · ${it.tris ?? '?'} tris · ${names.length} clips`; document.title = 'viewer: ' + key;
+  });
+}
+function fillKits() {
+  const kits = [...new Set(list.map(x => x.kit))], ks = $('kit'), prev = ks.value; ks.innerHTML = kits.map(k => `<option>${k}</option>`).join(''); ks.value = kits.includes(prev) ? prev : kits[0]; fillAssets();
+}
+function fillAssets() { const as = $('asset'), prev = cur; as.innerHTML = list.filter(x => x.kit === $('kit').value).map(x => `<option value="${x.key}">${x.key}</option>`).join(''); if (list.find(x => x.key === prev && x.kit === $('kit').value)) as.value = prev; }
+$('kit').onchange = () => { fillAssets(); load($('asset').value); }; $('asset').onchange = () => load($('asset').value);
+$('turn').onclick = e => { turn = !turn; e.target.classList.toggle('on', turn); }; if (!turn) $('turn').classList.remove('on');
+$('wire').onclick = e => { wire = !wire; e.target.classList.toggle('on', wire); model && model.traverse(o => { if (o.isMesh) o.material.wireframe = wire; }); };
+$('loop').onclick = e => { loopClip = !loopClip; e.target.classList.toggle('on', loopClip); if (active) play(active.name_); };
+async function poll(first) {
+  try {
+    const r = await fetch('index.json?' + Date.now()); list = await r.json(); $('live').style.color = '#6c9'; $('live').textContent = '● live ' + new Date().toLocaleTimeString();
+    const changed = list.filter(x => mtimes[x.key] && mtimes[x.key] !== x.mtime).map(x => x.key); const added = list.some(x => !(x.key in mtimes));
+    list.forEach(x => mtimes[x.key] = x.mtime);
+    if (first) { fillKits(); const want = qs.get('asset') || list[0]?.key; const it = list.find(x => x.key === want) || list[0]; if (it) { $('kit').value = it.kit; fillAssets(); $('asset').value = it.key; load(it.key); } }
+    else { if (added) { const k = $('kit').value, a = $('asset').value; fillKits(); $('kit').value = k; fillAssets(); $('asset').value = a; } if (changed.includes(cur)) load(cur, true); }
+  } catch (e) { $('live').style.color = '#c55'; $('live').textContent = '● offline'; }
+}
+await poll(true); setInterval(poll, 2000);
+renderer.setAnimationLoop(() => {
+  const dt = clock.getDelta(); if (mixer) mixer.update(dt); if (model && turn) model.rotation.y += dt * .5; warm.position.x = Math.sin(performance.now() / 900) * .3 - 2.2; ctl.update(); renderer.render(scene, cam);
+  if (active) { const c = active.getClip(), n = Math.max(1, Math.round(c.duration * FPS)); $('hud').textContent = `${active.name_}  frame ${String(Math.min(n, Math.round(active.time * FPS) + 1)).padStart(3, '0')}/${n}  ${c.duration.toFixed(2)}s`; } else $('hud').textContent = '';
+});
+</script></body></html>

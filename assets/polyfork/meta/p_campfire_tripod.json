@@ -1,0 +1,96 @@
+{
+ "key": "p_campfire_tripod",
+ "polyfork_id": "campfire-cook-tripod-d95a1e",
+ "name": "Campfire Cook Tripod",
+ "category": "prop",
+ "role": "campfire",
+ "kit": "nature-forest-kit-f29d6a",
+ "triangles": 470,
+ "size_m": {
+  "x": 1.5,
+  "y": 1.3,
+  "z": 1.3
+ },
+ "palette_src": [
+  {
+   "hex": "#3a2a1e",
+   "share": 0.298
+  },
+  {
+   "hex": "#57544e",
+   "share": 0.238
+  },
+  {
+   "hex": "#75563b",
+   "share": 0.179
+  },
+  {
+   "hex": "#8fa84a",
+   "share": 0.179
+  },
+  {
+   "hex": "#5d4430",
+   "share": 0.106
+  }
+ ],
+ "has_rig": true,
+ "ik_type": null,
+ "licence": "Polyfork free low-poly: commercial use, no attribution",
+ "page": "https://polyfork.dev/asset/campfire-cook-tripod-d95a1e",
+ "glb_url": "https://polyfork.dev/cdn/campfire-cook-tripod-d95a1e.glb",
+ "glb_sha256": "99c98a865d822b542cfd53ebcb8be6d04e56d00c14449876c88361ad6c9f2f9d",
+ "thumb_dhash": "34346265e4c69aa1",
+ "origin": "polyfork-batch3",
+ "version": 1,
+ "variant_of": null,
+ "states": [
+  "static"
+ ],
+ "verts_baked": 1410,
+ "tris_baked": 470,
+ "palette_theme": [
+  "woodDk",
+  "wood",
+  "iron",
+  "rust",
+  "lantern",
+  "rope"
+ ],
+ "lum_scale": 0.7,
+ "biomes": [
+  "highland",
+  "camp"
+ ],
+ "collision": {
+  "aabb": [
+   [
+    -0.7524709701538086,
+    0.0,
+    -0.6516589671373367
+   ],
+   [
+    0.7524709701538086,
+    1.2999999523162842,
+    0.6516589671373367
+   ]
+  ],
+  "radius": 0.995425522264079,
+  "height": 1.2999999523162842,
+  "footprint_pts": 8
+ },
+ "lfm": "assets/polyfork/p_campfire_tripod.lfm",
+ "col": "assets/polyfork/p_campfire_tripod.col.json",
+ "preview_glb": "assets/polyfork/preview/p_campfire_tripod.glb",
+ "thumb": "assets/polyfork/thumbs/p_campfire_tripod.png",
+ "meta": "assets/polyfork/meta/p_campfire_tripod.json",
+ "baked": {
+  "ao": "vertex Col.a",
+  "cavity": "aBn.w",
+  "origin": "ground y=0",
+  "up": "+Y",
+  "front": "+Z",
+  "units": "metres"
+ },
+ "added": "2026-11-12",
+ "class": "prop"
+}

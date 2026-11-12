@@ -1,0 +1,99 @@
+{
+ "key": "p_cemetery_gate",
+ "polyfork_id": "arched-cemetery-gate-bdca7c",
+ "name": "Arched Cemetery Gate",
+ "category": "prop",
+ "role": "gate",
+ "kit": "halloween-night-46ade4",
+ "triangles": 904,
+ "size_m": {
+  "x": 4,
+  "y": 3.74,
+  "z": 0.61
+ },
+ "palette_src": [
+  {
+   "hex": "#150e0c",
+   "share": 0.717
+  },
+  {
+   "hex": "#a89c9a",
+   "share": 0.144
+  },
+  {
+   "hex": "#b5a9a7",
+   "share": 0.061
+  },
+  {
+   "hex": "#b1a5a3",
+   "share": 0.039
+  },
+  {
+   "hex": "#594c4d",
+   "share": 0.022
+  },
+  {
+   "hex": "#a19593",
+   "share": 0.01
+  }
+ ],
+ "has_rig": true,
+ "ik_type": null,
+ "licence": "Polyfork free low-poly: commercial use, no attribution",
+ "page": "https://polyfork.dev/asset/arched-cemetery-gate-bdca7c",
+ "glb_url": "https://polyfork.dev/cdn/arched-cemetery-gate-bdca7c.glb",
+ "glb_sha256": "20261a052d54f6cc14f6b2af9971b6d94b5e21df57cd5f4babdd672cc5dcef66",
+ "thumb_dhash": "3473d1d4c4f4fc0c",
+ "origin": "polyfork-batch3",
+ "version": 1,
+ "variant_of": null,
+ "states": [
+  "static"
+ ],
+ "verts_baked": 2712,
+ "tris_baked": 904,
+ "palette_theme": [
+  "iron",
+  "rust",
+  "stone",
+  "stone2",
+  "lichen"
+ ],
+ "lum_scale": 0.7,
+ "biomes": [
+  "graveyard",
+  "moor"
+ ],
+ "collision": {
+  "aabb": [
+   [
+    -2.0,
+    0.0,
+    -0.3050000071525574
+   ],
+   [
+    2.0,
+    3.740000009536743,
+    0.3050000071525574
+   ]
+  ],
+  "radius": 2.0231225875767045,
+  "height": 3.740000009536743,
+  "footprint_pts": 4
+ },
+ "lfm": "assets/polyfork/p_cemetery_gate.lfm",
+ "col": "assets/polyfork/p_cemetery_gate.col.json",
+ "preview_glb": "assets/polyfork/preview/p_cemetery_gate.glb",
+ "thumb": "assets/polyfork/thumbs/p_cemetery_gate.png",
+ "meta": "assets/polyfork/meta/p_cemetery_gate.json",
+ "baked": {
+  "ao": "vertex Col.a",
+  "cavity": "aBn.w",
+  "origin": "ground y=0",
+  "up": "+Y",
+  "front": "+Z",
+  "units": "metres"
+ },
+ "added": "2026-11-12",
+ "class": "prop"
+}

@@ -1,0 +1,207 @@
+{
+ "p_pine_tall": {
+  "id": "tall-pine-tree-ab4108",
+  "cat": "prop",
+  "role": "tree (pine highland)",
+  "theme": [
+   "woodDk",
+   "turf",
+   "lichen",
+   "peat"
+  ],
+  "lum_scale": 0.12
+ },
+ "p_pine_young": {
+  "id": "young-pine-0d7695",
+  "cat": "prop",
+  "role": "tree (pine highland)",
+  "theme": [
+   "woodDk",
+   "turf",
+   "lichen",
+   "peat"
+  ],
+  "lum_scale": 0.12
+ },
+ "p_round_bush": {
+  "id": "round-bush-cd2ac0",
+  "cat": "prop",
+  "role": "bush",
+  "theme": [
+   "woodDk",
+   "turf",
+   "lichen",
+   "peat"
+  ],
+  "lum_scale": 0.12
+ },
+ "p_boulder": {
+  "id": "large-boulder-a29b99",
+  "cat": "prop",
+  "role": "rock",
+  "theme": [
+   "stone",
+   "stone2",
+   "lichen",
+   "peat",
+   "turf"
+  ],
+  "lum_scale": 0.7
+ },
+ "p_fallen_log": {
+  "id": "fallen-log-1685fb",
+  "cat": "prop",
+  "role": "log (fen/pine)",
+  "theme": [
+   "woodDk",
+   "wood",
+   "peat",
+   "root",
+   "turf"
+  ]
+ },
+ "p_barrel": {
+  "id": "wooden-barrel-ab50ca",
+  "cat": "prop",
+  "role": "barrel",
+  "theme": [
+   "woodDk",
+   "wood",
+   "iron",
+   "rust",
+   "leatherDk"
+  ]
+ },
+ "p_crate": {
+  "id": "timber-crate-ba0739",
+  "cat": "prop",
+  "role": "crate",
+  "theme": [
+   "woodDk",
+   "wood",
+   "iron",
+   "rust",
+   "leatherDk"
+  ]
+ },
+ "p_lamp_post": {
+  "id": "lamp-post-c9e409",
+  "cat": "prop",
+  "role": "lantern post",
+  "theme": [
+   "woodDk",
+   "wood",
+   "iron",
+   "brass",
+   "lantern"
+  ]
+ },
+ "p_signpost": {
+  "id": "trail-signpost-bd29a7",
+  "cat": "prop",
+  "role": "signpost",
+  "theme": [
+   "woodDk",
+   "wood",
+   "peat",
+   "rope"
+  ]
+ },
+ "p_campfire_tripod": {
+  "id": "campfire-cook-tripod-d95a1e",
+  "cat": "prop",
+  "role": "campfire",
+  "theme": [
+   "woodDk",
+   "wood",
+   "iron",
+   "rust",
+   "lantern",
+   "rope"
+  ],
+  "lum_scale": 0.7
+ },
+ "p_thorn_bush": {
+  "id": "bare-thorn-bush-91a238",
+  "cat": "prop",
+  "role": "bush (moor thorn)",
+  "theme": [
+   "woodDk",
+   "root",
+   "thorn",
+   "peat",
+   "rust"
+  ],
+  "lum_scale": 0.6
+ },
+ "p_iron_fence": {
+  "id": "wrought-iron-cemetery-fence-f1a113",
+  "cat": "prop",
+  "role": "fence",
+  "theme": [
+   "iron",
+   "rust",
+   "stone",
+   "stone2",
+   "lichen"
+  ],
+  "lum_scale": 0.7
+ },
+ "p_cemetery_gate": {
+  "id": "arched-cemetery-gate-bdca7c",
+  "cat": "prop",
+  "role": "gate",
+  "theme": [
+   "iron",
+   "rust",
+   "stone",
+   "stone2",
+   "lichen"
+  ],
+  "lum_scale": 0.7
+ },
+ "p_banner_pole": {
+  "id": "faction-banner-pole-39835b",
+  "cat": "prop",
+  "role": "banner",
+  "theme": [
+   "woodDk",
+   "wood",
+   "murrey",
+   "brass",
+   "stone",
+   "lichen",
+   "iron"
+  ],
+  "lum_scale": 0.6
+ },
+ "b_market_stall": {
+  "id": "market-stall-94937d",
+  "cat": "building",
+  "role": "market stall",
+  "theme": [
+   "woodDk",
+   "wood",
+   "murrey",
+   "buff",
+   "linen",
+   "woolBrown",
+   "rope"
+  ],
+  "lum_scale": 0.7
+ },
+ "b_timber_barn": {
+  "id": "timber-barn-90b3ce",
+  "cat": "building",
+  "role": "barn",
+  "theme": null,
+  "lum_scale": 0.7
+ },
+ "b_watchtower": {
+  "id": "watchtower-140f78",
+  "cat": "building",
+  "role": "tower",
+  "theme": null,
+  "lum_scale": 0.8
+ }
+}
