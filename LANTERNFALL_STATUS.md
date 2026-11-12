@@ -204,3 +204,6 @@ Shipped:
 - **Debug**: `--xcmd fall0..5` (stand at a waterfall, `fallND` = distance N*6 m), `--xcmd horse|cow|sheep` (teleport next to nearest animal).
 QA shots Read this session: a_default, a_poi0, a_map, a_mtn, b_fall, b_village, b_forest, c_village, c_fall, d_village, d_default, e_wall, f_walk, f_outside, g_fall1, g_fall0, h_fall3, h_fall4, i_fall3, i_horse (camera inside the capital wall - unusable), j_sheep, j_cow.
 Known / deferred: horse+cow+sheep close-ups not verified (debug camera lands on the wall / building); waterfall pool still reads pale and the mist billboards are over-bright; cliff rock texture shows stepped pixel banding under llvmpipe (derivative bump; check on a GPU); a salmon-red branched tree kind (not cherry) is visible in Blossom Vale; tree canopies still faceted; terrain is still 2 km with a 2 m height grid (chunk streaming / bigger map not started); Blender rebuild blocked (no Blender on the notebook).
+
+## v2.4.0 - Realm Polish II (this session) - IN PROGRESS
+Env: molab URL returned 410 at tool call 6 (dead on arrival; no heartbeat). Rebuilt user-space sysroot (apt-get download -> dpkg -x /tmp/agentA_sys, Xvfb byte-patched `/usr/bin\0` -> `/tmp/xbn\0` - the replacement MUST be the same length), cmake via pip. Local Release build ~60 s on 2 cores; llvmpipe 1280x720 captures ~13 s. No Blender binary available.
