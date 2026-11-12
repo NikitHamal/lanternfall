@@ -4,7 +4,7 @@
 #include "game.h"
 #include "figure.h"
 namespace pl {
-enum Mode { M_OFF, M_RANGE, M_WAVES };
+enum Mode { M_OFF, M_RANGE, M_WAVES, M_SELECT };
 enum View { VW_FIRST, VW_THIRD, VW_FREE, NVIEW };
 constexpr int MAXFOE = 24, MAXARR = 112, MAXTGT = 14, MAXFEED = 5;
 struct Input { float mx = 0, mz = 0; bool sprint = false, lmb = false, rmb = false, roll = false; };
@@ -17,6 +17,7 @@ struct Player {
   float hp = 100, maxHp = 100, st = 100, stWait = 0, draw = 0, holdT = 0, relT = 9, nockT = 0, rollT = 0, rollDx = 0, rollDz = 0, iT = 0, hurtT = 0, stagT = 0, hitDir = 0, hitK = 0, downT = 0, blockK = 0, blocking = 0;
   float swayX = 0, swayY = 0, kickP = 0, kickY = 0, bob = 0, fovK = 0, hmT = 0, hmKind = 0, vig = 0, flinchT = 0, powerShown = 0;
   bool drawing = false, down = false, over = false; int lives = 3; float rel = 0;
+  float abilCd = 0, abilT = 0, abilMax = 14, quiverT = 0, vic = 0, dashT = 0, dashX = 0, dashZ = 0, armor = 0, dMul = 1, stab = 1, dmgMul = 1, mvMul = 1, regen = 0; int quiver = 16, quiverMax = 16;
 };
 struct Hud {
   int view = VW_FIRST; bool assist = true, bot = false; int score = 0, combo = 0, bestCombo = 0, shots = 0, hits = 0, kills = 0, wave = 0, foesLeft = 0, lastPts = 0; float bannerT = 0, comboT = 0, scoreShow = 0, spread = 20, sweet = 0, shake = 0, zoomK = 0;
@@ -29,5 +30,6 @@ constexpr float ROLL_T = 0.55f, DRAW_T = 0.85f, SWEET0 = 0.93f;
 extern int pendingMode;
 bool active(); void start(int mode); void stop(); void update(float dtReal, const Input& in); void look(float dx, float dy); void scroll(float dy); void keyPress(int key);
 float timeScale(); void camera(float dt); void buildShapes(); float curve(float p); V3 aimDir(); V3 lanternPos(); bool freeDrag(); void setView(int v);
+void heroStep(int d); void useAbility(); extern float selT; void setBiome(int b); int biome();
 void debugAim(float yaw, float pitch); void debugDraw(float d); void debugBot(bool on);
 }

@@ -2,10 +2,12 @@
 // collision), zone scoring, hit markers, kill feed, hit-stop, practice range, wave hunt, block, dodge roll with i-frames, directional hit reactions.
 #include "play.h"
 #include "render.h"
+#include "settings.h"
+#include "roster.h"
 #include <cstdio>
 #include <cstring>
 namespace pl {
-int pendingMode = 0;
+int pendingMode = 0; float selT = 0; static int gBiome = 0;
 Player P; Hud H; Foe foes[MAXFOE]; Arrow arrows[MAXARR]; Target tgts[MAXTGT]; CamState cam; Unit playerUnit; V3 dots[40]; int nDots = 0; V3 landPt; bool landOk = false;
 namespace {
 int mode = M_OFF; float ax0 = 60, tm = 0, hitStop = 0, slowMo = 0, slowK = 1, lagX = 0, lagY = 0, botT = 0, botWait = 0, waveT = 0, dbgDraw = -1; int waveState = 0, botTgt = 0; bool botRel = false; uint32_t uid = 5000;
@@ -79,10 +81,10 @@ void hurtPlayer(float dmg, float sx, float sz);
 // ---------------------------------------------------------------- shots
 void loose() {
   float pw = curve(P.draw); bool sweet = P.draw >= SWEET0 && P.holdT < 0.9f; V3 from; V3 dir = shotDirBase(from);
-  float cone = (1 - pw) * 0.05f + (P.speed > 0.5f ? 0.01f : 0.f); dir = norm(dir + V3{(R() - 0.5f) * cone, (R() - 0.5f) * cone, (R() - 0.5f) * cone});
+  float cone = ((1 - pw) * 0.05f + (P.speed > 0.5f ? 0.01f : 0.f)) / P.stab; dir = norm(dir + V3{(R() - 0.5f) * cone, (R() - 0.5f) * cone, (R() - 0.5f) * cone});
   Arrow* a = freeArrow(); *a = Arrow(); a->on = true; a->own = 0; a->x = a->px = from.x; a->y = a->py = from.y; a->z = a->pz = from.z; V3 v = dir * launchSpeed(pw); a->vx = v.x; a->vy = v.y; a->vz = v.z;
-  a->dmg = 26.f * (0.35f + 0.65f * pw) * (sweet ? 1.25f : 1.f); a->pw = pw; a->life = 7; a->lu = from.x; a->lv = from.z; a->drop = sweet ? 1.f : 0.f;
-  P.draw = 0; P.drawing = false; P.holdT = 0; P.relT = 0; P.nockT = 0.2f; P.kickP += 0.010f + 0.022f * pw; P.kickY += (R() - 0.5f) * 0.012f; H.shots++; setAcc(); H.zoomK = std::max(H.zoomK, 0.25f * pw);
+  a->dmg = 26.f * P.dmgMul * (0.35f + 0.65f * pw) * (sweet ? 1.25f : 1.f); a->pw = pw; a->life = 7; a->lu = from.x; a->lv = from.z; a->drop = sweet ? 1.f : 0.f;
+  P.draw = 0; P.drawing = false; P.holdT = 0; P.relT = 0; P.nockT = 0.2f / std::min(1.6f, P.dMul); P.quiver = std::max(0, P.quiver - 1); P.kickP += 0.010f + 0.022f * pw; P.kickY += (R() - 0.5f) * 0.012f; H.shots++; setAcc(); H.zoomK = std::max(H.zoomK, 0.25f * pw);
   audio::play(pw > 0.8f ? S_BOWHEAVY : S_BOW, 0, 0.5f + 0.4f * pw); if (sweet) { fx.sparks(from.x, from.y, from.z, 6, {2.6f, 1.9f, 0.7f}, 2.f); }
 }
 void markHit(bool head, bool kill) { P.hmT = 0.25f; P.hmKind = kill ? 2.f : head ? 1.f : 0.f; }
@@ -100,7 +102,8 @@ void killFoe(Foe& f, bool head, float dist) {
 }
 void arrowHitFoe(Arrow& a, Foe& f, float t, float yRel) {
   Unit& u = f.u; bool head = yRel > f.headY * 0.78f; float dmg = a.dmg * (head ? 2.f : 1.f) * (1 - MON[u.cls].armor); float dist = std::hypot(a.px - a.lu, a.pz - a.lv);
-  V3 hp{a.px + (a.x - a.px) * t, a.py + (a.y - a.py) * t, a.pz + (a.z - a.pz) * t}; u.hp -= dmg; u.flashV = 1; H.hits++; setAcc();
+  V3 hp{a.px + (a.x - a.px) * t, a.py + (a.y - a.py) * t, a.pz + (a.z - a.pz) * t}; { int ps = roster::at(roster::sel()).pass; if (ps == roster::PS_BLOOD && head) dmg *= 1.2f; if (ps == roster::PS_KINDLED) { dmg *= 1.12f; fx.sparks(a.x, a.y, a.z, 4, {3.f, 1.4f, 0.4f}, 2.f); } if (ps == roster::PS_RIME) { u.slowT = 2.5f; u.slowK = 0.6f; u.chillT = 2.5f; } }
+  u.hp -= dmg; u.flashV = 1; H.hits++; setAcc();
   V3 d = norm(V3{a.vx, 0, a.vz}); u.stagV = 1; if (dmg > 14 || head) { u.stagT = MON[u.cls].boss ? 0.12f : 0.36f; f.kx = d.x * (head ? 4.5f : 3.f) / (1 + u.radius); f.kz = d.z * (head ? 4.5f : 3.f) / (1 + u.radius); if (u.act.on && !u.boss) { u.act.on = false; f.shot = false; } }
   char b[16]; snprintf(b, 16, "%d", (int)dmg); fx.floatText(hp.x, hp.y + 0.4f, hp.z, b, head ? 0xffd24a : 0xfff0d0, head ? 17.f : 12.f, 0.9f); if (head) fx.floatText(hp.x, hp.y + 0.9f, hp.z, "HEAD", 0xffa030, 10, 0.8f);
   fx.sparks(hp.x, hp.y, hp.z, head ? 12 : 7, head ? V3{3.f, 2.f, 0.6f} : V3{2.2f, 1.2f, 0.5f}, 3.f, -d.x, -d.z); fx.chips(hp.x, hp.y, hp.z, 3, {0.3f, 0.2f, 0.15f}, 2.f);
@@ -148,7 +151,7 @@ void revive() {
   feed("RISEN - flames left shown", 0xffb878);
 }
 void hurtPlayer(float dmg, float sx, float sz) {
-  if (mode != M_WAVES || P.down || P.iT > 0) return; float ang = angDiff(P.yaw, std::atan2(sx - P.x, sz - P.z));
+  if (mode != M_WAVES || P.down || P.iT > 0) return; float ang = angDiff(P.yaw, std::atan2(sx - P.x, sz - P.z)); dmg *= 1.f - P.armor; if (P.abilT > 0 && roster::at(roster::sel()).abil == roster::AB_BULWARK) dmg *= 0.3f;
   if (P.blocking > 0.6f && std::fabs(ang) < 1.25f && P.st > 0) { dmg *= 0.15f; P.st -= 16; P.stWait = 1.2f; P.blockK = 1; fx.sparks(P.x + std::sin(P.yaw) * 0.7f, P.y + 1.3f, P.z + std::cos(P.yaw) * 0.7f, 10, {2.4f, 1.8f, 0.8f}, 3.f); audio::play(S_HITSHIELD, 0, 0.8f); H.shake = std::max(H.shake, 0.2f); fx.floatText(P.x, P.y + 2.2f, P.z, "BLOCK", 0xd8e8ff, 12, 0.7f); if (P.st <= 0) { P.stagT = 0.5f; P.blocking = 0; } }
   else { P.hurtT = 0.4f; P.hitDir = ang; P.hitK = 1; P.vig = 1; H.shake = std::max(H.shake, 0.5f); P.kickP += 0.05f; P.kickY += (ang > 0 ? 1.f : -1.f) * 0.04f; audio::play(S_HITSOFT, 0, 0.9f); fx.flash(P.x, P.y + 1.2f, P.z, {1.f, 0.2f, 0.1f}, 25, 0.15f);
     if (dmg >= 9) { P.stagT = 0.45f; P.drawing = false; P.draw = 0; P.holdT = 0; } H.combo = 0; setCombo(); }
@@ -194,26 +197,29 @@ void botThink(float dt, Input& in) {
 // ---------------------------------------------------------------- stepping
 void stepPlayer(float h, Input in) {
   P.ox = P.x; P.oz = P.z; if (P.down) { P.downT += h; P.vx = P.vz = 0; P.speed = 0; if (P.downT > 4.2f && !P.over) revive(); return; }
+  P.abilCd = std::max(0.f, P.abilCd - h); P.abilT -= h; if (!P.down && P.regen > 0) P.hp = std::min(P.maxHp, P.hp + P.regen * h); if (P.abilT > 0 && roster::at(roster::sel()).abil == roster::AB_TONIC) P.hp = std::min(P.maxHp, P.hp + 10.f * h);
+  if (P.quiver < P.quiverMax) { P.quiverT += h; if (P.quiverT >= 1.1f) { P.quiverT = 0; P.quiver++; } }
   P.relT += h; P.iT -= h; P.nockT -= h; P.hurtT -= h; P.stagT -= h; P.hitK *= std::exp(-4 * h); P.blockK *= std::exp(-6 * h); P.vig *= std::exp(-2.2f * h);
   if (P.stWait > 0) P.stWait -= h; else P.st = std::min(100.f, P.st + 26 * h);
   bool rolling = P.rollT > 0, free_ = H.view == VW_FREE; float yaw = P.yaw;
   bool wantBlock = in.rmb && !rolling && P.st > 6 && P.stagT <= 0 && mode == M_WAVES; P.blocking += ((wantBlock ? 1.f : 0.f) - P.blocking) * (1 - std::exp(-14 * h));
   if (in.roll && !rolling && P.st >= 20 && P.stagT <= 0) { V3 f = fwdOf(yaw, 0), r = rightOf(yaw); float dx = r.x * in.mx + f.x * in.mz, dz = r.z * in.mx + f.z * in.mz; if (std::fabs(in.mx) + std::fabs(in.mz) < 0.1f) { dx = -f.x; dz = -f.z; } float l = std::hypot(dx, dz); P.rollDx = dx / l; P.rollDz = dz / l; P.rollT = 1e-4f; P.iT = 0.42f; P.st -= 20; P.stWait = 0.7f; P.drawing = false; P.draw = 0; P.holdT = 0; audio::play(S_SWING, 0, 0.35f); V3 c{0.25f, 0.2f, 0.14f}; fx.dust(P.x, P.y + 0.1f, P.z, 6, &c, 0.4f, 0.6f); rolling = true; }
   if (rolling) { P.rollT += h; float u = P.rollT / ROLL_T, sp = 9.5f * (1 - u * u); P.vx = P.rollDx * sp; P.vz = P.rollDz * sp; if (P.rollT >= ROLL_T) { P.rollT = 0; } }
+  else if (P.dashT > 0) { P.dashT -= h; P.vx = P.dashX * 26.f; P.vz = P.dashZ * 26.f; }
   else { V3 f = fwdOf(yaw, 0), r = rightOf(yaw); float mx = free_ ? 0 : in.mx, mz = free_ ? 0 : in.mz, l = std::hypot(mx, mz); if (l > 1) { mx /= l; mz /= l; }
-    float top = (in.sprint && !P.drawing ? 6.4f : 4.3f) * (P.drawing ? 0.5f : 1.f) * (P.blocking > 0.5f ? 0.55f : 1.f) * (P.stagT > 0 ? 0.3f : 1.f); float tx = (r.x * mx + f.x * mz) * top, tz = (r.z * mx + f.z * mz) * top, k = 1 - std::exp(-(l > 0.05f ? 11.f : 14.f) * h); P.vx += (tx - P.vx) * k; P.vz += (tz - P.vz) * k; }
+    float top = P.mvMul * (in.sprint && !P.drawing ? 6.4f : 4.3f) * (P.drawing ? 0.5f : 1.f) * (P.blocking > 0.5f ? 0.55f : 1.f) * (P.stagT > 0 ? 0.3f : 1.f); float tx = (r.x * mx + f.x * mz) * top, tz = (r.z * mx + f.z * mz) * top, k = 1 - std::exp(-(l > 0.05f ? 11.f : 14.f) * h); P.vx += (tx - P.vx) * k; P.vz += (tz - P.vz) * k; }
   P.x += P.vx * h; P.z += P.vz * h; gfx::pushOut(P.x, P.z, 0.38f); float ccx = ax0 + 22, ccz = pathZ(ccx), ddx = P.x - ccx, ddz = P.z - ccz, dd = std::hypot(ddx, ddz); if (dd > ARENA) { P.x = ccx + ddx / dd * ARENA; P.z = ccz + ddz / dd * ARENA; }
   P.y = terrH(P.x, P.z); P.speed = std::hypot(P.vx, P.vz); P.bob += P.speed * h * 1.7f;
   // face: toward the camera yaw while aiming / in first person; toward motion otherwise
   float fy = P.yaw; if (H.view == VW_THIRD && !P.drawing && P.blocking < 0.3f && P.speed > 0.8f && !rolling) fy = std::atan2(P.vx, P.vz); if (rolling) fy = std::atan2(P.rollDx, P.rollDz); P.face += angDiff(P.face, fy) * (1 - std::exp(-12 * h));
   // draw / release
-  bool canDraw = P.stagT <= 0 && !rolling && P.blocking < 0.3f && P.nockT <= 0 && !(in.sprint && P.speed > 5.f);
+  bool canDraw = P.quiver > 0 && P.stagT <= 0 && !rolling && P.blocking < 0.3f && P.nockT <= 0 && !(in.sprint && P.speed > 5.f);
   if (dbgDraw >= 0) { P.drawing = true; P.draw = dbgDraw; P.holdT = 0; }
-  else if (in.lmb && canDraw) { if (!P.drawing) { P.drawing = true; P.draw = 0; P.holdT = 0; audio::play(S_CLICK, 0, 0.3f); } P.draw = std::min(1.f, P.draw + h / DRAW_T); if (P.draw >= 1) { P.holdT += h; if (P.holdT > 0.9f) P.st = std::max(0.f, P.st - 7 * h); } }
+  else if (in.lmb && canDraw) { if (!P.drawing) { P.drawing = true; P.draw = 0; P.holdT = 0; audio::play(S_CLICK, 0, 0.3f); } P.draw = std::min(1.f, P.draw + h * P.dMul * (P.abilT > 0 && roster::at(roster::sel()).abil == roster::AB_VOLLEY ? 1.8f : 1.f) / DRAW_T); if (P.draw >= 1) { P.holdT += h; if (P.holdT > 0.9f) P.st = std::max(0.f, P.st - 7 * h); } }
   else if (P.drawing) { if (P.draw > 0.14f && canDraw && P.st > 0) loose(); else { P.drawing = false; P.draw = 0; P.holdT = 0; } if (P.st <= 0 && P.drawing) { P.drawing = false; } }
   if (P.drawing && P.st <= 0.01f && P.holdT > 0.9f && dbgDraw < 0) loose();
   // sway: gentle noise that grows once the draw is held past the sweet window
-  float amp = 0; if (P.drawing) { float over = P.holdT > 0.9f ? std::min(3.f, (P.holdT - 0.9f) / 0.7f) : 0.f; amp = 0.0010f + 0.0025f * (1 - P.draw) + 0.0045f * over + P.speed * 0.00045f; }
+  float amp = 0; if (P.drawing) { float over = P.holdT > 0.9f ? std::min(3.f, (P.holdT - 0.9f) / 0.7f) : 0.f; amp = (0.0010f + 0.0025f * (1 - P.draw) + 0.0045f * over + P.speed * 0.00045f) / P.stab; }
   float tx_ = amp * nz(tm * 1.9f, 0.3f) * 2, ty_ = amp * nz(tm * 2.3f, 4.1f) * 2; float k = 1 - std::exp(-10 * h); P.swayX += (tx_ - P.swayX) * k; P.swayY += (ty_ - P.swayY) * k;
   P.kickP *= std::exp(-7 * h); P.kickY *= std::exp(-7 * h); lagX *= std::exp(-6 * h); lagY *= std::exp(-6 * h);
   float cv = curve(P.draw); H.sweet = (P.drawing && P.draw >= SWEET0 && P.holdT < 0.9f) ? 1.f : 0.f; float spr = lerpf(18.f, 2.5f, P.drawing ? cv : 0.f) + P.speed * 0.9f + (P.holdT > 0.9f ? 2.5f * std::min(1.f, (P.holdT - 0.9f) / 1.f) * (0.6f + 0.4f * std::sin(tm * 17)) : 0.f); H.spread += (spr - H.spread) * (1 - std::exp(-16 * h));
@@ -227,7 +233,34 @@ void stepWorld(float h) {
   if (mode == M_WAVES && !P.over) { if (waveState == 1 && liveFoes() == 0) { waveState = 0; waveT = 4.5f; char b[40]; snprintf(b, 40, "WAVE %d CLEARED", H.wave); banner(b, "CATCH YOUR BREATH"); feed(b, 0x9fe8a0); P.hp = std::min(P.maxHp, P.hp + 25); P.st = 100; setScore(50 * H.wave); }
     else if (waveState == 0) { waveT -= h; if (waveT <= 0) startWave(); } }
 }
+void aoe(float r, float dmg, float stag, float kb) {
+  for (auto& f : foes) { Unit& u = f.u; if (!u.used || u.hp <= 0) continue; float dx = u.x - P.x, dz = u.z - P.z, d = std::max(0.3f, std::hypot(dx, dz)); if (d > r + u.radius) continue;
+    u.hp -= dmg * (1 - MON[u.cls].armor); u.flashV = 1; u.stagV = 1; u.stagT = std::max(u.stagT, stag); f.kx = dx / d * kb; f.kz = dz / d * kb; if (u.act.on && !u.boss) { u.act.on = false; f.shot = false; }
+    char b[16]; snprintf(b, 16, "%d", (int)dmg); fx.floatText(u.x, terrH(u.x, u.z) + f.headY + 0.4f, u.z, b, 0xffc070, 13, 0.8f); if (u.hp <= 0) killFoe(f, false, d); }
+}
+// hero-select pedestal preview: turntable + idle -> draw -> release -> victory loop
+void selectUpdate(float dt) {
+  float t0 = std::fmod(selT, 8.f); selT += dt; float t = std::fmod(selT, 8.f); P.face = -PI / 2 + selT * 0.5f; P.yaw = -PI / 2; P.relT += dt;
+  P.drawing = t >= 2.2f && t < 3.9f; P.draw = P.drawing ? std::min(1.f, (t - 2.2f) / 1.1f) : 0.f; P.holdT = 0; if (t0 < 3.9f && t >= 3.9f) P.relT = 0;
+  float vt = (t >= 4.7f && t < 7.3f) ? 1.f : 0.f; P.vic += (vt - P.vic) * (1 - std::exp(-6 * dt));
+}
 }  // namespace
+void heroStep(int d) { roster::step(d); selT = 0; P.vic = 0; P.relT = 9; P.drawing = false; }
+void setBiome(int b) { gBiome = b; }
+int biome() { return gBiome; }
+void useAbility() {
+  if (mode == M_OFF || mode == M_SELECT || P.down || P.abilCd > 0) return; const roster::Hero& hr = roster::at(roster::sel()); P.abilCd = hr.cd; P.abilT = hr.dur; V3 f = fwdOf(P.yaw, 0);
+  char b[48]; snprintf(b, 48, "%s", hr.active); feed(b, 0xffd27a); fx.floatText(P.x, P.y + 2.4f, P.z, hr.active, 0xffd27a, 12, 1.0f); audio::play(S_FLARE, 0, 0.5f);
+  switch (hr.abil) {
+    case roster::AB_VOLLEY: fx.ring(P.x, P.z, 0.3f, 2.5f, 0.9f, {2.f, 1.6f, 0.6f}); break;
+    case roster::AB_BULWARK: fx.ring(P.x, P.z, 0.3f, 4.f, 0.5f, {1.4f, 1.6f, 2.2f}); aoe(3.2f, 8, 0.5f, 7.f); P.blockK = 1; break;
+    case roster::AB_SURGE: { P.dashT = 0.3f; P.dashX = f.x; P.dashZ = f.z; P.iT = std::max(P.iT, 0.5f); V3 c{0.3f, 0.25f, 0.2f}; fx.dust(P.x, P.y + 0.2f, P.z, 8, &c, 0.4f, 0.6f);
+      for (auto& fo : foes) { Unit& u = fo.u; if (!u.used || u.hp <= 0) continue; float dx = u.x - P.x, dz = u.z - P.z, al = dx * f.x + dz * f.z, pe = std::fabs(dx * f.z - dz * f.x); if (al > 0 && al < 9.f && pe < 1.6f + u.radius) { u.hp -= 34.f * P.dmgMul; u.flashV = 1; u.stagT = std::max(u.stagT, 0.5f); u.stagV = 1; fo.kx = f.x * 7; fo.kz = f.z * 7; if (u.hp <= 0) killFoe(fo, false, al); } } break; }
+    case roster::AB_EMBER: fx.ring(P.x, P.z, 0.3f, 7.f, 0.8f, {3.f, 1.3f, 0.3f}); fx.flash(P.x, P.y + 1, P.z, {1, 0.6f, 0.2f}, 90, 0.35f); aoe(7.f, 40.f * P.dmgMul, 0.35f, 4.f); break;
+    case roster::AB_TONIC: P.hp = std::min(P.maxHp, P.hp + 40.f); P.st = 100; fx.ring(P.x, P.z, 0.3f, 2.5f, 0.8f, {0.7f, 1.8f, 0.8f}); break;
+    case roster::AB_FROST: fx.ring(P.x, P.z, 0.3f, 10.f, 0.9f, {0.7f, 1.3f, 2.2f}); for (auto& fo : foes) { Unit& u = fo.u; if (u.used && u.hp > 0 && std::hypot(u.x - P.x, u.z - P.z) < 10.f + u.radius) { u.slowT = 4.f; u.slowK = 0.4f; u.chillT = 4.f; u.stagT = std::max(u.stagT, 0.6f); u.stagV = 1; } } break;
+    case roster::AB_QUAKE: fx.ring(P.x, P.z, 0.3f, 8.f, 0.7f, {1.8f, 1.2f, 0.6f}); aoe(8.f, 30.f * P.dmgMul, 0.9f, 8.f); H.shake = std::max(H.shake, 0.6f); break; }
+}
 // ================================================================ public API
 float curve(float p) { p = clampf(p, 0, 1); return 1 - (1 - p) * (1 - p) * (1 - 0.35f * p); }   // fast early pull, flattens into the sweet spot
 bool active() { return mode != M_OFF; }
@@ -240,26 +273,30 @@ void debugDraw(float d) { dbgDraw = d; }
 void debugBot(bool on) { H.bot = on; }
 void setView(int v) { v = ((v % NVIEW) + NVIEW) % NVIEW; if (cam.init) { cam.oldEye = cam.eye; cam.oldTgt = cam.tgt; cam.oldFov = cam.fov; cam.blend = 0; } H.view = v; cam.sm = cam.eye; if (v == VW_FREE) { cam.orbitYaw = P.yaw + 2.6f; cam.orbitPitch = 0.22f; cam.orbitD = 5.5f; cam.pivot = {P.x, P.y + 1.2f, P.z}; cam.idle = 0; } char b[40]; snprintf(b, 40, "VIEW: %s", v == VW_FIRST ? "FIRST PERSON" : v == VW_THIRD ? "THIRD PERSON" : "FREE LOOK - SHOWCASE"); feed(b, 0xb3a88e); }
 void start(int m) {
-  mode = m; tm = 0; hitStop = slowMo = 0; slowK = 1; dbgDraw = -1; waveState = 0; waveT = 2.f; H = Hud(); H.mode = m; H.view = VW_FIRST; H.assist = true; snprintf(H.scoreS, 16, "0"); setAcc(); setCombo(); H.combo = 0; setCombo(); P = Player(); cam = CamState();
+  mode = m; tm = 0; hitStop = slowMo = 0; slowK = 1; dbgDraw = -1; waveState = 0; waveT = 2.f; H = Hud(); H.mode = m; H.view = VW_FIRST; H.assist = cfg::S.assist; snprintf(H.scoreS, 16, "0"); setAcc(); setCombo(); H.combo = 0; setCombo(); P = Player(); cam = CamState(); roster::init();
+  { const roster::Hero& hr = roster::at(roster::sel()); P.maxHp = P.hp = hr.hp; P.quiver = P.quiverMax = hr.quiver; P.dMul = hr.draw; P.stab = hr.stab * (hr.pass == roster::PS_STEADY ? 1.5f : hr.pass == roster::PS_TITAN ? 1.3f : 1.f); P.dmgMul = hr.dmg; P.mvMul = hr.move * (hr.pass == roster::PS_BLOOD ? 1.12f : 1.f); P.armor = hr.pass == roster::PS_STEEL ? 0.15f : 0.f; P.regen = hr.pass == roster::PS_MEDIC ? 1.5f : 0.f; P.abilMax = hr.cd; }
   for (auto& f : foes) f = Foe(); for (auto& a : arrows) a = Arrow(); for (auto& t : tgts) t = Target(); botTgt = 0; botT = 0; uid = 5000 + (uint32_t)(R() * 1000);
   P.x = P.ox = ax0; P.z = P.oz = pathZ(ax0); P.y = terrH(P.x, P.z); P.yaw = P.face = PI / 2; P.pitch = 0.0f; playerUnit = Unit(); playerUnit.used = true; playerUnit.team = 0; playerUnit.cls = FLETCHER; fx.clear();
-  if (m == M_RANGE) { buildRange(); banner("PRACTICE RANGE", "HOLD LMB TO DRAW - RELEASE AT THE GOLD MARK"); feed("Targets: static, sliding, bobbing, sweeping", 0xb3a88e); } else { P.lives = 3; banner("WAVE HUNT", "SURVIVE - BLOCK RMB - ROLL SPACE"); H.wave = 0; waveT = 3.f; }
+  if (m == M_RANGE) { buildRange(); banner("PRACTICE RANGE", "HOLD LMB TO DRAW - RELEASE AT THE GOLD MARK"); feed("Targets: static, sliding, bobbing, sweeping", 0xb3a88e); } else if (m == M_WAVES) { P.lives = 3; banner("WAVE HUNT", "SURVIVE - BLOCK RMB - ROLL SPACE"); H.wave = 0; waveT = 3.f; }
+  if (m == M_SELECT) { H.view = VW_THIRD; P.face = P.yaw = -PI / 2; selT = 0; P.relT = 9; H.bannerT = 0; }
   gfx::resetCamera();
 }
 void stop() { mode = M_OFF; slowK = 1; gfx::camO.on = false; }
 void look(float dx, float dy) {
-  if (mode == M_OFF) return;
+  if (mode == M_OFF || mode == M_SELECT) return;
   if (H.view == VW_FREE) { cam.orbitYaw -= dx * 0.0045f; cam.orbitPitch = clampf(cam.orbitPitch + dy * 0.0045f, -0.2f, 1.45f); cam.idle = 0; return; }
-  if (P.down) return; float s = 0.0021f * (P.drawing ? 0.62f : 1.f) * (P.blocking > 0.5f ? 0.8f : 1.f); P.yaw -= dx * s; P.pitch = clampf(P.pitch - dy * s, -1.3f, 1.3f); lagX += dx * 0.0009f; lagY += dy * 0.0009f; lagX = clampf(lagX, -0.06f, 0.06f); lagY = clampf(lagY, -0.06f, 0.06f);
+  if (P.down) return; float s = 0.0021f * cfg::S.sens * (P.drawing ? 0.62f : 1.f) * (P.blocking > 0.5f ? 0.8f : 1.f); if (cfg::S.invertY) dy = -dy; P.yaw -= dx * s; P.pitch = clampf(P.pitch - dy * s, -1.3f, 1.3f); lagX += dx * 0.0009f; lagY += dy * 0.0009f; lagX = clampf(lagX, -0.06f, 0.06f); lagY = clampf(lagY, -0.06f, 0.06f);
 }
-void scroll(float dy) { if (H.view == VW_FREE) cam.orbitD = clampf(cam.orbitD - dy * 0.8f, 2.2f, 45.f); else if (H.view == VW_THIRD) cam.dist = clampf(cam.dist - dy * 0.3f, 2.0f, 6.f); }
+void scroll(float dy) { if (mode == M_SELECT) { heroStep(dy > 0 ? -1 : 1); return; } if (H.view == VW_FREE) cam.orbitD = clampf(cam.orbitD - dy * 0.8f, 2.2f, 45.f); else if (H.view == VW_THIRD) cam.dist = clampf(cam.dist - dy * 0.3f, 2.0f, 6.f); }
 void keyPress(int k) {
   if (mode == M_OFF) return;
-  if (k == 'V') setView(H.view + 1); else if (k == 'G') { H.assist = !H.assist; feed(H.assist ? "Arc assist ON" : "Arc assist OFF", 0xb3a88e); } else if (k == 'B') { H.bot = !H.bot; feed(H.bot ? "Auto-archer ON" : "Auto-archer OFF", 0xb3a88e); }
+  if (mode == M_SELECT) { if (k == 263 || k == 'A') heroStep(-1); else if (k == 262 || k == 'D') heroStep(1); else if (k == 13 || k == 32) stop(); return; }
+  if (k == 'E') { useAbility(); return; }
+  if (k == cfg::S.key[cfg::ACT_VIEW]) setView(H.view + 1); else if (k == cfg::S.key[cfg::ACT_ASSIST]) { H.assist = !H.assist; feed(H.assist ? "Arc assist ON" : "Arc assist OFF", 0xb3a88e); } else if (k == 'B') { H.bot = !H.bot; feed(H.bot ? "Auto-archer ON" : "Auto-archer OFF", 0xb3a88e); }
   else if (k == 'R') start(mode); else if (k == 13 && H.ended) stop();
 }
 void update(float dtReal, const Input& in0) {
-  if (mode == M_OFF) return; dtReal = std::min(dtReal, 0.05f); tm += dtReal; float ts = 1;
+  if (mode == M_OFF) return; dtReal = std::min(dtReal, 0.05f); tm += dtReal; if (mode == M_SELECT) { selectUpdate(dtReal); return; } float ts = 1;
   if (hitStop > 0) { hitStop -= dtReal; ts = 0.03f; } else if (slowMo > 0) { slowMo -= dtReal; ts = lerpf(1.f, 0.3f, std::min(1.f, slowMo / 0.3f)); if (slowMo < 0.3f) ts = lerpf(1.f, 0.3f, slowMo / 0.3f); } slowK = ts;
   Input in = in0; bool botOn = H.bot || H.view == VW_FREE; if (botOn) { in.lmb = in.rmb = in.roll = false; botThink(dtReal, in); }
   float dt = dtReal * ts; int n = std::max(1, (int)std::ceil(dt / (1.f / 120))); float h = dt / n; for (int i = 0; i < n; i++) { stepPlayer(h, in); stepWorld(h); in.roll = false; }
@@ -278,18 +315,19 @@ void update(float dtReal, const Input& in0) {
 void camera(float dt) {
   if (mode == M_OFF) return; dt = std::min(dt, 0.05f); V3 eye, tgt; float fov; float kick = 0;
   float dk = P.drawing ? curve(P.draw) : 0.f; (void)kick;
-  if (H.view == VW_FIRST) {
+  if (mode == M_SELECT) { const FigAsset* fa = roster::cur(); float sc = fa->scale; eye = {P.x - (3.4f + 1.5f * sc), P.y + 0.3f + 1.25f * sc, P.z + 0.9f}; tgt = {P.x, P.y + 0.3f + 1.0f * sc, P.z}; fov = 0.62f; }
+  else if (H.view == VW_FIRST) {
     V3 d = camDirRaw(); float yaw = P.yaw + P.swayX + P.kickY + (P.hitDir > 0 ? 1.f : -1.f) * P.hitK * 0.02f, pitch = P.pitch + P.swayY + P.kickP; d = fwdOf(yaw, pitch); eye = eyePos(); if (P.down) { eye.y -= 0.0f; d = fwdOf(yaw, std::max(-0.9f, pitch - 0.9f * std::min(1.f, P.downT * 2))); }
-    tgt = eye + d * 20.f; fov = 1.10f - 0.20f * dk - 0.06f * H.zoomK + (P.speed > 5.5f ? 0.04f : 0.f);
-    float sh = H.shake * 0.01f; eye.x += (R() - 0.5f) * sh; eye.y += (R() - 0.5f) * sh; eye.z += (R() - 0.5f) * sh;
+    tgt = eye + d * 20.f; fov = cfg::S.fov * (PI / 180.f) - 0.22f * dk - 0.06f * H.zoomK + (P.speed > 5.5f ? 0.04f * (cfg::S.reduceMotion ? 0.f : 1.f) : 0.f);
+    float sh = H.shake * 0.01f * cfg::effShake(); eye.x += (R() - 0.5f) * sh; eye.y += (R() - 0.5f) * sh; eye.z += (R() - 0.5f) * sh;
   } else if (H.view == VW_THIRD) {
     V3 r = rightOf(P.yaw), d = fwdOf(P.yaw + P.swayX + P.kickY, P.pitch + P.swayY + P.kickP); float aim = P.drawing ? dk : 0.f; float shoulder = lerpf(0.55f, 0.85f, aim) + (P.blocking > 0.5f ? 0.1f : 0.f); float D = lerpf(cam.dist, cam.dist * 0.62f, aim);
     float ph = 1.55f - (P.rollT > 0 ? 0.5f * std::sin(std::min(1.f, P.rollT / ROLL_T) * PI) : 0.f) - (P.down ? 0.9f : 0.f); V3 piv{P.x + r.x * 0.1f, P.y + ph, P.z + r.z * 0.1f}; V3 des = piv + r * shoulder - d * D;
     if (!cam.init) cam.sm = des; float k = 1 - std::exp(-17 * dt); cam.sm = cam.sm + (des - cam.sm) * k;   // spring-damped follow
     V3 tp = piv + r * shoulder * 0.9f; V3 seg = cam.sm - tp; float L = len(seg); float t; V3 ps = piv + r * (shoulder * 0.9f);
     if (L > 0.01f && gfx::rayWorld(ps.x, ps.y, ps.z, cam.sm.x, cam.sm.y, cam.sm.z, t)) { float nl = std::max(0.35f, t * L - 0.3f); cam.sm = ps + seg * (nl / L); }
-    float gy = terrH(cam.sm.x, cam.sm.z) + 0.35f; if (cam.sm.y < gy) cam.sm.y = gy; eye = cam.sm; tgt = eye + fwdOf(P.yaw + P.swayX + P.kickY, P.pitch + P.swayY + P.kickP) * 25.f; fov = 0.95f - 0.17f * dk - 0.05f * H.zoomK;
-    float sh = H.shake * 0.012f; eye.x += (R() - 0.5f) * sh; eye.y += (R() - 0.5f) * sh;
+    float gy = terrH(cam.sm.x, cam.sm.z) + 0.35f; if (cam.sm.y < gy) cam.sm.y = gy; eye = cam.sm; tgt = eye + fwdOf(P.yaw + P.swayX + P.kickY, P.pitch + P.swayY + P.kickP) * 25.f; fov = (0.95f * cfg::S.fov / 70.f) - 0.17f * dk - 0.05f * H.zoomK;
+    float sh = H.shake * 0.012f * cfg::effShake(); eye.x += (R() - 0.5f) * sh; eye.y += (R() - 0.5f) * sh;
   } else {
     cam.idle += dt; if (cam.idle > 3.5f) cam.orbitYaw += 0.18f * dt; V3 want{P.x, P.y + 1.15f, P.z}; cam.pivot = cam.pivot + (want - cam.pivot) * (1 - std::exp(-4 * dt));
     float cp = std::cos(cam.orbitPitch); V3 off{std::sin(cam.orbitYaw) * cp, std::sin(cam.orbitPitch), std::cos(cam.orbitYaw) * cp}; eye = cam.pivot + off * cam.orbitD; float t; V3 pv = cam.pivot; if (gfx::rayWorld(pv.x, pv.y, pv.z, eye.x, eye.y, eye.z, t)) eye = pv + (eye - pv) * std::max(0.1f, t - 0.04f);
@@ -319,9 +357,10 @@ void arrowGeo(V3 tip, V3 d, float len_, bool view) {
 }  // namespace
 void buildShapes() {
   for (int k = 0; k < 4; k++) shWn[k] = shVn[k] = 0; if (mode == M_OFF) return;
+  if (mode == M_SELECT) { V3 b{P.x, terrH(P.x, P.z), P.z}; wCyl(b - V3{0, 0.02f, 0}, b + V3{0, 0.2f, 0}, 1.35f, C(0x3a3a38), 0.9f); wCyl(b + V3{0, 0.2f, 0}, b + V3{0, 0.29f, 0}, 1.1f, C(0x55524a), 0.85f); wCyl(b + V3{0, 0.29f, 0}, b + V3{0, 0.305f, 0}, 1.14f, C(0xe0a33c), 0.5f, 0.3f, 1.6f); return; }
   // world arrows & projectiles
   for (const Arrow& a : arrows) { if (!a.on) continue;
-    if (a.own == 0) { V3 d = a.stuck ? V3{a.vx, a.vy, a.vz} : norm(V3{a.vx, a.vy, a.vz}); arrowGeo({a.x, a.y, a.z}, d, 0.8f, false); }
+    if (a.own == 0) { V3 d = a.stuck ? V3{a.vx, a.vy, a.vz} : norm(V3{a.vx, a.vy, a.vz}); V3 tp{a.x, a.y, a.z}; if (a.stuck) { float emb = a.tg >= 0 ? 0.12f : 0.34f, sink = a.life < 1.2f ? (1.2f - a.life) * 0.6f : 0.f; tp = tp + d * emb; tp.y -= sink; } arrowGeo(tp, d, 0.8f, false); }
     else { V3 c{a.x, a.y, a.z}; V3 col = C(MON[(int)a.pw].boss ? 0xff7a3a : MON[(int)a.pw].ranged ? 0x6aff9a : 0xa8c070); put(shW, shWn, SH_SPHERE, ball(c, 0.16f), col, 0.5f, 0, 6.f); put(shW, shWn, SH_SPHERE, ball(c - norm(V3{a.vx, a.vy, a.vz}) * 0.3f, 0.1f), col, 0.5f, 0, 4.f); } }
   // targets
   static const uint32_t RC[5] = {0xe8e0cc, 0x1c1c20, 0x2a5ea8, 0xc83a2a, 0xf0c030}; static const float RR[5] = {1.0f, 0.82f, 0.6f, 0.36f, 0.14f};
@@ -332,26 +371,42 @@ void buildShapes() {
   // ballistic arc preview
   if (nDots) { for (int i = 0; i < nDots; i++) put(shW, shWn, SH_SPHERE, ball(dots[i], 0.035f + 0.00055f * (float)i), C(0xffe9a0), 0.5f, 0, 5.f); }
   if (landOk) put(shW, shWn, SH_SPHERE, ball(landPt, 0.1f), H.sweet > 0.5f ? C(0xffd24a) : C(0xffb070), 0.5f, 0, 7.f);
-  // first-person view-model: bow with deformable limbs + string, nocked arrow, hands
-  if (H.view != VW_FIRST || P.down) return;
+  // first-person view-model: bow (deformable limbs + string), arrow resting on the grip, gloved bow hand, draw hand hooked on the string
+  if (H.view != VW_FIRST || P.down || mode == M_SELECT) return;
   M4 cw = camWorld(gfx::camO.eye, gfx::camO.tgt); V3 rt{cw.m[0], cw.m[1], cw.m[2]}, up{cw.m[4], cw.m[5], cw.m[6]}, bk{cw.m[8], cw.m[9], cw.m[10]}, eye = gfx::camO.eye;
   auto W = [&](float x, float y, float z) { return eye + rt * x + up * y + bk * z; }; auto Wd = [&](float x, float y, float z) { return norm(rt * x + up * y + bk * z); };
-  float p = P.drawing ? P.draw : 0.f, e = P.drawing ? curve(p) : 0.f, blk = P.blocking, spr = clampf((P.speed - 4.8f) / 2.f, 0, 1) * (P.drawing ? 0.f : 1.f); float tmv = tm;
-  float rel = P.relT < 0.5f ? std::exp(-P.relT * 14.f) : 0.f, vib = rel * std::cos(P.relT * 75.f) * 0.05f;
-  float gx = lerpf(-0.30f, -0.15f, e), gy = lerpf(-0.31f, -0.15f, e), gz = lerpf(-0.80f, -0.74f, e); float tilt = lerpf(0.22f, 0.04f, e);
-  gx = lerpf(gx, -0.02f, blk); gy = lerpf(gy, -0.07f, blk); gz = lerpf(gz, -0.66f, blk); gz += rel * 0.06f * (P.relT < 0.5f ? 1 : 0) + P.blockK * 0.04f; gy += rel * 0.015f;
-  gx += 0.012f * std::sin(tmv * 1.15f) - lagX * 0.5f + spr * 0.1f; gy += 0.010f * std::sin(tmv * 1.55f + 1.f) + lagY * 0.5f - spr * 0.1f + std::sin(P.bob * 2.f) * 0.008f * std::min(1.f, P.speed / 4.f); gz += spr * 0.05f + std::sin(P.bob) * 0.006f * std::min(1.f, P.speed / 4.f);
+  const float mo = cfg::S.reduceMotion ? 0.2f : 1.f;
+  float e = P.drawing ? curve(P.draw) : 0.f, blk = P.blocking, spr = clampf((P.speed - 4.8f) / 2.f, 0, 1) * (P.drawing ? 0.f : 1.f), tmv = tm;
+  float ease = e * e * (3.f - 2.f * e), lift = smooth(0.f, 0.3f, e), mv = std::min(1.f, P.speed / 4.f);
+  float rl = P.relT < 0.6f ? P.relT : 9.f, ov = rl < 0.6f ? std::exp(-rl * 9.f) * std::cos(rl * 62.f) : 0.f, kick = rl < 0.5f ? std::exp(-rl * 14.f) : 0.f;
+  float held = P.drawing && P.holdT > 0.9f ? std::min(1.f, (P.holdT - 0.9f) / 1.f) : 0.f;   // over-hold tremble
+  float gx = lerpf(-0.27f, -0.085f, lift), gy = lerpf(-0.29f, -0.155f, lift), gz = lerpf(-0.66f, -0.76f, lift);
+  gx = lerpf(gx, -0.03f, blk); gy = lerpf(gy, -0.10f, blk); gz = lerpf(gz, -0.64f, blk); gz += kick * 0.06f; gy += kick * 0.02f;
+  gx += (0.010f * std::sin(tmv * 1.15f) - lagX * 0.5f + spr * 0.10f) * mo + held * 0.004f * nz(tmv * 24, 5);
+  gy += (0.010f * std::sin(tmv * 1.55f + 1.f) + 0.004f * std::sin(tmv * 1.9f) + lagY * 0.5f - spr * 0.10f + std::sin(P.bob * 2.f) * 0.008f * mv) * mo + held * 0.004f * nz(tmv * 27, 6);
+  gz += (spr * 0.05f + std::sin(P.bob) * 0.006f * mv) * mo;
   if (P.stagT > 0) { gx += 0.05f * nz(tmv * 30, 1); gy += 0.04f * nz(tmv * 33, 2); }
-  float ang = lerpf(tilt, 1.35f, blk); V3 U = Wd(std::sin(ang), std::cos(ang), 0), F = Wd(lerpf(0.02f, 0.14f, e), lerpf(0.02f, 0.10f, e) + spr * 0.1f, -1.f); V3 G = W(gx, gy, gz); if (blk > 0.05f) F = norm(F + Wd(-0.1f, 0, 0) * blk);
-  float bend = 0.28f + 0.72f * e, L = 0.38f; V3 wood = C(0x7a4a26), tipc = C(0xd8cfae), leather = C(0x5a3a24), sleeve = C(0x2e3a2e), strc = C(0xe8dcc0);
-  V3 prev[2]; for (int sg = 0; sg < 2; sg++) prev[sg] = G; const int N = 8;
-  auto limb = [&](float s) { float sgn = s < 0 ? -1.f : 1.f, a_ = std::fabs(s); return G + U * (s * L * (1 - 0.1f * bend * a_ * a_)) - F * (bend * 0.2f * a_ * a_ * (0.7f + 0.3f * a_)) + F * (0.02f * (1 - a_ * a_)) * sgn * 0.f; };
-  for (int i = 0; i < N; i++) for (int sg = -1; sg <= 1; sg += 2) { float s0 = sg * (float)i / N, s1 = sg * (float)(i + 1) / N; V3 a0 = limb(s0), a1 = limb(s1); float th = 0.011f * (1 - 0.5f * (float)i / N); putV(SH_CYL, seg(a0, a1, th * 1.1f, th * 0.7f), wood, 0.55f, 0.f, 0.f); }
-  V3 tp = limb(1), bt = limb(-1); putV(SH_SPHERE, ball(tp, 0.016f), tipc, 0.5f, 0, 0); putV(SH_SPHERE, ball(bt, 0.016f), tipc, 0.5f, 0, 0);
-  putV(SH_CYL, seg(G - U * 0.075f, G + U * 0.075f, 0.03f, 0.03f), leather, 0.8f, 0, 0);
-  float dd = 0.07f + 0.34f * e; V3 side = norm(cross(F, U)); V3 N0 = G - F * dd + side * vib; putV(SH_CYL, seg(tp, N0, 0.0022f, 0.0022f), strc, 0.6f, 0, 0); putV(SH_CYL, seg(N0, bt, 0.0022f, 0.0022f), strc, 0.6f, 0, 0);
-  bool nocked = P.nockT <= 0 && !(P.relT < 0.25f) && blk < 0.5f; if (nocked) arrowGeo(G - F * dd + F * 0.0f + F * 0.58f, F, 0.58f, true);
-  V3 rh = N0 + side * 0.0f; putV(SH_SPHERE, ball(rh, 0.034f), leather, 0.8f, 0, 0); putV(SH_CYL, seg(rh, W(0.16f, -0.36f, -0.05f), 0.04f, 0.04f), sleeve, 0.9f, 0, 0);
-  putV(SH_SPHERE, ball(G - F * 0.01f, 0.04f), leather, 0.8f, 0, 0); putV(SH_CYL, seg(G - F * 0.03f, W(-0.22f, -0.40f, -0.12f), 0.047f, 0.047f), sleeve, 0.9f, 0, 0);
+  V3 G = W(gx, gy, gz);
+  V3 F = norm(mix3(Wd(0.10f, 0.05f + spr * 0.1f, -1.f), Wd(-0.073f, 0.015f, -0.39f), lift)); if (blk > 0.05f) F = norm(F + Wd(-0.1f, 0, 0) * blk);
+  float ang = lerpf(lerpf(0.20f, -0.16f, lift), 1.35f, blk); V3 U = Wd(std::sin(ang), std::cos(ang), 0); U = norm(U - F * dot(U, F)); V3 side = norm(cross(F, U));
+  float bend = 0.30f + 0.70f * e - 0.30f * ov, L = 0.38f; const int N = 8;
+  V3 wood = C(0x7a4a26), tipc = C(0xd8cfae), leather = C(0x4a2f1c), sleeve = C(0x2e3a2e), strc = C(0xd8ccb0), brace = C(0x8a6a3a);
+  auto limb = [&](float s) { float a_ = std::fabs(s); return G + U * (s * L * (1 - 0.1f * bend * a_ * a_)) - F * (bend * 0.2f * a_ * a_ * (0.7f + 0.3f * a_)); };
+  for (int i = 0; i < N; i++) for (int sg = -1; sg <= 1; sg += 2) { float s0 = sg * (float)i / N, s1 = sg * (float)(i + 1) / N; V3 a0 = limb(s0), a1 = limb(s1); float th = 0.012f * (1 - 0.55f * (float)i / N); putV(SH_CYL, seg(a0, a1, th * 1.15f, th * 0.7f), wood, 0.5f, 0.f, 0.f); }
+  V3 tp = limb(1), bt = limb(-1); putV(SH_SPHERE, ball(tp, 0.015f), tipc, 0.5f, 0, 0); putV(SH_SPHERE, ball(bt, 0.015f), tipc, 0.5f, 0, 0);
+  putV(SH_CYL, seg(G - U * 0.08f, G + U * 0.08f, 0.027f, 0.027f), leather, 0.8f, 0, 0);   // riser wrap
+  float dd = lerpf(0.09f, 0.40f, ease) - (rl < 0.6f ? 0.07f * ov : 0.f); V3 N0 = G - F * dd + side * (0.012f * ov) + up * (0.03f * std::sin(PI * e) * mo) + rt * (0.01f * std::sin(PI * e) * mo);
+  putV(SH_CYL, seg(tp, N0, 0.0028f, 0.0028f), strc, 0.6f, 0, 0); putV(SH_CYL, seg(N0, bt, 0.0028f, 0.0028f), strc, 0.6f, 0, 0); putV(SH_CYL, seg(N0 - U * 0.022f, N0 + U * 0.022f, 0.0042f, 0.0042f), strc, 0.6f, 0, 0);
+  bool nocked = P.nockT <= 0 && !(P.relT < 0.25f) && blk < 0.5f; if (nocked) arrowGeo(N0 + F * 0.62f, F, 0.62f, true);
+  // draw hand: palm behind the string, three fingers hooked on it, opening on release; forearm + sleeve back to the elbow
+  float op = rl < 0.22f ? 1.f - rl / 0.22f : 0.f; V3 HP = N0 - F * 0.05f - up * 0.004f;
+  putV(SH_SPHERE, ball(HP, 0.031f), leather, 0.8f, 0, 0);
+  for (int k = -1; k <= 1; k++) { V3 kn = HP + U * (k * 0.013f) + F * 0.012f, ti = N0 + U * (k * 0.011f) + (side * 0.02f - F * 0.02f + U * (k * 0.03f)) * op; putV(SH_CYL, seg(kn, ti, 0.0085f, 0.0085f), leather, 0.8f, 0, 0); }
+  V3 Er = W(0.27f + 0.05f * e, -0.40f + 0.09f * e, -0.04f + 0.06f * e); putV(SH_CYL, seg(HP - F * 0.01f, Er, 0.036f, 0.036f), sleeve, 0.9f, 0, 0); putV(SH_CYL, seg(HP - F * 0.04f, HP - F * 0.09f, 0.040f, 0.040f), brace, 0.7f, 0, 0); putV(SH_CYL, seg(Er, W(0.52f, -0.78f, 0.35f), 0.05f, 0.05f), sleeve, 0.9f, 0, 0);
+  // bow hand: fist around the riser (fingers in front, thumb across), forearm to the elbow
+  putV(SH_SPHERE, ball(G - F * 0.004f, 0.037f), leather, 0.8f, 0, 0);
+  for (int k = 0; k < 4; k++) putV(SH_SPHERE, ball(G + F * 0.03f + U * (-0.03f + 0.02f * k) - side * 0.004f, 0.0125f), leather, 0.8f, 0, 0);
+  putV(SH_SPHERE, ball(G + side * 0.032f - F * 0.008f + U * 0.018f, 0.014f), leather, 0.8f, 0, 0);
+  V3 El = W(-0.34f - 0.02f * e, -0.43f, -0.24f); putV(SH_CYL, seg(G - F * 0.03f, El, 0.040f, 0.040f), sleeve, 0.9f, 0, 0); putV(SH_CYL, seg(G - F * 0.05f, G - F * 0.11f - U * 0.01f, 0.044f, 0.044f), brace, 0.7f, 0, 0); putV(SH_CYL, seg(El, W(-0.62f, -0.82f, 0.30f), 0.052f, 0.052f), sleeve, 0.9f, 0, 0);
 }
 }  // namespace pl

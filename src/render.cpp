@@ -1,6 +1,7 @@
 // Renderer: HDR scene (MSAA) -> AO + height fog + point-light in-scatter -> 4-level bloom -> DOF + AgX + grade (ported from 40-post.js),
 // world (terrain/grass/sky/props/waylights), camera, lights and unit visuals. Everything is instanced; per-frame work uses static buffers only.
 #include "render.h"
+#include "roster.h"
 #include "shaders.h"
 #include "meshes.h"
 #include "figure.h"
@@ -207,15 +208,17 @@ static void figUnit(const Unit& u, bool mon, FigAnim& an, float dt, float t, boo
 }
 static FigAnim animPl;
 static void figPlayer(float dt) {
-  const FigAsset& a = gFH[FLETCHER]; const pl::Player& P = pl::P; if (!a.ok || nfd >= 4 + MAXMON) return; FigAnim& an = animPl; if (an.id != 1u) { an = FigAnim(); an.id = 1u; }
-  float sc = a.scale, x = P.x, z = P.z, y = terrH(x, z); int ac = a.clipIx("aimed"); if (ac < 0) ac = a.clipIx("attack"); float hit = ac >= 0 && a.clips[ac].hit > 0.01f ? a.clips[ac].hit : 0.5f, au = -1;
+  const FigAsset& a = *roster::cur(); const pl::Player& P = pl::P; if (!a.ok || nfd >= 4 + MAXMON) return; FigAnim& an = animPl; static GLuint lastVao = 0; if (an.id != 1u || lastVao != a.vao) { an = FigAnim(); an.id = 1u; lastVao = a.vao; }
+  const int bSp = figBone(a, "spine", 2), bNk = figBone(a, "neck", 4), bLU = figBone(a, "lUp", 6), bRU = figBone(a, "rUp", 9);
+  float sc = a.scale, x = P.x, z = P.z, y = terrH(x, z) + (pl::H.mode == pl::M_SELECT ? 0.30f : 0.f); int ac = a.clipIx("aimed"); if (ac < 0) ac = a.clipIx("attack"); float hit = ac >= 0 && a.clips[ac].hit > 0.01f ? a.clips[ac].hit : 0.5f, au = -1;
   if (P.drawing) au = hit * 0.985f * pl::curve(P.draw); else if (P.relT < 0.5f && ac >= 0) au = hit + (1 - hit) * (P.relT / 0.5f);   // anticipation (draw) -> release -> follow-through -> recovery
   bool combat = P.drawing || P.blocking > 0.3f || P.relT < 2.f || pl::H.view == pl::VW_FREE;
   figAnimUpdate(an, a, dt, P.speed / sc, combat, ac, au, P.stagT > 0.3f ? 1.f : 0.f, P.down);
   // additive procedural layer: roll, directional hit reaction, raised-bow block
   if (P.rollT > 0) { float u = std::min(1.f, P.rollT / pl::ROLL_T), s2 = u * u * (3 - 2 * u); figAddMove(an, a, 0, 0, -0.38f * std::sin(u * PI), 0); figAddRot(an, a, 0, 1, 0, 0, TAU * s2, a.head[1]); }
-  if (P.hitK > 0.02f && !P.down) { float g = P.hitDir; figAddRot(an, a, 2, -std::cos(g), 0, std::sin(g), 0.55f * P.hitK, a.head[2]); figAddRot(an, a, 4, std::sin(g), 0, std::cos(g) * 0.3f, 0.25f * P.hitK, a.head[4]); }
-  if (P.blocking > 0.02f && !P.down) { figAddRot(an, a, 6, 1, 0, 0, -1.45f * P.blocking, a.head[6]); figAddRot(an, a, 9, 1, 0, 0, -0.9f * P.blocking, a.head[9]); }
+  if (P.hitK > 0.02f && !P.down) { float g = P.hitDir; figAddRot(an, a, bSp, -std::cos(g), 0, std::sin(g), 0.55f * P.hitK, a.head[bSp]); figAddRot(an, a, bNk, std::sin(g), 0, std::cos(g) * 0.3f, 0.25f * P.hitK, a.head[bNk]); }
+  if (P.blocking > 0.02f && !P.down) { figAddRot(an, a, bLU, 1, 0, 0, -1.45f * P.blocking, a.head[bLU]); figAddRot(an, a, bRU, 1, 0, 0, -0.9f * P.blocking, a.head[bRU]); }
+  if (P.vic > 0.02f) { figAddRot(an, a, bLU, 1, 0, 0, -2.5f * P.vic, a.head[bLU]); figAddRot(an, a, bRU, 1, 0, 0, -2.7f * P.vic, a.head[bRU]); }
   if (P.down) { figAddMove(an, a, 0, 0, 0.012f * std::sin(time_ * 2.4f) * (1 + 0), 0); }
   figAnimPose(an, a); FigDraw& d = fdraw[nfd++]; d.a = &a; d.mat = an.mat; d.dissolve = 0; d.disH = std::max(1.f, a.height); d.glow = 1; d.shadow = true; d.dim = P.down ? 0.55f : 1.f; d.lantern = a.lant; for (int k = 0; k < 3; k++) d.disCol[k] = a.disCol[k];
   d.model = mul(translate(x, y, z), mul(rotY(P.face), scale4(sc, sc, sc))); float fl = P.hurtT > 0 ? P.hurtT * 0.6f : 0.f; d.flash[0] = fl * 1.2f; d.flash[1] = fl * 0.5f; d.flash[2] = fl * 0.3f;
