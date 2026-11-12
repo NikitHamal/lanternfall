@@ -10,6 +10,12 @@ Vision: a proper fantasy immersive third-person game (Athran-style kingdom defen
 - [x] Debug: `--xcmd side` (profile camera), `--xcmd fxN` (force activity N on NPCs + player), `talkclose`
 - [x] Local sysroot + Xvfb capture pipeline (see LANTERNFALL_STATUS.md v2.2.0)
 
+## Shipped v3.0.0 - "Solid Realm"
+- [x] FIX smooth pale terrain ramps (shader rock window now matches the CPU bake); debug hooks LF_TDBG / LF_ONLYK / LF_SKIPK / LF_NEAR
+- [x] FIX walk-through gatehouse corners + invisible walls at barn/chapel ends: exact oriented-box colliders; LF_COLAUDIT mesh-vs-collider audit
+- [x] verified: citizens are real clothed humans, people/animals/monsters are solid, lanterns hang from hooks/belts (night shot), app heap peak 104 MB
+- [ ] next: box colliders for the remaining procedural kinds (mill, tent, ore) + derive colliders from mesh footprint automatically; chunk streaming; same-tree distance sweep for LOD parity
+
 ## Next up (ordered)
 1. [ ] Walk/run/sprint polish: slope foot IK (raycast per foot), turn-in-place, start/stop steps, strafe + backpedal sets, crouch + sneak
 2. [ ] Melee: full-body attack arcs (weight shift, foot slide), directional block, stagger types, finishers

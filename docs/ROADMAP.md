@@ -56,6 +56,7 @@ spells, gather by day, survive demon hordes at night, explore lost kingdoms and 
 | v1.8.0 | ~6.5 k (dense) + `src/xkingdom.inc` | 26 MB | 1.6 MB | Athran kingdom build/siege loop, tower defense AI, warband orders, 4 spells + mana, rifts, Noble Hart mount, FPV bow fix |
 
 | v2.1.0 | ~7.4 k + xtown.inc | 26 MB | ~1.8 MB | schedules, talk menu, merchants, quests, tiers, save |
+| v3.0.0 | ~8.4 k dense | 26 MB | 2.6 MB | exact box colliders, terrain ramp fix, collision audit, heap peak 104 MB |
 
 ## Next session candidates (pick ONE major pillar)
 1. Persistent Kingdom Save/Load (`save/kingdom.json`) + Multi-Tier Structure Upgrades (Timber -> Stone -> Citadel) & Siege Catapults

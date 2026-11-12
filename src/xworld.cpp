@@ -128,9 +128,10 @@ void auditKind(int k, const float* vp, size_t nv, size_t stride, const uint16_t*
   for (size_t i = 0; i < nv; i++) { x0 = std::min(x0, vp[i * stride]); x1 = std::max(x1, vp[i * stride]); z0 = std::min(z0, vp[i * stride + 2]); z1 = std::max(z1, vp[i * stride + 2]); }
   for (size_t i = 0; i < n; i++) { const Col_& c = cols[base + i]; x0 = std::min(x0, c.x - c.r); x1 = std::max(x1, c.x + c.r); z0 = std::min(z0, c.z - c.r); z1 = std::max(z1, c.z + c.r); }
   if (x1 - x0 > 80.f || z1 - z0 > 80.f) { cols.resize(base); return; }
-  int solid = 0, miss = 0, cover = 0, ghost = 0; const float st = 0.25f;
+  if (n == 1 && !cols[base].box) { static float rs[4096]; int m = 0; for (size_t i = 0; i < nv && m < 4096; i++) { float y = vp[i * stride + 1]; if (y < 0.6f || y > 1.2f) continue; float r = std::sqrt(vp[i * stride] * vp[i * stride] + vp[i * stride + 2] * vp[i * stride + 2]); if (r < 3.f) rs[m++] = r; } if (m > 8) { std::sort(rs, rs + m); fprintf(stderr, "TRUNK kind %d mesh r(min %.2f p25 %.2f p50 %.2f) collider r %.2f\n", k, rs[0], rs[m / 4], rs[m / 2], cols[base].r); } }
+  int solid = 0, miss = 0, cover = 0, ghost = 0; const float st = 0.25f; const float yTop = getenv("LF_COLAUDIT")[0] == '2' ? 1.0f : 2.2f;
   for (float z = z0; z <= z1; z += st) for (float x = x0; x <= x1; x += st) {
-    bool sol = false; for (size_t t = 0; t + 2 < ni && !sol; t += 3) { float a[3], b[3], c[3]; P(ix[t], a); P(ix[t + 1], b); P(ix[t + 2], c); float ymin = std::min({a[1], b[1], c[1]}), ymax = std::max({a[1], b[1], c[1]}); if (ymin > 2.2f || ymax < 0.3f) continue;
+    bool sol = false; for (size_t t = 0; t + 2 < ni && !sol; t += 3) { float a[3], b[3], c[3]; P(ix[t], a); P(ix[t + 1], b); P(ix[t + 2], c); float ymin = std::min({a[1], b[1], c[1]}), ymax = std::max({a[1], b[1], c[1]}); if (ymin > yTop || ymax < 0.3f) continue;
       auto seg = [&](const float* p, const float* q) { float ex = q[0] - p[0], ez = q[2] - p[2], L2 = ex * ex + ez * ez; float u = L2 > 1e-9f ? clampf(((x - p[0]) * ex + (z - p[2]) * ez) / L2, 0.f, 1.f) : 0.f; float dx = x - (p[0] + ex * u), dz = z - (p[2] + ez * u); return dx * dx + dz * dz < 0.14f * 0.14f; };
       if (seg(a, b) || seg(b, c) || seg(c, a)) { sol = true; break; }
       float d = (b[2] - c[2]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[2] - c[2]); if (std::fabs(d) < 1e-9f) continue; float l1 = ((b[2] - c[2]) * (x - c[0]) + (c[0] - b[0]) * (z - c[2])) / d, l2 = ((c[2] - a[2]) * (x - c[0]) + (a[0] - c[0]) * (z - c[2])) / d; if (l1 >= 0 && l2 >= 0 && l1 + l2 <= 1) sol = true; }
