@@ -63,3 +63,15 @@ Vision: a proper fantasy immersive third-person game (Athran-style kingdom defen
 - Combat: melee, bow, spells, mounts, troop commands, bosses, demon hordes at night
 - People: schedules, crafting, quests, dialogue, factions, crime
 - Tech: chunk streaming, GPU culling, real-GPU profiling, audio mix, save / load for everything
+
+## v2.5.0 (Realm Polish III - "The Great Continent") - shipped
+- [x] 4 km world, taller/wider mountain ranges, hills, 12 more lakes, up to 15 rivers, 9 falls, 72 settlements
+- [x] Water mesh flattened at banks (killed the ice-wall shorelines), falls pool levels, all falls rendered, calmer water colour
+- [x] Sand only on gentle low ground, no 100 m needle spires
+## Next session candidates (Realm Polish IV - pick ONE)
+1. [ ] **Streaming + memory**: chunk the 4 km height / info / water textures (free the CPU copies, ~100 MB), bigger world or second continent, LOD tiles
+2. [ ] **Rivers II**: bank mud strip, rocks + foam, flow-map normals, depth fade, remaining fall-lip slivers, bridges for the new rivers, river fords
+3. [ ] **Settlement audit**: every wall gets 2 gates + 2 stairs, patrols path via stairs, guards verified at deck height (needs camera spot beside towers), roads between all 72 settlements
+4. [ ] **Animals II**: deer / wolves / rabbits / fish, mount + dismount animation, Blender-quality bodies
+5. [ ] **Biomes**: desert, swamp, tundra with unique flora + ground; weather; caves
+6. [ ] Triplanar rock + cliff scree, boulders at slope feet
