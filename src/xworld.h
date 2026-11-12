@@ -14,7 +14,10 @@ enum Kind : uint8_t {
   K_ORE, K_RIFT, K_PURIFIED, K_SPELL_FIRE, K_SPELL_FROST,
   // v1.9 living world: flora + articulated fauna parts (procedural, see xmesh_new.inc)
   K_BIRCH, K_CHERRY, K_JUNGLE, K_WILLOW, K_PALM, K_FERN, K_MUSHROOM, K_REEDS, K_LILY, K_SPIRE, K_FBUSH,
-  K_FA_DOG, K_FA_CAT, K_FA_HEN, K_FA_SHEEP, K_FA_COW, K_FA_HORSE, K_FA_BIRD, K_FA_LEG, K_FA_WING, K_PETAL, K_STAIR, NK
+  K_FA_DOG, K_FA_CAT, K_FA_HEN, K_FA_SHEEP, K_FA_COW, K_FA_HORSE, K_FA_BIRD, K_FA_LEG, K_FA_WING, K_PETAL, K_STAIR,
+  // v2.6 anatomy-driven fauna parts (xmesh_fauna.inc): bodies, neck+head, tails, 2-bone legs, saddle
+  K_AN_BHORSE, K_AN_BCOW, K_AN_BSHEEP, K_AN_BDOG, K_AN_BCAT, K_AN_BDEER, K_AN_BHEN, K_AN_BRABBIT, K_AN_HHORSE, K_AN_HCOW, K_AN_HSHEEP, K_AN_HDOG, K_AN_HCAT, K_AN_HDEER,
+  K_AN_THORSE, K_AN_TCOW, K_AN_TDOG, K_AN_TCAT, K_AN_UPF, K_AN_UPH, K_AN_LOH, K_AN_LOP, K_AN_SADDLE, NK
 };
 struct Obj { float x, y, z, ry, sx, sy, sz; uint8_t kind, r, g, b, sway; };      // tint bytes: 128 == 1.0
 struct Settle { int type = 0, nation = 0, size = 1; float x = 0, z = 0, y = 0, r = 30, gateX = 0, gateZ = 1; char name[28] = {0}; int poi = -1; };   // type: 0 capital 1 village 2 hamlet 3 fort 4 camp 5 ruins 6 graveyard 7 border gate

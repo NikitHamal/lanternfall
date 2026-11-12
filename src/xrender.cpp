@@ -33,7 +33,9 @@ const KindDef KD[NK] = {
   // v1.9 flora: birch, cherry, jungle, willow, palm, fern, mushroom, reeds, lily, spire, flowering bush
   {nullptr, SLOT_BIRCH, 100, 520, true}, {nullptr, SLOT_CHERRY, 110, 560, true}, {nullptr, SLOT_JUNGLE, 120, 600, true}, {nullptr, SLOT_WILLOW, 100, 520, true}, {nullptr, -1, 480, 0, true}, {nullptr, -1, 90, 0, false}, {nullptr, -1, 80, 0, false}, {nullptr, -1, 150, 0, false}, {nullptr, -1, 130, 0, false}, {nullptr, -1, 900, 0, true}, {nullptr, -1, 160, 0, false},
   // fauna: dog, cat, hen, sheep, cow, horse, bird, leg, wing, petal
-  {nullptr, -1, 260, 0, true}, {nullptr, -1, 200, 0, true}, {nullptr, -1, 160, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 340, 0, true}, {nullptr, -1, 360, 0, true}, {nullptr, -1, 420, 0, false}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 420, 0, false}, {nullptr, -1, 60, 0, false}, {nullptr, -1, 300, 0, true}};
+  {nullptr, -1, 260, 0, true}, {nullptr, -1, 200, 0, true}, {nullptr, -1, 160, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 340, 0, true}, {nullptr, -1, 360, 0, true}, {nullptr, -1, 420, 0, false}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 420, 0, false}, {nullptr, -1, 60, 0, false}, {nullptr, -1, 300, 0, true},
+  // v2.6 anatomy fauna parts (23)
+  {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}, {nullptr, -1, 300, 0, true}};
 static_assert(sizeof(KD) / sizeof(KD[0]) == NK, "kind table size");
 PMesh pm[NSLOT]; FigAsset propAsset[NK]; std::vector<IData> data[NK]; std::vector<int> cellStart[NK]; std::vector<IData> stage[NSLOT]; int stageN[NSLOT];
 GLuint pTerr, pWater, pSky, pProp, pPropShadow, pGrass, pFall, pMist, pFogP, pDownP, pFinalP, pMapP, pFigX, vaoEmpty;
@@ -225,9 +227,13 @@ void main(){ vU = aUv; vM = vec2(aMat.z*255., aMat.y); gl_Position = uVP*(mat4(i
 )GLSL";
 const char* LEAF_SHADOW_FS = R"GLSL(
 in vec2 vU; in vec2 vM;
-void main(){ if (vM.x > 11.5) { if (leafTex(vU, vM.y).x < .5) discard; } }
+void main(){ if (vM.x > 11.5 && vM.x < 12.5) { if (leafTex(vU, vM.y).x < .5) discard; } }
 )GLSL";
-const char* LEAF_BRANCH = R"GLSL(} else if (ty > 11.5) {
+const char* LEAF_BRANCH = R"GLSL(} else if (ty > 12.5) {
+    float sa = n3(rp*vec3(120.,120.,40.)), sb = n3(rp*vec3(48.,48.,16.)+3.7), sc = n3(rp*vec3(230.,230.,80.)+9.), dap = fb3(rp*7.+4.);
+    col *= (.68 + .38*sa + .26*sb) * (.88 + .24*sc) * (1. + vMat.w*(dap-.5)*1.7);
+    h = sa*.0016 + sb*.0032 + sc*.0006; rough = .84 - .14*sb; fol = 0.;
+  } else if (ty > 11.5) {
     vec4 lt = leafTex(uv, vMat.y); if (lt.x < .35) discard; leafA = lt.x;
     col *= (.6 + .72*lt.z) * (.68 + .52*lt.y); col = mix(col, col*vec3(1.38,1.2,.62), smoothstep(.84, 1., lt.z)*.55); col *= 1. - .5*lt.w;
     rough = .6; metal = 0.; h = lt.z*.004; fol = 1.;
@@ -237,7 +243,7 @@ std::string leafPatch(std::string fs) {
   auto rep = [&](const char* a, const std::string& b) { size_t i = fs.find(a); if (i == std::string::npos) { fprintf(stderr, "leafPatch miss: %s\n", a); return; } fs.replace(i, strlen(a), b); };
   rep("void main(){\n  float ty = vMat.z;", std::string(LEAF_GLSL) + "void main(){\n  float ty = vMat.z;"); rep("float fol = 0.;", "float fol = 0.; float leafA = 1.;");
   rep("} else {\n    float gr = n2(vec2(uv.x*150.", std::string(LEAF_BRANCH));
-  rep("vec3 N = normalize(vN); if (!gl_FrontFacing) N = -N;", "vec3 N = normalize(vN); if (!gl_FrontFacing && ty < 11.5) N = -N;"); rep("oC = vec4(c, 1.); }", "oC = vec4(c, leafA); }");
+  rep("vec3 N = normalize(vN); if (!gl_FrontFacing) N = -N;", "vec3 N = normalize(vN); if (!gl_FrontFacing && (ty < 11.5 || ty > 12.5)) N = -N;"); rep("oC = vec4(c, 1.); }", "oC = vec4(c, leafA); }");
   return fs;
 }
 const char* GRASS_VS = R"GLSL(

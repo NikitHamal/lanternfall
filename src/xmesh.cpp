@@ -55,10 +55,12 @@ void merlonsLine(MB& b, float x0, float x1, float z, float y, int n, float hw, f
 #include "xmesh_in.inc"
 #include "xmesh_new.inc"
 #include "xtree.inc"
+#include "xmesh_fauna.inc"
 void arrowMesh(MB& b) { Sty sh = wood(0x8a6a3c, 0.9f), hd = metal(0x9aa0a6), fl = cloth(0xe8e0cc), fl2 = cloth(0xa83030); box(b, 0, 0, 0, 0.011f, 0.011f, 0.46f, sh); box(b, 0, 0, 0.5f, 0.016f, 0.016f, 0.06f, hd); box(b, 0, 0, 0.56f, 0.008f, 0.008f, 0.03f, hd); for (int k = 0; k < 3; k++) { float a = k * 2.0944f; boxR(b, 0.f, 0.f, -0.38f, 0.002f + 0.0f, 0.03f, 0.1f, 0, k == 0 ? fl2 : fl); (void)a; } box(b, 0, 0, -0.38f, 0.03f, 0.002f, 0.1f, fl); }
 void build(int kind, MB& b) {
   if (kind == xw::K_INHOME || kind == xw::K_INHALL || kind == xw::K_INCHAPEL) { buildInterior(kind, b); return; } if (kind == xw::K_ARROW) { arrowMesh(b); return; }
   if (kind == xw::K_OAK) { buildOak(b, 0); return; } if (kind == xw::K_PINE) { buildPine(b, 0); return; } if (kind == xw::K_PINEY) { buildPine(b, 1); return; } if (kind == xw::K_BIRCH) { buildBirchN(b); return; } if (kind == xw::K_CHERRY) { buildCherryN(b); return; } if (kind == xw::K_JUNGLE) { buildJungleN(b); return; } if (kind == xw::K_PALM) { buildPalmN(b); return; } if (kind == xw::K_WILLOW) { buildWillowN(b); return; }
+  if (kind >= xw::K_AN_BHORSE && kind <= xw::K_AN_SADDLE) { buildAnimal(kind, b); return; }
   if (kind >= xw::K_BIRCH && kind <= xw::K_FBUSH) { buildFlora(kind, b); return; } if (kind >= xw::K_FA_DOG && kind <= xw::K_PETAL) { buildFauna(kind, b); return; }
   switch (kind) {
     case xw::K_STAIR: { Sty s = stone(0x78746b), s2 = stone(0x6a665e, 0.7f), wd = wood(0x6b4a2b, 0.8f); const int N = 13; const float tr = 0.92f, rs = 5.9f / N;
