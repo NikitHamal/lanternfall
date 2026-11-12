@@ -40,7 +40,7 @@ const KindDef KD[NK] = {
 static_assert(sizeof(KD) / sizeof(KD[0]) == NK, "kind table size");
 PMesh pm[NSLOT]; FigAsset propAsset[NK]; std::vector<uint32_t> ids[NK]; std::vector<int> cellStart[NK]; int stageMax[NSLOT]; std::vector<IData> stage[NSLOT]; int stageN[NSLOT];
 GLuint pTerr, pWater, pSky, pProp, pPropShadow, pGrass, pFall, pMist, pFogP, pDownP, pFinalP, pMapP, pFigX, vaoEmpty;
-GLuint texH, texInfoA, texInfoB, texWater, texMap, texSh, fboSh; GLuint terrIbo[2], terrVao; int terrNI[2];
+GLuint texRoad, texH, texInfoA, texInfoB, texWater, texMap, texSh, fboSh; GLuint terrIbo[2], terrVao; int terrNI[2];
 GLuint grassVao, grassVbo, grassIbo, flowerVao, flowerVbo, flowerIbo, fallVao, fallVbo, mistVao, mistVbo; int grassNI, flowerNI, fallNI;
 GLuint fboMS, texMSc, texMSd, fboScene, texScene, texDepth, fboA, texA, fboB[4], texB[4]; int bw[4], bh[4], W = 2, H = 2, curMsaa = -1, winW = 1280, winH = 720; bool inited = false;
 constexpr int SHS = 2048; M4 shadowVP; Env E; V3 camPos; M4 camW, invProj, invVP; bool hasProj = false;
@@ -72,7 +72,7 @@ float vn2(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); return mix(mix(
 float fbm2(vec2 p){ return .5*vn2(p)+.25*vn2(p*2.03+7.1)+.125*vn2(p*4.1+3.3)+.0625*vn2(p*8.3+1.7); }
 )GLSL";
 const char* TERR_FS = R"GLSL(
-in vec3 vWp; out vec4 oC; uniform sampler2D uHeight, uInfoA, uInfoB; uniform float uWorld, uTime;
+in vec3 vWp; out vec4 oC; uniform sampler2D uHeight, uInfoA, uInfoB, uRoad; uniform float uWorld, uTime;
 void main(){
   vec2 uv = vWp.xz/uWorld+.5; vec4 A = texture(uInfoA, uv), B = texture(uInfoB, uv); float e = 2.; float eu = e/uWorld;
   float hx = (texture(uHeight, uv+vec2(eu,0.)).r - texture(uHeight, uv-vec2(eu,0.)).r)*1024., hz = (texture(uHeight, uv+vec2(0.,eu)).r - texture(uHeight, uv-vec2(0.,eu)).r)*1024.;
@@ -92,6 +92,15 @@ void main(){
   col = mix(col, col*vec3(1.16,1.04,.68), gk*smoothstep(.45,.85,pm)*.55);
   col = mix(col, col*vec3(.78,.98,.9), gk*smoothstep(.55,.2,pm2)*.18);
   col = mix(vec3(dot(col, vec3(.33))), col, mix(1., .78, gk));
+  // roads: per-pixel from the 0.125 m distance field (ragged verge, ruts of dirt + pebbles) - the 2 m ground texture alone gave blocky polygon edges
+  float rdq = texture(uRoad, uv).r*31.875, rw = max(.28, fp*1.1);
+  float rdn = rdq + (vn2(vWp.xz*1.3) - .5)*.9 + (vn2(vWp.xz*5.) - .5)*.35;
+  float rmk = smoothstep(2.2 + rw, 2.2 - rw, rdn);
+  if (rmk > .001) { float rf = 1. - smoothstep(30., 160., d);
+    vec3 rc = mix(vec3(.36,.27,.16), vec3(.27,.21,.14), n2) * (.84 + .3*vn2(vWp.xz*3.5));
+    rc *= mix(.74, 1., smoothstep(0., 1.5, 2.2 - rdn)); rc = mix(rc, rc*vec3(.82,.9,.7), smoothstep(.0,.45,vn2(vWp.xz*.8 + 17.) - .35)*.5*smoothstep(1.3,.4,2.2 - rdn));
+    rc = mix(rc, vec3(.52,.47,.4), step(.84, hsh(vec3(floor(vWp.xz*8.), 3.)))*.5*rf);
+    col = mix(col, rc, rmk); }
   // cliff faces: warm/cool strata, vertical cracks, lichen & moss
   float wob = vn2(vWp.xz*.05)*3.;
   float band = .5 + .5*sin(vWp.y*1.55 + wob*2. + n2*1.4), band2 = mix(.5, .5 + .5*sin(vWp.y*5.3 + wob*3.), 1. - smoothstep(.2, .55, .85*fp));
@@ -105,7 +114,7 @@ void main(){
   // snow: soft blue shade, sparkle
   vec3 sn = vec3(.93,.96,1.04) * (.9 + .1*vn2(vWp.xz*2.5));
   col = mix(col, sn, snowK);
-  float h = rockK * (rk3*.55 + rk4*.12 + (1.-cr)*-.10 + n2*.2) + snowK*n3*.03;
+  float h = rockK * (rk3*.55 + rk4*.12 + (1.-cr)*-.10 + n2*.2) + snowK*n3*.03 + rmk*((n3 - .5)*.07 - .05*smoothstep(1.4, 0., rdn));
   N = bump(N, vWp, h, .9*near);
   if (B.a > .1) { float ang = B.b*3.14159; float st = .5 + .5*sin(dot(vWp.xz, vec2(cos(ang), sin(ang)))*5.9); col *= .78 + .36*st; }
   col *= 1. - .28*B.g; float sh = shadowAt(vWp, N);
@@ -351,6 +360,7 @@ bool init() {
   pGrass = gfx::program(V(GRASS_VS).c_str(), V(XL.c_str(), GRASS_FS).c_str(), "x-grass"); pFall = gfx::program(V(FALL_VS).c_str(), V(NOISE, FALL_FS).c_str(), "x-fall"); pMapP = gfx::program(V(MAP_VS).c_str(), V(MAP_FS).c_str(), "x-map");
   pFogP = gfx::program(sh::FS_VS, sh::FOG_FS, "x-fog"); pDownP = gfx::program(sh::FS_VS, sh::DOWN_FS, "x-down"); pFinalP = gfx::program(sh::FS_VS, sh::FINAL_FS, "x-final"); glGenVertexArrays(1, &vaoEmpty);
   // world textures
+  tex2D(texRoad, GS, GS, GL_R8, GL_RED, GL_UNSIGNED_BYTE, roadQ.data(), GL_LINEAR, GL_CLAMP_TO_EDGE, false);
   tex2D(texH, GS, GS, GL_R16, GL_RED, GL_UNSIGNED_SHORT, Hq.data(), GL_LINEAR, GL_CLAMP_TO_EDGE, false);
   tex2D(texInfoA, GS, GS, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, nullptr, GL_LINEAR, GL_CLAMP_TO_EDGE, false); tex2D(texInfoB, GS, GS, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, nullptr, GL_LINEAR, GL_CLAMP_TO_EDGE, false); tex2D(texWater, GS, GS, GL_RGBA16, GL_RGBA, GL_UNSIGNED_SHORT, nullptr, GL_LINEAR, GL_CLAMP_TO_EDGE, false);
   { const int SR = 64; std::vector<uint8_t> sA((size_t)GS * SR * 4), sB((size_t)GS * SR * 4); std::vector<uint16_t> sW((size_t)GS * SR * 4);   // ground bake streamed in 64-row strips (~2 MB scratch instead of 70 MB of CPU copies)
@@ -455,9 +465,9 @@ void render(const Frame& f, const FigDraw* figs, int nfig) {
   glDisable(GL_DEPTH_TEST); glDepthMask(GL_FALSE); glUseProgram(pSky); sm(pSky, "uInvVP", invVP); s3(pSky, "uCam", f.eye); s3(pSky, "uSunDir", E.sunDir); s3(pSky, "uMoonDir", norm({-E.sunDir.x * 0.7f, std::max(0.3f, -E.sunDir.y), 0.45f})); s3(pSky, "uZen", E.zen); s3(pSky, "uHor", E.hor); s3(pSky, "uGnd", E.gnd); s3(pSky, "uSunCol", E.sunCol);
   s1(pSky, "uNight", E.night); s1(pSky, "uDay", E.day); s1(pSky, "uTime", f.time); s1(pSky, "uCover", E.cover); s1(pSky, "uSunVis", E.sunVis); s1(pSky, "uTw", E.tw); glBindVertexArray(vaoEmpty); glDrawArrays(GL_TRIANGLES, 0, 3); glEnable(GL_DEPTH_TEST); glDepthMask(GL_TRUE);
   // textures: 0 height, 1 infoA, 2 infoB, 3 water
-  glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, texH); glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, texInfoA); glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, texInfoB); glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, texWater); glActiveTexture(GL_TEXTURE0);
+  glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, texH); glActiveTexture(GL_TEXTURE1); glBindTexture(GL_TEXTURE_2D, texInfoA); glActiveTexture(GL_TEXTURE2); glBindTexture(GL_TEXTURE_2D, texInfoB); glActiveTexture(GL_TEXTURE3); glBindTexture(GL_TEXTURE_2D, texWater); glActiveTexture(GL_TEXTURE0 + 6); glBindTexture(GL_TEXTURE_2D, texRoad); glActiveTexture(GL_TEXTURE0);
   // terrain (fine levels first for early-z)
-  setLitX(pTerr, pl, plc); si(pTerr, "uHeight", 0); si(pTerr, "uInfoA", 1); si(pTerr, "uInfoB", 2); s1(pTerr, "uWorld", WORLD); s1(pTerr, "uTime", f.time); si(pTerr, "uN", TN); glBindVertexArray(terrVao); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrIbo[0]);
+  setLitX(pTerr, pl, plc); si(pTerr, "uHeight", 0); si(pTerr, "uInfoA", 1); si(pTerr, "uInfoB", 2); si(pTerr, "uRoad", 6); s1(pTerr, "uWorld", WORLD); s1(pTerr, "uTime", f.time); si(pTerr, "uN", TN); glBindVertexArray(terrVao); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrIbo[0]);
   for (int L = 0; L < NL; L++) { float sp = CS * (float)(1 << L), sn = sp * 2.f; float cx = CS * 0.5f + std::floor((f.eye.x - CS * 0.5f) / sn + 0.5f) * sn, cz = CS * 0.5f + std::floor((f.eye.z - CS * 0.5f) / sn + 0.5f) * sn; s2(pTerr, "uCenter", cx, cz); s1(pTerr, "uSp", sp); s1(pTerr, "uBias", L == 0 ? 0.f : 0.03f * sp); int r = L == 0 ? 0 : 1; glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrIbo[r]); glDrawElements(GL_TRIANGLES, terrNI[r], GL_UNSIGNED_SHORT, nullptr); drawCalls++; }
   // props + figures
   setLitX(pProp, pl, plc); s1(pProp, "uTime", f.time); s1(pProp, "uDissolve", 0.f); s1(pProp, "uDisH", 1.f); glUniform3f(U(pProp, "uDisCol"), 0, 0, 0); glUniform3f(U(pProp, "uFlash"), 0, 0, 0); s1(pProp, "uDim", 1.f); s1(pProp, "uGlow", E.glow); drawProps(pProp, false);
