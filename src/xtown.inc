@@ -64,6 +64,7 @@ int questCount() { int c = 0; for (const Quest& q : QS) if (q.on) c++; return c;
 int makeQuest(const Npc& giver, bool military) {
   Quest* slot = nullptr; for (Quest& q : QS) if (!q.on) { slot = &q; break; } if (!slot) return -1; int st = giver.settle >= 0 ? giver.settle : 0; const Settle& S0 = settles[st]; Quest q; q.on = true; q.settle = st; q.x = S0.x; q.z = S0.z;
   float r = rng(); int type = military ? (r < 0.65f ? QT_SLAY : r < 0.85f ? QT_SCOUT : QT_HUNT) : (r < 0.22f ? QT_HUNT : r < 0.45f ? QT_WOOD : r < 0.60f ? QT_STONE : r < 0.80f ? QT_SCOUT : QT_SLAY);
+  for (const Quest& o : QS) if (o.on && o.type == type && (type == QT_HUNT || type == QT_WOOD || type == QT_STONE)) { type = QT_SLAY; break; }
   if (type == QT_SCOUT) { int best = -1; float bd = 1e30f; for (size_t i = 0; i < pois.size(); i++) { if (pois[i].found) continue; bool taken = false; for (const Quest& o : QS) if (o.on && o.type == QT_SCOUT && o.poi == (int)i) taken = true; if (taken) continue; float d = dist2(pois[i].x, pois[i].z, S0.x, S0.z) * (0.7f + 0.6f * hfr((int)i + dayIdx)); if (d < bd) { bd = d; best = (int)i; } }
     if (best < 0) type = QT_HUNT; else { q.poi = best; q.x = pois[best].x; q.z = pois[best].z; snprintf(q.title, sizeof q.title, "SCOUT: %.26s", pois[best].name); q.need = 1; q.reward = 60 + (int)(std::sqrt(bd) / 12.f); } }
   q.type = type;
