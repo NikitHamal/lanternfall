@@ -143,17 +143,17 @@ void main(){
   g2 = vec2(vn2(q2+vec2(e,0.))-vn2(q2-vec2(e,0.)), vn2(q2+vec2(0.,e))-vn2(q2-vec2(0.,e)));
   vec2 g3 = vec2(vn2(q3+vec2(e,0.))-vn2(q3-vec2(e,0.)), vn2(q3+vec2(0.,e))-vn2(q3-vec2(0.,e)));
   vec3 N = normalize(vec3(-(g1*a1 + g2*.5*a1 + g3*.25*a1).x*1.6, 1., -(g1*a1 + g2*.5*a1 + g3*.25*a1).y*1.6));
-  vec3 V = normalize(uCam - vWp); float fres = .02 + .98*pow(1. - clamp(dot(N,V),0.,1.), 5.); fres = clamp(fres, .03, .6);
+  vec3 V = normalize(uCam - vWp); float fres = .02 + .98*pow(1. - clamp(dot(N,V),0.,1.), 5.); fres = clamp(fres, .03, .38);
   vec3 bed = texture(uInfoA, uv).rgb; bed *= bed;
-  vec3 shallow = vec3(.07,.27,.24), deep = vec3(.01,.07,.11); vec3 body = mix(shallow, deep, 1. - exp(-depth*.55)); body = mix(bed*.55, body, 1. - exp(-depth*1.4)) * uAmb;
-  vec3 R = reflect(-V, N); vec3 refl = skyR(R)*vec3(.78,.88,.98)*.82; vec3 col = mix(body, refl, fres);
+  vec3 shallow = vec3(.05,.24,.22), deep = vec3(.006,.05,.085); vec3 body = mix(shallow, deep, 1. - exp(-depth*.55)); body = mix(bed*.55, body, 1. - exp(-depth*1.4)) * uAmb;
+  vec3 R = reflect(-V, N); vec3 refl = skyR(R)*vec3(.62,.74,.88)*.62; vec3 col = mix(body, refl, fres);
   vec3 Hh = normalize(uSunDir + V); float spec = pow(max(dot(N,Hh),0.), 220.) * 2.4 + pow(max(dot(N,Hh),0.), 28.)*.06; col += uSunCol*spec*uSunVis;
   float n3 = vn2(p*2.6 + vec2(t*.2, -t*.1)), n4 = vn2(p*7.1 - fd*t*1.5);
   float foam = smoothstep(.5, .0, depth) * (.35 + .65*smoothstep(.35,.7,n3));
   foam += river*smoothstep(.5,.85,vn2(p*.9 - fd*t*2.4)*vn2(p*2.2 - fd*t*3.1)*2.2)*.35;
   for (int i = 0; i < 8; i++) { if (uFalls[i].w < .5) continue; float dd = length(p - uFalls[i].xy); foam += smoothstep(uFalls[i].z, 1., dd) * (smoothstep(uFalls[i].z, 1., dd)) * (.2 + .8*smoothstep(.3,.8,n4 + .25*n3)) * .5; }
-  foam = clamp(foam, 0., 1.); col = mix(col, vec3(.9,.94,.96)*uAmb*1.05 + uSunCol*.04*uSunVis, foam*.62);
-  float alpha = mix(.45, .97, 1. - exp(-depth*1.5)); alpha = mix(alpha, 1., max(foam*.9, fres*.5)); oC = vec4(col, alpha); }
+  foam = clamp(foam, 0., 1.); col = mix(col, vec3(.82,.88,.9)*uAmb*.95 + uSunCol*.03*uSunVis, foam*.5);
+  float alpha = mix(.45, .97, 1. - exp(-depth*1.5)); alpha = mix(alpha, 1., max(foam*.8, fres*.4)); oC = vec4(col, alpha); }
 )GLSL";
 const char* FALL_VS = R"GLSL(
 layout(location=0) in vec2 aP; uniform mat4 uVP; uniform vec4 uPos; uniform vec4 uDir; uniform vec3 uRight, uUp; uniform int uMode; out vec2 vUv; out float vY; out vec3 vWp;
@@ -170,9 +170,9 @@ void main(){
   if (uMode == 0) { float t = uTime, x = vUv.x, y = vUv.y;
     float a1 = vn2(vec2(x*3.1, y*.22 - t*3.4)), a2 = vn2(vec2(x*8.7 + 3., y*.35 - t*5.1)), a3 = vn2(vec2(x*19. + 9., y*.6 - t*7.5)), lump = vn2(vec2(x*1.4 + 7., y*.12 - t*1.9));
     float st = a1*.45 + a2*.35 + a3*.25; float white = smoothstep(.5, .86, st + .3*lump - .1);
-    vec3 col = mix(vec3(.14,.33,.42), vec3(.52,.74,.84), st); col = mix(col, vec3(.99), white*.9); col *= uAmb*1.05; col += uSunCol*.03;
+    vec3 col = mix(vec3(.14,.33,.42), vec3(.52,.74,.84), st); col = mix(col, vec3(.95,.97,.98), white*.72); col *= uAmb*1.05; col += uSunCol*.03;
     float foam = smoothstep(.22, .0, vY) * (.55 + .6*vn2(vUv*4.2 - vec2(0., t*2.))); col = mix(col, vec3(1.)*uAmb*1.15, clamp(foam, 0., 1.)*.85);
-    float a = clamp(.26 + .38*st + .5*white + foam*.5, .26, .95); oC = vec4(col, a); }
+    float a = clamp(.2 + .34*st + .42*white + foam*.4, .2, .9); oC = vec4(col, a); }
   else { float r = length(vUv); if (r > 1.) discard; float n = vn2(vUv*2.5 + vY); float a = pow(1.-r, 2.)*(.14 + .1*n); oC = vec4(vec3(.92,.96,1.)*uAmb*1.05, a); } }
 )GLSL";
 const char* PROP_VS = R"GLSL(
@@ -447,11 +447,11 @@ void render(const Frame& f, const FigDraw* figs, int nfig) {
   // water
   glEnable(GL_BLEND); glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); glUseProgram(pWater); sm(pWater, "uVP", vpM); si(pWater, "uHeight", 0); si(pWater, "uInfoA", 1); si(pWater, "uWater", 3); s1(pWater, "uWorld", WORLD); s1(pWater, "uTime", f.time); s1(pWater, "uAmb", 0.22f + 0.7f * E.day + 0.1f * E.tw); s3(pWater, "uCam", f.eye);
   s3(pWater, "uSunDir", E.keyDir); s3(pWater, "uSunCol", E.keyCol * 0.5f); s3(pWater, "uZen", E.zen); s3(pWater, "uHor", E.hor); s1(pWater, "uSunVis", std::max(E.sunVis, E.night * 0.35f)); si(pWater, "uN", TN);
-  { float fl[32] = {0}; for (size_t i = 0; i < falls.size() && i < 8; i++) { fl[i * 4] = falls[i].x + falls[i].dx * 3.5f; fl[i * 4 + 1] = falls[i].z + falls[i].dz * 3.5f; fl[i * 4 + 2] = 7.f; fl[i * 4 + 3] = 1.f; } glUniform4fv(U(pWater, "uFalls"), 8, fl); }
+  { float fl[32] = {0}; bool used[32] = {false}; int nf = (int)falls.size() < 32 ? (int)falls.size() : 32; for (int k = 0; k < 8 && k < nf; k++) { int bi = -1; float bd = 1e30f; for (int i = 0; i < nf; i++) { if (used[i]) continue; float dd = (falls[i].x - f.eye.x) * (falls[i].x - f.eye.x) + (falls[i].z - f.eye.z) * (falls[i].z - f.eye.z); if (dd < bd) { bd = dd; bi = i; } } if (bi < 0) break; used[bi] = true; fl[k * 4] = falls[bi].x + falls[bi].dx * 3.5f; fl[k * 4 + 1] = falls[bi].z + falls[bi].dz * 3.5f; fl[k * 4 + 2] = 7.f; fl[k * 4 + 3] = 1.f; } glUniform4fv(U(pWater, "uFalls"), 8, fl); }
   glBindVertexArray(terrVao); for (int L = 0; L < NL; L++) { float sp = CS * (float)(1 << L), sn = sp * 2.f; float cx = CS * 0.5f + std::floor((f.eye.x - CS * 0.5f) / sn + 0.5f) * sn, cz = CS * 0.5f + std::floor((f.eye.z - CS * 0.5f) / sn + 0.5f) * sn; s2(pWater, "uCenter", cx, cz); s1(pWater, "uSp", sp); int r = L == 0 ? 0 : 1; glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrIbo[r]); glDrawElements(GL_TRIANGLES, terrNI[r], GL_UNSIGNED_SHORT, nullptr); drawCalls++; }
   // waterfalls + mist
   { glUseProgram(pFall); sm(pFall, "uVP", vpM); s1(pFall, "uTime", f.time); s1(pFall, "uAmb", 0.22f + 0.8f * E.day + 0.1f * E.tw); s3(pFall, "uSunCol", E.keyCol * 0.3f); V3 right{camW.m[0], camW.m[1], camW.m[2]}, up{camW.m[4], camW.m[5], camW.m[6]}; s3(pFall, "uRight", right); s3(pFall, "uUp", up);
-    for (size_t i = 0; i < falls.size() && i < 8; i++) { const Fall& fa = falls[i]; float dd = (fa.x - f.eye.x) * (fa.x - f.eye.x) + (fa.z - f.eye.z) * (fa.z - f.eye.z); if (dd > 1100.f * 1100.f) continue; glUniform4f(U(pFall, "uPos"), fa.x, fa.yTop, fa.z, fa.w); glUniform4f(U(pFall, "uDir"), fa.dx, fa.dz, fa.yBot, fa.yTop - fa.yBot);
+    for (size_t i = 0; i < falls.size(); i++) { const Fall& fa = falls[i]; float dd = (fa.x - f.eye.x) * (fa.x - f.eye.x) + (fa.z - f.eye.z) * (fa.z - f.eye.z); if (dd > 1100.f * 1100.f) continue; glUniform4f(U(pFall, "uPos"), fa.x, fa.yTop, fa.z, fa.w); glUniform4f(U(pFall, "uDir"), fa.dx, fa.dz, fa.yBot, fa.yTop - fa.yBot);
       si(pFall, "uMode", 0); glBindVertexArray(fallVao); glDrawElements(GL_TRIANGLES, fallNI, GL_UNSIGNED_SHORT, nullptr); si(pFall, "uMode", 1); glDepthMask(GL_FALSE); glBindVertexArray(mistVao); glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, 14); glDepthMask(GL_TRUE); drawCalls += 2; } }
   glDisable(GL_BLEND);
   if (curMsaa > 0) { glBindFramebuffer(GL_READ_FRAMEBUFFER, fboMS); glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboScene); glBlitFramebuffer(0, 0, W, H, 0, 0, W, H, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST); }
