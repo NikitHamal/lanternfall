@@ -187,7 +187,7 @@ static void weatherUpdate(float dt) {
 bool active() { return on; } float danger() { int c = 0; for (int k = 0; k < nMonL; k++) { const Npc& m = npcs[monList[k]]; if (m.alive && m.role == R_MON && dist2(m.x, m.z, P.x, P.z) < 35 * 35 && m.tgtKind == 1) c++; } return std::min(1.f, c * 0.35f); }
 int poiCount() { return (int)pois.size(); } const char* poiName(int i) { return pois[i].name; } bool poiFound(int i) { return pois[i].found; } void poiPos(int i, float& x, float& z) { x = pois[i].x; z = pois[i].z; }
 void resize(int w, int h) { if (built) xr::resize(w, h); }
-void start() {
+void start() { gFigNoBaked = true;
   if (!built) { built = true; generate(7); buildEnters(); initKingdomWorld(); xr::init();
     memset(WID, 0, sizeof WID); for (int b = 0; b < FMAXB; b++) { float* o = WID + b * 12; o[0] = o[5] = o[10] = 1; }
     static const char* PK[6] = {"polyfork/apothecary", "polyfork/lamplighter", "polyfork/rimebinder", "polyfork/warden", "polyfork/reaver", "polyfork/fletcher"}; for (int i = 0; i < 6; i++) figLoad(polyHeroes[i], PK[i]);

@@ -63,14 +63,25 @@ static bool loadFig(FigAsset& a, const char* key) {
   for (int i = 0; i < a.nb; i++) a.parent[i] = (int8_t)p[i]; p += (a.nb + 3) / 4 * 4;
   memcpy(a.head, p, a.nb * 12); p += a.nb * 12; p += (a.nb + 3) / 4 * 4;
   for (int i = 0; i < a.nfx; i++) { memcpy(a.fx[i].name, p, 12); a.fx[i].name[12] = 0; p += 12; a.fx[i].bone = rd<int32_t>(p); for (int k = 0; k < 3; k++) a.fx[i].p[k] = rd<float>(p); }
-  glGenVertexArrays(1, &a.vao); glBindVertexArray(a.vao); glGenBuffers(1, &a.vbo); glBindBuffer(GL_ARRAY_BUFFER, a.vbo); glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)a.nv * 36, p, GL_STATIC_DRAW); p += (size_t)a.nv * 36;
+  glGenVertexArrays(1, &a.vao); glBindVertexArray(a.vao); glGenBuffers(1, &a.vbo); glBindBuffer(GL_ARRAY_BUFFER, a.vbo); const uint8_t* vtx = p; glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)a.nv * 36, p, GL_STATIC_DRAW); p += (size_t)a.nv * 36;
   glEnableVertexAttribArray(0); glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, (void*)0);
   glEnableVertexAttribArray(1); glVertexAttribPointer(1, 3, GL_BYTE, GL_TRUE, 36, (void*)12);
   glEnableVertexAttribArray(2); glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, 36, (void*)16);
   glEnableVertexAttribArray(3); glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 36, (void*)20);
   glEnableVertexAttribArray(4); glVertexAttribPointer(4, 4, GL_UNSIGNED_BYTE, GL_TRUE, 36, (void*)28);
   glEnableVertexAttribArray(5); glVertexAttribPointer(5, 4, GL_UNSIGNED_BYTE, GL_FALSE, 36, (void*)32);
-  glGenBuffers(1, &a.ibo); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, a.ibo); glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)a.ni * 2, p, GL_STATIC_DRAW); p += (size_t)a.ni * 2; glBindVertexArray(0);
+  glGenBuffers(1, &a.ibo); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, a.ibo); glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)a.ni * 2, p, GL_STATIC_DRAW);
+  {  // second index set without baked weapon geometry (bones wL / wR / str / arw) so socketed weapons are the only ones drawn
+    bool wb[FMAXB] = {false}; bool any = false; for (int i = 0; i < a.nb; i++) if (!strcmp(a.bone[i], "str") || !strcmp(a.bone[i], "arw")) { wb[i] = true; any = true; }
+    if (any) for (int i = 0; i < a.nb; i++) if (!strcmp(a.bone[i], "wL") || !strcmp(a.bone[i], "wR")) wb[i] = true;
+    if (any) {
+      const uint16_t* ix = (const uint16_t*)p; uint16_t* o = (uint16_t*)malloc((size_t)a.ni * 2); int no = 0, nbase = 0;
+      for (int t = 0; t < a.ni; t += 3) { if (t == a.baseNI) nbase = no; bool drop = true; for (int k = 0; k < 3; k++) { int bi = vtx[(size_t)ix[t + k] * 36 + 32]; if (bi >= a.nb || !wb[bi]) drop = false; } if (drop) continue; for (int k = 0; k < 3; k++) o[no++] = ix[t + k]; }
+      if (a.baseNI >= a.ni) nbase = no; a.baseNI2 = nbase; a.ni2 = no; glGenBuffers(1, &a.ibo2); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, a.ibo2); glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)no * 2, o, GL_STATIC_DRAW); free(o);
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, a.ibo);
+    }
+  }
+  p += (size_t)a.ni * 2; glBindVertexArray(0);
   const uint8_t* q = p; size_t total = 0;
   for (int i = 0; i < a.nclips; i++) { q += 12; uint16_t fr; memcpy(&fr, q, 2); q += 4 + 16; size_t bytes = (size_t)fr * a.nb * 14; q += bytes; total += bytes; }
   a.clipMem = total ? (int16_t*)malloc(total) : nullptr; size_t off = 0;
@@ -373,6 +384,7 @@ void figWeaponMat(const FigAsset& rig, const FigAnim& an, bool left, int wpId, c
   loc.m[12] = pos.x; loc.m[13] = pos.y; loc.m[14] = pos.z;
   out = mul(unitModel, loc);
 }
+bool gFigNoBaked = false;
 // ------------------------------------------------------------------ drawing
 void figDraw(GLuint prog, const FigDraw* d, int n, bool shadowPass) {
   static GLint lM = -1, lB, lD, lH, lC, lF, lDim, lG; static GLuint last = 0;
@@ -381,7 +393,8 @@ void figDraw(GLuint prog, const FigDraw* d, int n, bool shadowPass) {
     const FigDraw& f = d[i]; if (!f.a || !f.a->ok) continue; if (shadowPass && !f.shadow) continue; if (f.vm) glDepthRange(0.0, 0.02);
     glUniformMatrix4fv(lM, 1, GL_FALSE, f.model.m); glUniform4fv(lB, f.a->nb * 3, f.mat);
     if (!shadowPass) { glUniform1f(lD, f.dissolve); glUniform1f(lH, f.disH); glUniform3fv(lC, 1, f.disCol); glUniform3fv(lF, 1, f.flash); glUniform1f(lDim, f.dim); glUniform1f(lG, f.glow); }
-    glBindVertexArray(f.a->vao); glDrawElements(GL_TRIANGLES, f.lantern ? f.a->ni : f.a->baseNI, GL_UNSIGNED_SHORT, nullptr); if (f.vm) glDepthRange(0.0, 1.0);
+    glBindVertexArray(f.a->vao); if ((f.noBaked || gFigNoBaked) && f.a->ibo2) { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, f.a->ibo2); glDrawElements(GL_TRIANGLES, f.lantern ? f.a->ni2 : f.a->baseNI2, GL_UNSIGNED_SHORT, nullptr); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, f.a->ibo); }
+    else glDrawElements(GL_TRIANGLES, f.lantern ? f.a->ni : f.a->baseNI, GL_UNSIGNED_SHORT, nullptr); if (f.vm) glDepthRange(0.0, 1.0);
   }
 }
 // ------------------------------------------------------------------ shaders
@@ -493,5 +506,5 @@ void main(){
   oC = vec4(c, 1.); }
 )GLSL";
 bool figLoad(FigAsset& a, const char* key) { a = FigAsset(); if (!loadFig(a, key)) { free(a.clipMem); a = FigAsset(); return false; } return true; }
-void figFree(FigAsset& a) { if (a.vao) glDeleteVertexArrays(1, &a.vao); if (a.vbo) glDeleteBuffers(1, &a.vbo); if (a.ibo) glDeleteBuffers(1, &a.ibo); free(a.clipMem); a = FigAsset(); }
+void figFree(FigAsset& a) { if (a.vao) glDeleteVertexArrays(1, &a.vao); if (a.vbo) glDeleteBuffers(1, &a.vbo); if (a.ibo) glDeleteBuffers(1, &a.ibo); if (a.ibo2) glDeleteBuffers(1, &a.ibo2); free(a.clipMem); a = FigAsset(); }
 int figBone(const FigAsset& a, const char* name, int fallback) { for (int i = 0; i < a.nb; i++) if (!strcmp(a.bone[i], name)) return i; return fallback; }
