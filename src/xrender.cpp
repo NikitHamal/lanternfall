@@ -76,7 +76,7 @@ in vec3 vWp; out vec4 oC; uniform sampler2D uHeight, uInfoA, uInfoB; uniform flo
 void main(){
   vec2 uv = vWp.xz/uWorld+.5; vec4 A = texture(uInfoA, uv), B = texture(uInfoB, uv); float e = 2.; float eu = e/uWorld;
   float hx = (texture(uHeight, uv+vec2(eu,0.)).r - texture(uHeight, uv-vec2(eu,0.)).r)*1024., hz = (texture(uHeight, uv+vec2(0.,eu)).r - texture(uHeight, uv-vec2(0.,eu)).r)*1024.;
-  vec3 N = normalize(vec3(-hx, 2.*e, -hz)); vec3 col = A.rgb*A.rgb; float d = length(vWp - uCam);
+  vec3 N = normalize(vec3(-hx, 2.*e, -hz)); vec3 col = A.rgb*A.rgb; float d = length(vWp - uCam); float fp = length(fwidth(vWp))*.8;
   float n1 = vn2(vWp.xz*.35), n2 = vn2(vWp.xz*1.7), n3 = vn2(vWp.xz*7.); float det = (.8 + .4*n1) * (.9 + .2*n2) * (.93 + .14*n3); det = mix(det, 1., smoothstep(90., 420., d)); col *= det;
   float slope = 1. - N.y; float lum = dot(col, vec3(.3,.55,.15));
   float snowK = smoothstep(.62, .86, lum + .06*(n1-.5));
@@ -94,10 +94,10 @@ void main(){
   col = mix(vec3(dot(col, vec3(.33))), col, mix(1., .78, gk));
   // cliff faces: warm/cool strata, vertical cracks, lichen & moss
   float wob = vn2(vWp.xz*.05)*3.;
-  float band = .5 + .5*sin(vWp.y*1.55 + wob*2. + n2*1.4), band2 = .5 + .5*sin(vWp.y*5.3 + wob*3.);
+  float band = .5 + .5*sin(vWp.y*1.55 + wob*2. + n2*1.4), band2 = mix(.5, .5 + .5*sin(vWp.y*5.3 + wob*3.), 1. - smoothstep(.2, .55, .85*fp));
   vec3 tint = mix(vec3(.84,.9,1.02), vec3(1.14,1.0,.8), band);
-  float cr = abs(vn2(vec2(vWp.x + vWp.z, vWp.y*1.35)*1.7 + 4.) - .5)*2.; cr = smoothstep(0., .16, cr);
-  float rk3 = vn(vWp*vec3(2.4,3.2,2.4)), rk4 = vn(vWp*vec3(9.,11.,9.));
+  float cr = abs(vn2(vec2(vWp.x + vWp.z, vWp.y*1.35)*1.7 + 4.) - .5)*2.; cr = mix(1., smoothstep(0., .16, cr), 1. - smoothstep(.2, .55, 1.7*fp));
+  float rk3 = mix(.5, vn(vWp*vec3(2.4,3.2,2.4)), 1. - smoothstep(.2, .55, 3.2*fp)), rk4 = mix(.5, vn(vWp*vec3(9.,11.,9.)), 1. - smoothstep(.2, .55, 11.*fp));
   vec3 rcol = col * tint * (.62 + .5*rk3) * mix(.62, 1., cr) * (.9 + .2*band2);
   float moss = smoothstep(.48,.7, vn2(vWp.xz*.9+vWp.y*.35)) * smoothstep(.2,.8,N.y);
   rcol = mix(rcol, vec3(.16,.26,.09)*(.7+.6*rk4), moss*.55*near);
