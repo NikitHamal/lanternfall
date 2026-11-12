@@ -44,3 +44,22 @@ Vision: a proper fantasy immersive third-person game (Athran-style kingdom defen
 4. [ ] Verify animals in-engine (stand next to a horse / cow, approach, mount) with a dedicated camera spot away from walls; add animal species sounds
 5. [ ] NPC guard patrols: check posts type 1 stand exactly on deck height and can use stairs (path via decks) - add NPC stair pathing
 6. [ ] Terrain: chunk streaming + 4 km map, snow / desert / swamp biomes
+
+## v2.4.0 (Realm Polish II - "The Living Canopy") - shipped
+- [x] Procedural branching trees with alpha-tested leaf / fir-spray cards (oak, pine, young pine, birch, cherry, jungle, willow, palm), leaf-shaped shadows, alpha-to-coverage, LOD proxies per species
+- [x] Water: capped Fresnel + tinted reflections + deeper colours
+- [x] Debug: `--xcmd tr_<kind>[dN][hi]`, `LF_MESHSTAT=1`
+## Next session candidates (Realm Polish III - pick ONE major pillar)
+1. [ ] **Terrain**: bigger map (4 km, 3 m grid or chunk streaming), taller mountain massifs with cliffs / scree, plateaus, valleys, coast + beaches, snow line; triplanar rock texture
+2. [ ] **Ground cover**: grass blade LOD + clumps, ferns / bracken cards (use `leafCard`), flower meadows by biome, fallen leaves, undergrowth under trees, wind sway on cards (vertex shader)
+3. [ ] **Animals**: realistic horse / deer / cow / sheep bodies (blocked on a Blender notebook; else procedural quadruped skinning), calm approach, mount + dismount animation, hit reactions
+4. [ ] **Walls / gates / stairs audit**: every settlement wall gets a gate and 2+ stairs, guards navigate stairs (NPC stair pathing), verify guards at deck height (`--xcmd` camera spot beside a tower, not inside the wall)
+5. [ ] **Rivers / waterfalls**: bank mud strip, foam at rocks, flow-mapped normals, depth fade, pool mist
+6. [ ] **Buildings**: roof / wall materials, interiors, villages with lanes and fields
+7. [ ] Bark texture + trunk knots, tree falling when chopped, seasonal tint per biome
+## Long-term vision checklist (Athran-grade fantasy kingdom game; hundreds of sessions)
+- World: biomes (temperate, jungle, snow, desert, swamp, volcanic), lost kingdoms, caves, dungeons, day / night + weather
+- Kingdom: build / upgrade castle tiers, workers with jobs, siege engines, persistent base
+- Combat: melee, bow, spells, mounts, troop commands, bosses, demon hordes at night
+- People: schedules, crafting, quests, dialogue, factions, crime
+- Tech: chunk streaming, GPU culling, real-GPU profiling, audio mix, save / load for everything
