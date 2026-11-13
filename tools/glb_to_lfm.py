@@ -20,7 +20,7 @@ import lfm_io
 from glb_lib import load_glb
 
 ROOT = os.path.dirname(HERE)
-SRC = os.path.join(ROOT, 'assets', '3d models')
+SRC = os.path.join(ROOT, 'source_models')
 
 # name: (file, role, tris, height m, flip(yaw 180), metal, rough, mat type, extra tint)
 HUMANS = {
@@ -222,10 +222,48 @@ def pose_preview(P, T, C, bA, bB, wB, heads, out):
     Image.fromarray(np.concatenate(ims, 1)).save(out)
 
 
+def drop_outliers(P, T, Cl, H):
+    """remove stray pieces (props authored at another scale, floating FX cards) far outside the body box"""
+    bad = (P[:, 1] > 1.35 * H) | (P[:, 1] < -0.1 * H) | (np.abs(P[:, 0]) > 0.9 * H) | (np.abs(P[:, 2]) > 0.9 * H)
+    if not bad.any(): return P, T, Cl
+    keep = ~bad[T].any(1)
+    return P, T[keep], Cl
+
+
+def arms_down(P, H):
+    """T/A-pose normalisation: rotate each arm (in the XY plane about the shoulder) towards ~10 deg off vertical when the sculpt holds it > 28 deg out.
+    Torso vertices are untouched (weight is a function of position along the arm axis and distance from it)."""
+    for sgn in (1, -1):
+        sh = np.array([sgn * 0.118 * H, 0.80 * H])
+        m = (np.sign(P[:, 0]) == sgn) & (P[:, 1] > 0.25 * H) & (P[:, 1] < 0.92 * H) & (np.abs(P[:, 0]) > 0.19 * H)
+        if m.sum() < 50: continue
+        far = np.argsort(-np.abs(P[m, 0]))[:max(30, m.sum() // 30)]
+        tip = P[m][far][:, :2].mean(0)
+        d = tip - sh; L = np.linalg.norm(d)
+        ang = np.degrees(np.arctan2(abs(d[0]), -d[1]))
+        if ang < 28 or L < 0.2 * H: continue
+        da = np.radians(ang - 10.0) * -sgn * np.sign(1)  # rotate so the hand swings down (towards the body)
+        dh = d / L
+        rel = P[:, :2] - sh
+        t = (rel @ dh) / L
+        lat = np.abs(rel[:, 0] * dh[1] - rel[:, 1] * dh[0])
+        w = np.clip((t - 0.12) / 0.25, 0, 1); w = w * w * (3 - 2 * w)
+        w *= np.clip(1 - (lat - 0.09 * H) / (0.07 * H), 0, 1) * (t > 0)
+        a = da * w
+        # signs: left arm (x>0) rotates clockwise seen from +z when moving down
+        c, sn = np.cos(a), np.sin(a)
+        x = rel[:, 0] * c - rel[:, 1] * sn; y = rel[:, 0] * sn + rel[:, 1] * c
+        P[:, 0] = sh[0] + x; P[:, 1] = sh[1] + y
+        print(f'  arms {"L" if sgn > 0 else "R"}: {ang:.0f} deg -> 10')
+
+
 def build_human(name, pose=False):
     cfg = HUMANS[name]
     g = load_glb(os.path.join(SRC, cfg['f']), 1024)
     P, T, Cl = g['P'].astype(np.float64), g['T'], g['Cl']
+    ref = np.percentile(P[:, 1], 95) - np.percentile(P[:, 1], 1)   # stray props authored at another scale would wreck the height fit
+    bad = (P[:, 1] > np.percentile(P[:, 1], 1) + 1.5 * ref) | (np.abs(P[:, 0]) > 1.5 * ref) | (np.abs(P[:, 2]) > 1.5 * ref)
+    if bad.any(): T = T[~bad[T].any(1)]
     if name == 'artorias':  # file contains Artorias (skin 0) and Sif the wolf: keep the biped (taller than wide) cluster
         pass
     # normalise: feet on y=0, centre x/z on the torso, scale to H
@@ -239,10 +277,15 @@ def build_human(name, pose=False):
     P[:, 0] -= np.median(P[tor, 0]); P[:, 2] -= np.median(P[tor, 2]) - 0.0
     if cfg['flip']:
         P[:, 0] *= -1; P[:, 2] *= -1
+    P, T, Cl = drop_outliers(P, T, Cl, cfg['H'])
+    arms_down(P, cfg['H'])
     Pd, Td = decimate(P.astype(np.float32), T, cfg['tris'])
     Pd, Td, used = clean(Pd, Td)
     Cd = transfer_color(P, Cl, Pd)
     Cd = fit_colors(Cd)
+    lum = Cd.mean(1); p90 = np.percentile(lum, 90)
+    gain = float(np.clip(0.30 / max(p90, 1e-3), 0.55, 3.5))   # auto exposure: very dark PBR albedo is lifted, pure-white placeholder albedo is pulled to steel
+    Cd = np.clip(Cd * gain, 0, 1)
     N = vnormals(Pd, Td)
     cur = curvature(Pd, Td, N)
     donor = lfm_io.read(os.path.join(ROOT, 'assets', 'warden.lfm'))
@@ -263,7 +306,7 @@ def build_human(name, pose=False):
     key = name[:15]
     lfm_io.write_like(donor, v, Td.astype(np.uint16), key, os.path.join(out, name + '.lfm'), height=1.8, hpY=1.8, scale=cfg['H'] / 1.8)
     sz = os.path.getsize(os.path.join(out, name + '.lfm'))
-    print(f'{name}: src {len(g["P"])}v/{len(g["T"])}t -> {nv}v/{len(Td)}t, {sz / 1e6:.2f} MB, hand x {abs(heads[8][0]):.2f}, scale {cfg["H"] / 1.8:.3f}')
+    print(f'{name}: gain {gain:.2f} src {len(g["P"])}v/{len(g["T"])}t -> {nv}v/{len(Td)}t, {sz / 1e6:.2f} MB, hand x {abs(heads[8][0]):.2f}, scale {cfg["H"] / 1.8:.3f}')
     if pose:
         pose_preview(v['p'].astype(np.float64), Td, Cd, bA, bB, wB, heads * k, os.path.join('/tmp/agentA_cache', name + '_pose.png'))
     return cfg['H'] / 1.8

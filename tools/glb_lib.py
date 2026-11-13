@@ -160,6 +160,10 @@ def load_glb(path, max_tex=1024):
             fac = np.array(pbr.get('baseColorFactor', [1, 1, 1, 1]), np.float32)
             col = np.tile(fac[:3], (n0, 1))
             bt = pbr.get('baseColorTexture')
+            sg = mat.get('extensions', {}).get('KHR_materials_pbrSpecularGlossiness')
+            if sg is not None:   # spec/gloss workflow: diffuse == albedo
+                fac = np.array(sg.get('diffuseFactor', [1, 1, 1, 1]), np.float32)
+                col = np.tile(fac[:3], (n0, 1)); bt = sg.get('diffuseTexture')
             if bt is not None and 'TEXCOORD_%d' % bt.get('texCoord', 0) in at:
                 tex = j['textures'][bt['index']]
                 src = tex.get('source')

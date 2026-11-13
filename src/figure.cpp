@@ -493,15 +493,15 @@ void main(){
     float rd = abs(n2(vec2(uv.x*80., uv.y*13.))-.5)*2., s2 = fb3(rp*14.);
     h = rd*.008 + s2*.008; col *= .45+.5*rd+.4*s2;
     { float bl = dot(col, vec3(.2126,.7152,.0722)); col = mix(vec3(bl)*vec3(1.42,1.,.58), col, .35); col *= 1.2 + .5*fb3(rp*4.+vec3(2.)); }
-  } else if (ty < 10.5) {
-    em += col * vMat.w * uGlow; col *= .05; mudK = 0.;
-  } else if (ty < 11.5) {
-    float gr = n2(vec2(uv.x*150., uv.y*18.)); h = gr*.001; col *= .7+.3*big+.12*gr;
-    float st = smoothstep(.5,.7,fb3(rp*11.)); col = mix(col, col*vec3(.5,.42,.3), st*.7);
-  } else {
+  } else if (ty > 11.5) {
     /* type 12: photo-baked Sketchfab albedo (vertex colours from the source textures); only a faint grain + micro bump so it reads as material, not paint */
     float fr = length(fwidth(rp)); float g3 = mix(.5, n3(rp*140.), 1. - smoothstep(.004, .02, fr));
     h = g3*.0008 + fine*.0003; col *= .94 + .12*g3; col *= 1. + .35*max(vCav,0.)*.4;
+  } else if (ty < 10.5) {
+    em += col * vMat.w * uGlow; col *= .05; mudK = 0.;
+  } else {
+    float gr = n2(vec2(uv.x*150., uv.y*18.)); h = gr*.001; col *= .7+.3*big+.12*gr;
+    float st = smoothstep(.5,.7,fb3(rp*11.)); col = mix(col, col*vec3(.5,.42,.3), st*.7);
   }
   if (mudK > 0. && ty < 9.5) {
     float mud = vMat.w * mudK * (1.-smoothstep(.02,.62, rp.y + (big-.45)*.5));
