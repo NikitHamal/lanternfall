@@ -15,6 +15,7 @@ const SpDef SPD[SP_N] = {
 struct Fauna { bool used = false, alive = true, pet = false; int sp = 0, state = 0; float x = 0, y = 0, z = 0, face = 0, sc = 1, hp = 10, maxHp = 10, homeX = 0, homeZ = 0, tx = 0, tz = 0, t = 0, spd = 0, ph = 0, hitT = 0, deadT = 0, fleeT = 0, biteCd = 0, tint[3] = {1, 1, 1}, ltint[3] = {1, 1, 1}, pitch = 0;
   float spdS = 0, cyc = 0, gDuty = 0.66f, gH = 0, gLift = 0, gOff[4] = {0.25f, 0.75f, 0.f, 0.5f}, bob = 0, pit = 0, look = 0, headP = 0, graze = 0, lie = 0, wag = 0, alert = 0; int act = 0; };
 constexpr int MAXF = 1800; Fauna FA[MAXF]; int nFA = 0;
+const FigAsset* FAV[SP_N][2]; int nFAV[SP_N];   // skinned sculpt variants per species (xfauna_fig.inc); empty => procedural parts
 // riding: the mounted horse is a full Fauna (same rig as the herds) that follows the player; mountT / dmT drive the mount and dismount hop
 bool rideH = false; Fauna rideF; float rideX = 0, rideZ = 0, rideFace = 0, mountT = 1.f, dmT = 0.f, mountFx = 0, mountFz = 0; constexpr float RIDE_OFF = 0.66f; bool dbgClean = false; float dbgSpd = -1.f; int dbgTrack = -1; float dbgAng = 1.1f, dbgDist = 4.f, dbgHF = 0.9f;
 #include "xfauna_rig.inc"
@@ -180,8 +181,8 @@ void faunaUpdate(float dt) {
 }
 int appendFaunaDyn(xr::Dyn* out, int k, int cap) {
   if (CI.in) return k; auto put = [&](int kind, const M4& m, float r, float g, float b) { if (k >= cap) return; xr::Dyn& o = out[k++]; o.kind = kind; o.m = m; o.mode = 0.f; o.tint[0] = r; o.tint[1] = g; o.tint[2] = b; };
-  if (rideH && K.mounted && P.view != 0) k = emitAnimal(out, k, cap, rideF, true, tAbs);
-  for (int pass = 0; pass < 2; pass++) for (int i = 0; i < nFA; i++) { const Fauna& f = FA[i]; if (!f.used) continue; float d2 = dist2(f.x, f.z, P.x, P.z); float lim = (SPD[f.sp].legLen < 0.3f ? 70.f : 125.f); float nearR = 48.f; if (pass == 0 ? d2 > nearR * nearR : (d2 <= nearR * nearR || d2 > lim * lim)) continue; if (k > cap - 20) break; k = emitAnimal(out, k, cap, f, false, tAbs); }
+  if (rideH && K.mounted && P.view != 0) { if (nFAV[rideF.sp]) put(K_AN_SADDLE, mul(translate(rideF.x, rideF.y, rideF.z), mul(rotY(rideF.face), scale4(rideF.sc, rideF.sc, rideF.sc))), 1.f, 1.f, 1.f); else k = emitAnimal(out, k, cap, rideF, true, tAbs); }
+  for (int pass = 0; pass < 2; pass++) for (int i = 0; i < nFA; i++) { const Fauna& f = FA[i]; if (!f.used || nFAV[f.sp]) continue; float d2 = dist2(f.x, f.z, P.x, P.z); float lim = (SPD[f.sp].legLen < 0.3f ? 70.f : 125.f); float nearR = 48.f; if (pass == 0 ? d2 > nearR * nearR : (d2 <= nearR * nearR || d2 > lim * lim)) continue; if (k > cap - 20) break; k = emitAnimal(out, k, cap, f, false, tAbs); }
   // birds
   if (clockH > 5.6f && clockH < 19.4f) for (int i = 0; i < nBD; i++) { const Bird& b = BD[i]; if (k > cap - 40) break; float ang = b.dir * tAbs * b.spd / b.r + b.ph; float x = b.cx + std::cos(ang) * b.r, z = b.cz + std::sin(ang) * b.r; if (dist2(x, z, P.x, P.z) > 240.f * 240.f) continue;
     float y = b.gh + b.alt + std::sin(tAbs * 0.45f + b.ph) * 1.8f; float face = std::atan2(-b.dir * std::sin(ang), b.dir * std::cos(ang)); float flap = std::sin(tAbs * (b.crow ? 9.f : 17.f) + b.ph) * 0.75f * (std::sin(tAbs * 0.8f + b.ph * 2.f) > -0.3f ? 1.f : 0.2f);

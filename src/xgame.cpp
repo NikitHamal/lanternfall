@@ -122,6 +122,7 @@ void tickAttack(Npc& n, float dt, bool vsPlayer, Npc* tn) {
 }
 #include "xkingdom.inc"
 #include "xfauna.inc"
+#include "xfauna_fig.inc"
 #include "xtown.inc"
 #include "xanim.inc"
 #include "xsolid.inc"
@@ -204,7 +205,7 @@ void start() { gFigNoBaked = true;
     static const char* PK[6] = {"polyfork/apothecary", "polyfork/lamplighter", "polyfork/rimebinder", "polyfork/warden", "polyfork/reaver", "polyfork/fletcher"}; for (int i = 0; i < 6; i++) figLoad(polyHeroes[i], PK[i]);
     {   // v3.4 wildlife: realistic Sketchfab sculpts on the native quadruped rig (deer = hollow stag rig, husky = gloam hound rig); baked clips reused
       struct AR { const char* key; int mon; }; static const AR ARS[] = {{"animals/stag", HOLLOWSTAG}, {"animals/husky", GLOAMHOUND}};
-      for (const AR& q : ARS) { FigAsset t; if (figLoad(t, q.key)) { FigAsset keep = gFM[q.mon]; t.scale = keep.scale; t.radius = keep.radius; t.hpY = keep.hpY; figFree(gFM[q.mon]); gFM[q.mon] = t; } } }
+      for (const AR& q : ARS) { FigAsset t; if (figLoad(t, q.key)) { FigAsset keep = gFM[q.mon]; t.scale = keep.scale; t.radius = keep.radius; t.hpY = keep.hpY; figFree(gFM[q.mon]); gFM[q.mon] = t; } } faunaFigLoad(); }
     int v;
     if ((v = addRig(&gFH[APOTHECARY], -1, -1, gFH[APOTHECARY].scale, "VILLAGER")) >= 0) poolVill[nPoolVill++] = v; if ((v = addRig(&polyHeroes[0], roster::WP_STAFF, roster::WP_NONE, 1.f, "HERBALIST")) >= 0) poolVill[nPoolVill++] = v; if ((v = addRig(&gFH[FLETCHER], -1, -1, gFH[FLETCHER].scale, "HUNTER")) >= 0) poolVill[nPoolVill++] = v;
     if ((v = addRig(&gFH[RIMEBINDER], -1, -1, gFH[RIMEBINDER].scale, "SCHOLAR")) >= 0) poolVill[nPoolVill++] = v; if ((v = addRig(&gFH[LAMPLIGHTER], -1, -1, gFH[LAMPLIGHTER].scale, "LAMPLIGHTER")) >= 0) poolVill[nPoolVill++] = v; if ((v = addRig(&polyHeroes[2], roster::WP_STAFF, roster::WP_NONE, 1.f, "ELDER")) >= 0) poolVill[nPoolVill++] = v;
@@ -284,6 +285,10 @@ void debugCmd(const char* c) { if (strstr(c, "folk")) { if (strstr(c, "turn")) {
       float d = d0 + row * 2.6f, off = (col - 3.f) * 1.35f; n->role = ro; n->rig = k; n->x = P.x + fx * d + rx * off; n->z = P.z + fz * d + rz * off; n->y = groundAt(n->x, n->z); n->face = P.yaw + PI; n->homeX = n->x; n->homeZ = n->z; n->sc = rd.scale; n->wander = 0.5f; n->spd = 0.05f; n->runSpd = 0.1f; setName(*n, rd.title); n->hp = n->maxHp = 99999; n->settle = -1;
       if (++col == 7) { col = 0; row++; } } }
   if (const char* sq = strstr(c, "spd=")) dbgSpd = (float)atof(sq + 4); if (strstr(c, "clean")) { dbgClean = true; P.view = 1; H.view = 1; } if (strstr(c, "rain")) { wxForce = 1; wxW = 1.f; } if (strstr(c, "mapview")) H.map = true; if (const char* sk = strstr(c, "sky")) { P.fly = true; H.fly = true; P.y += (float)atof(sk + 3); }
+  if (strstr(c, "zoo")) {   // v3.4 QA: small species in a near row, big species behind, all facing the camera
+    static const int ZS[9] = {SP_DOG, SP_CAT, SP_SHEEP, SP_SHEEP, SP_COW, SP_HORSE, SP_HORSE, SP_HORSE, SP_DEER}; float fx = std::sin(P.yaw), fz = std::cos(P.yaw), rx = fz, rz = -fx; float d0 = strchr(c, '@') ? (float)atof(strchr(c, '@') + 1) : 8.f;
+    for (int k = 0; k < 9; k++) { bool sm = k < 4; float dd = sm ? d0 * 0.5f : d0, sp = sm ? 1.0f : 2.0f, lat = sm ? (k - 1.5f) * sp : (k - 4 - 2.f) * sp; float x = P.x + fx * dd + rx * lat, z = P.z + fz * dd + rz * lat;
+      if (Fauna* f = addFauna(ZS[k], x, z, true)) { f->face = P.yaw + PI + lat * 0.05f; f->t = 999.f; f->state = 0; f->homeX = f->tx = x; f->homeZ = f->tz = z; } } }
   { static const char* AN[SP_N] = {"dog", "cat", "hen", "sheep", "cow", "horse", "deer", "rabbit"}; int want = -1; for (int q = 0; q < SP_N; q++) if (strstr(c, AN[q])) want = q; if (want >= 0) { int bi = -1; float bd = 1e30f; for (int i = 0; i < nFA; i++) if (FA[i].used && FA[i].alive && FA[i].sp == want) { float d = dist2(FA[i].x, FA[i].z, P.x, P.z); if (d < bd) { bd = d; bi = i; } }
     if (bi >= 0) { Fauna& f = FA[bi]; float dd = SPD[want].legLen < 0.3f ? 1.6f : want == SP_HORSE || want == SP_COW || want == SP_DEER ? 4.4f : 2.6f; if (const char* dp = strstr(c, "@")) dd = (float)atof(dp + 1); float ang = strstr(c, "front") ? 0.f : strstr(c, "back") ? PI : 1.1f; float x = f.x + std::sin(f.face + ang) * dd, z = f.z + std::cos(f.face + ang) * dd; P.x = x; P.z = z; P.y = height(x, z); P.yaw = std::atan2(f.x - x, f.z - z); P.face = P.yaw; P.pitch = 0.05f; P.camDist = dd; P.camInit = false; if (dbgClean) { dbgTrack = bi; dbgAng = ang; dbgDist = dd; if (const char* hp = strstr(c, "h=")) dbgHF = (float)atof(hp + 2); }
       if (strstr(c, "ride") && want == SP_HORSE) { P.x = f.x; P.z = f.z; P.y = height(f.x, f.z); P.face = f.face; P.yaw = f.face + 0.55f; P.pitch = 0.1f; P.camDist = 5.2f; rideH = true; K.mounted = true; rideF = f; rideF.used = true; rideF.sc = 1.f; rideF.act = 0; mountT = 1.f; dmT = 0.f; f.used = false; if (dbgClean) dbgTrack = -2; }
@@ -461,7 +466,7 @@ void update(float dtReal, const pl::Input& inRaw) {
 }
 
 void draw() {
-  static FigDraw fd[260]; int nfd = 0; xr::lastDt = 0.016f; const float dtv = 1.f / 60.f; float psc = 1.f; const FigAsset* pa = roster::cur(); if (pa) psc = pa->scale; const roster::Hero& hr = roster::at(roster::sel());
+  static FigDraw fd[260]; int nfd = 0; for (int q = 0; q < 260; q++) fd[q].tint[0] = fd[q].tint[1] = fd[q].tint[2] = 1.f; xr::lastDt = 0.016f; const float dtv = 1.f / 60.f; float psc = 1.f; const FigAsset* pa = roster::cur(); if (pa) psc = pa->scale; const roster::Hero& hr = roster::at(roster::sel());
   bool lampDay = (clockH < 6.2f || clockH > 18.4f) && !CI.in; auto weapon = [&](const FigAsset& rig, const FigAnim& an, bool left, int wp, const M4& um, const float* fl, float dim) { if (wp < 0 || wp >= NWEAP || !gFW[wp].ok || nfd >= 258) return; if ((wp == roster::WP_LANTERN || (wp == roster::WP_STAFF && &rig != roster::cur())) && !lampDay) return; FigDraw& w = fd[nfd++]; M4 m; figWeaponMat(rig, an, left, wp, um, tAbs, m); w.a = &gFW[wp]; w.model = m; w.mat = WID; w.dissolve = 0; w.disH = 1; w.glow = 1; w.shadow = true; w.dim = dim; w.lantern = true; w.vm = false; for (int k = 0; k < 3; k++) { w.flash[k] = fl[k]; w.disCol[k] = 0; } };
   // player
   bool lampOn = (clockH < 6.2f || clockH > 18.4f) && !CI.in; bool bowEq = B.weapon == 1, showBody = P.view == 1 || P.fly, fpvVM = !showBody; static V3 vmRef[2] = {{0.30f, 1.1f, 0.28f}, {-0.30f, 1.1f, 0.28f}};
@@ -524,6 +529,7 @@ void draw() {
     FigDraw& fdd = fd[nfd++]; fdd.a = a; fdd.mat = an.mat; fdd.dissolve = n.alive ? 0.f : clampf((n.deadT - 4.5f) / 2.f, 0, 1); fdd.disH = std::max(1.f, a->height); fdd.glow = n.role >= R_MON ? (n.boss ? 3.f : 2.2f) : 1.f; fdd.shadow = d < 70.f; fdd.dim = 1.f; fdd.lantern = false; fdd.vm = false; for (int k = 0; k < 3; k++) fdd.disCol[k] = a->disCol[k];
     float fl = n.hitT * n.hitT * 4.f; fdd.flash[0] = fl * 1.2f; fdd.flash[1] = fl * 0.7f; fdd.flash[2] = fl * 0.4f; float sc = n.sc; fdd.model = mul(translate(n.x, n.y, n.z), mul(rotY(n.face), scale4(sc, sc, sc)));
     if (n.role < R_MON) { weapon(*a, an, false, wR, fdd.model, fdd.flash, 1.f); weapon(*a, an, true, wL, fdd.model, fdd.flash, 1.f); } }
+  nfd = faunaFigs(fd, nfd, 256, dtv);
   xr::Frame f; f.eye = P.eye; f.tgt = P.tgt; f.fov = P.fov; f.hour = clockH; f.time = tAbs; f.flash = lightT * lightT * 0.55f; f.fade = 1.f - H.fade * 0.85f * (P.deadT > 0 ? 1.f : 0.f) - (restT > 0 ? 0.6f * std::sin(clampf(restT / 3.2f, 0, 1) * PI) : 0.f);
   static xr::Dyn dyn[1400]; static xr::PtLight dlights[24]; int ndl = 0;
   int nd = buildDyn(dyn, 96);

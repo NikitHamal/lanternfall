@@ -388,12 +388,12 @@ void figWeaponMat(const FigAsset& rig, const FigAnim& an, bool left, int wpId, c
 bool gFigNoBaked = false;
 // ------------------------------------------------------------------ drawing
 void figDraw(GLuint prog, const FigDraw* d, int n, bool shadowPass) {
-  static GLint lM = -1, lB, lD, lH, lC, lF, lDim, lG; static GLuint last = 0;
-  if (last != prog) { last = prog; lM = glGetUniformLocation(prog, "uModel"); lB = glGetUniformLocation(prog, "uBones"); lD = glGetUniformLocation(prog, "uDissolve"); lH = glGetUniformLocation(prog, "uDisH"); lC = glGetUniformLocation(prog, "uDisCol"); lF = glGetUniformLocation(prog, "uFlash"); lDim = glGetUniformLocation(prog, "uDim"); lG = glGetUniformLocation(prog, "uGlow"); }
+  static GLint lM = -1, lB, lD, lH, lC, lF, lDim, lG, lT; static GLuint last = 0;
+  if (last != prog) { last = prog; lM = glGetUniformLocation(prog, "uModel"); lB = glGetUniformLocation(prog, "uBones"); lD = glGetUniformLocation(prog, "uDissolve"); lH = glGetUniformLocation(prog, "uDisH"); lC = glGetUniformLocation(prog, "uDisCol"); lF = glGetUniformLocation(prog, "uFlash"); lDim = glGetUniformLocation(prog, "uDim"); lG = glGetUniformLocation(prog, "uGlow"); lT = glGetUniformLocation(prog, "uTint"); }
   for (int i = 0; i < n; i++) {
     const FigDraw& f = d[i]; if (!f.a || !f.a->ok) continue; if (shadowPass && !f.shadow) continue; if (f.vm) glDepthRange(0.0, 0.02);
     glUniformMatrix4fv(lM, 1, GL_FALSE, f.model.m); glUniform4fv(lB, f.a->nb * 3, f.mat);
-    if (!shadowPass) { glUniform1f(lD, f.dissolve); glUniform1f(lH, f.disH); glUniform3fv(lC, 1, f.disCol); glUniform3fv(lF, 1, f.flash); glUniform1f(lDim, f.dim); glUniform1f(lG, f.glow); }
+    if (!shadowPass) { glUniform1f(lD, f.dissolve); glUniform1f(lH, f.disH); glUniform3fv(lC, 1, f.disCol); glUniform3fv(lF, 1, f.flash); glUniform1f(lDim, f.dim); glUniform1f(lG, f.glow); glUniform3fv(lT, 1, f.tint); }
     glBindVertexArray(f.a->vao); if ((f.noBaked || gFigNoBaked) && f.a->ibo2) { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, f.a->ibo2); glDrawElements(GL_TRIANGLES, f.lantern ? f.a->ni2 : f.a->baseNI2, GL_UNSIGNED_SHORT, nullptr); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, f.a->ibo); }
     else glDrawElements(GL_TRIANGLES, f.lantern ? f.a->ni : f.a->baseNI, GL_UNSIGNED_SHORT, nullptr); if (f.vm) glDepthRange(0.0, 1.0);
   }
@@ -420,7 +420,7 @@ void main(){ int ba = int(aBn.x+.5), bb = int(aBn.y+.5); float w = aBn.z/255.; v
 )GLSL";
 const char* FIG_FS_BODY = R"GLSL(
 in vec3 vWp; in vec3 vN; in vec3 vCol; in vec3 vRest; in vec4 vMat; in vec2 vUvS; in float vAO; in float vCav; out vec4 oC;
-uniform float uDissolve; uniform float uDisH; uniform vec3 uDisCol; uniform vec3 uFlash; uniform float uDim; uniform float uGlow;
+uniform float uDissolve; uniform float uDisH; uniform vec3 uDisCol; uniform vec3 uFlash; uniform float uDim; uniform float uGlow; uniform vec3 uTint;
 float h12(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
 float h13(vec3 p3){ p3 = fract(p3 * .1031); p3 += dot(p3, p3.zyx + 31.32); return fract((p3.x + p3.y) * p3.z); }
 float n2(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); return mix(mix(h12(i),h12(i+vec2(1.,0.)),f.x),mix(h12(i+vec2(0.,1.)),h12(i+vec2(1.,1.)),f.x),f.y); }
@@ -507,7 +507,7 @@ void main(){
     float mud = vMat.w * mudK * (1.-smoothstep(.02,.62, rp.y + (big-.45)*.5));
     col = mix(col, vec3(.04,.032,.024)*(.7+.6*fine), mud*.8); rough = mix(rough,.95,mud); metal *= 1.-mud*.9;
   }
-  col *= uDim; rough = clamp(rough,.05,1.); metal = clamp(metal,0.,1.); em += uFlash;
+  col *= uDim * uTint; rough = clamp(rough,.05,1.); metal = clamp(metal,0.,1.); em += uFlash;
   vec3 N = normalize(vN); if (!gl_FrontFacing) N = -N;
   { vec3 dp1 = dFdx(vWp), dp2 = dFdy(vWp); float dhx = dFdx(h), dhy = dFdy(h);
     vec3 r1 = cross(dp2, N), r2 = cross(N, dp1); float det = dot(dp1, r1);

@@ -9,8 +9,8 @@ from glb_to_lfm import decimate, clean, transfer_color, vnormals, curvature, fit
 ANIMALS = {
     'stag': dict(f='stag_realistic.glb', donor='hollowstag', tris=10000, metal=0.0, rough=.85, ty=12, tint=(1.0, .92, .8)),
     'husky': dict(f='realistic_3d_husky_dog_model.glb', donor='gloamhound', tris=9000, metal=0.0, rough=.85, ty=12, tint=(1, 1, 1), fallback=(.62, .58, .55)),
-    'horse_bay': dict(f='balt_horse_12-13th_century.glb', donor='hollowstag', tris=11000, metal=0.0, rough=.8, ty=12, tint=(1, 1, 1)),
-    'horse_black': dict(f='midnight_black_horse_3d_model_free.glb', donor='hollowstag', tris=11000, metal=0.0, rough=.7, ty=12, tint=(1, 1, 1)),
+    'horse_bay': dict(f='balt_horse_12-13th_century.glb', donor='hollowstag', tris=14000, metal=0.0, rough=.8, ty=12, tint=(1, 1, 1)),
+    'horse_black': dict(f='midnight_black_horse_3d_model_free.glb', donor='hollowstag', tris=16000, metal=0.0, rough=.7, ty=12, tint=(1, 1, 1)),
     'cow': dict(f='brown_cow_3d_model.glb', donor='gloamhound', tris=9000, metal=0.0, rough=.85, ty=12, tint=(1, 1, 1)),
     'sheep': dict(f='sheep.glb', donor='gloamhound', tris=6000, metal=0.0, rough=.95, ty=12, tint=(1, 1, 1)),
     'cat': dict(f='cat_in_motion_3d_model_free.glb', donor='gloamhound', tris=6000, metal=0.0, rough=.85, ty=12, tint=(1, 1, 1)),
@@ -42,7 +42,11 @@ def build(name):
     P *= s
     z = P[:, 2]; P[:, 2] += (dl + dh) / 2 - (np.percentile(z, 2) + np.percentile(z, 98)) / 2
     P[:, 0] -= np.median(P[:, 0])
-    Pd, Td = decimate(P.astype(np.float32), T, cfg['tris'])
+    # weld split vertices (UV / normal seams) so the quadric decimator sees one closed surface, not shards
+    q = np.round(P / 0.0005).astype(np.int64)
+    _, first, inv = np.unique(q, axis=0, return_index=True, return_inverse=True)
+    Pw = P[first]; Tw = inv.reshape(-1)[T]; Tw = Tw[(Tw[:, 0] != Tw[:, 1]) & (Tw[:, 1] != Tw[:, 2]) & (Tw[:, 0] != Tw[:, 2])]
+    Pd, Td = decimate(Pw.astype(np.float32), Tw.astype(np.int32), cfg['tris'])
     Pd, Td, used = clean(Pd, Td)
     Cd = transfer_color(P, Cl, Pd)
     if g['Cl'].std() < 1e-3 and 'fallback' in cfg: Cd = np.tile(np.array(cfg['fallback']) ** 2.2, (len(Pd), 1))
