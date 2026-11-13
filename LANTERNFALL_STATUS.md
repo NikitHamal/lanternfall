@@ -364,3 +364,5 @@ Finding: the previous session had already (a) reverted the procedural citizen ki
 - Neck pose tuned per species (graze pitch x0.42-0.62, look yaw clamped) after `shots/cow1` (head folded into chest) -> `shots/cow2` (read OK); `sheep1` read: sheep sculpt is bulky / short-legged, wants a better source model.
 - Open: the cherry / oak leaf cards still read as large flat shards close-up (xtree `canopyCards`), hen / rabbit procedural, cat + sheep not yet seen close-up, rider legs hidden by the sculpt's barrel (needs a seat-IK pass), no combat capture, real-GPU timing, Blender not available here (variations are shader tints + decimation, not Blender copies). Source GLBs (509 MB) live in `source_models/` and bloat the repo; consider moving to a release asset / LFS.
 Credits for CC-BY models: `docs/MODEL_CREDITS.txt`.
+
+CI: tag run 43419268803 (commit 3877b43) - Windows/Linux/macOS + release all success; release v3.4.0 published with 3 assets (linux 16.5 MB, macOS 17.2 MB, windows 16.9 MB). Main run 43419258591 green.
