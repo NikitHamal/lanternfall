@@ -21,3 +21,23 @@ void solidStep(float dt) {
     float d = std::sqrt(dx * dx + dz * dz); if (d < 1e-3f) { dx = (float)((a * 7 + b) % 5) - 2.f + 0.37f; dz = 1.f; d = std::sqrt(dx * dx + dz * dz); } float pen = std::min((rr - d) * 0.5f, 0.06f); float ka = L[a].heavy ? 0.f : (L[b].heavy ? 1.f : 0.5f), kb = L[b].heavy ? 0.f : (L[a].heavy ? 1.f : 0.5f); float ux = dx / d * pen * 2.f, uz = dz / d * pen * 2.f;
     *L[a].x -= ux * ka; *L[a].z -= uz * ka; *L[b].x += ux * kb; *L[b].z += uz * kb; }
 }
+// ---- v3.2 dynamic collision self-test: `--xcmd bumpN[@deg]` sprints the player straight at the nearest NPC (0), animal (1), cottage (2),
+// gate tower (3), barn (4), chapel (5), wall segment (6) from 7 m away and prints how close the body got (LF_BUMP lines). Debug only, no per-frame cost when off.
+int dbgBump = -1, dbgBumpT = 0, dbgBumpIdx = -1; float dbgBumpMin = 1e9f, dbgBumpTx = 0, dbgBumpTz = 0, dbgBumpLim = 0, dbgBumpY0 = 0;
+void bumpSetup(int kind, float deg) {
+  float bd = 1e30f; int bi = -1; float tx = 0, tz = 0, lim = 0; float a = deg * 0.0174533f;
+  if (kind == 0) { for (int i = 0; i < MAXN; i++) { Npc& n = npcs[i]; if (!n.used || !n.alive || n.asleep || n.role >= R_MON || n.interior != CI.in) continue; float d = dist2(n.x, n.z, P.x, P.z); if (d < bd) { bd = d; bi = i; } } if (bi >= 0) { tx = npcs[bi].x; tz = npcs[bi].z; lim = npcRad(npcs[bi]) + 0.4f; npcs[bi].hp = npcs[bi].maxHp = 99999; } }
+  else if (kind == 1) { for (int i = 0; i < nFA; i++) { Fauna& f = FA[i]; if (!f.used || !f.alive || f.sp == SP_HEN) continue; float d = dist2(f.x, f.z, P.x, P.z); if (d < bd) { bd = d; bi = i; } } if (bi >= 0) { tx = FA[bi].x; tz = FA[bi].z; lim = faRad(FA[bi]) + 0.4f; } }
+  else { int want = kind == 2 ? xw::K_COTTAGE : kind == 3 ? xw::K_GATE : kind == 4 ? xw::K_BARN : kind == 5 ? xw::K_CHAPEL : xw::K_WALL; for (size_t i = 0; i < objs.size(); i++) { if (objs[i].kind != want) continue; float d = dist2(objs[i].x, objs[i].z, P.x, P.z); if (d < bd) { bd = d; bi = (int)i; } } if (bi >= 0) { tx = objs[bi].x; tz = objs[bi].z; lim = 0.f; } }
+  if (bi < 0) { std::printf("LF_BUMP kind %d: no target\n", kind); return; }
+  dbgBump = kind; dbgBumpIdx = bi; dbgBumpT = 0; dbgBumpMin = 1e9f; dbgBumpLim = lim; dbgBumpTx = tx; dbgBumpTz = tz;
+  P.x = tx - std::sin(a) * 7.f; P.z = tz - std::cos(a) * 7.f; P.y = height(P.x, P.z); P.yaw = a; P.face = a; P.vx = P.vz = 0; dbgWalk = 2; dbgBumpY0 = P.y;
+}
+void bumpTick() {
+  if (dbgBump < 0) return; float tx = dbgBumpTx, tz = dbgBumpTz;
+  if (dbgBump == 0 && dbgBumpIdx >= 0) { tx = npcs[dbgBumpIdx].x; tz = npcs[dbgBumpIdx].z; } else if (dbgBump == 1 && dbgBumpIdx >= 0) { tx = FA[dbgBumpIdx].x; tz = FA[dbgBumpIdx].z; }
+  if (dbgBump == 0 && dbgBumpIdx >= 0) { npcs[dbgBumpIdx].x = dbgBumpTx; npcs[dbgBumpIdx].z = dbgBumpTz; } else if (dbgBump == 1 && dbgBumpIdx >= 0) { FA[dbgBumpIdx].x = dbgBumpTx; FA[dbgBumpIdx].z = dbgBumpTz; }
+  float d = std::sqrt(dist2(tx, tz, P.x, P.z)); if (d < dbgBumpMin) dbgBumpMin = d; dbgBumpT++;
+  if (dbgBumpT == 360) { float x = P.x, z = P.z; bool inside = xw::collide(x, z, 0.2f, P.y); float moved = std::sqrt(dist2(x, z, P.x, P.z));
+    std::printf("LF_BUMP kind %d target (%.1f,%.1f) end (%.1f,%.1f) minDist %.2f limit %.2f %s | final dist %.2f, standing-inside push %.2f m, dy %.2f -> %s\n", dbgBump, dbgBumpTx, dbgBumpTz, P.x, P.z, dbgBumpMin, dbgBumpLim, dbgBump < 2 ? (dbgBumpMin >= dbgBumpLim * 0.8f ? "SOLID" : "PASSED-THROUGH") : "", d, moved, P.y - dbgBumpY0, (dbgBump < 2 ? dbgBumpMin >= dbgBumpLim * 0.8f : moved < 0.05f) ? "OK" : "FAIL"); (void)inside; dbgBump = -1; dbgWalk = 0; }
+}

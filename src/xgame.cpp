@@ -278,7 +278,7 @@ void debugCmd(const char* c) { if (const char* lu = strstr(c, "lineup")) { int p
     for (int i = 0; i < MAXN; i++) { const Npc& n = npcs[i]; if (!n.used || !n.alive || n.asleep || n.role != R_VILL || (shop && !isMerchant(n))) continue; float d = dist2(n.x, n.z, cs.x, cs.z); if (d < bd) { bd = d; bi = i; } }
     if (bi >= 0) { Npc& n = npcs[bi]; P.x = n.x + std::sin(n.face) * 2.6f; P.z = n.z + std::cos(n.face) * 2.6f; P.y = height(P.x, P.z); P.yaw = std::atan2(n.x - P.x, n.z - P.z); P.face = P.yaw; P.pitch = 0.05f; P.camDist = 3.4f; P.camInit = false; n.state = S_IDLE; n.stT = 99; char who[40]; snprintf(who, sizeof who, "%s - %s", n.name, rigs[n.rig].title); townOpen(n, bi, who, L_VILL[0]);
       if (strstr(c, "quest")) for (int k = 0; k < TM.n; k++) if (TM.id[k] == O_WORK) townChoose(k); if (strstr(c, "close")) townClose(); } }
-  if (strstr(c, "savenow")) townSave();
+  if (strstr(c, "savenow")) townSave(); if (const char* bp = strstr(c, "bump")) bumpSetup(atoi(bp + 4), strchr(bp, '@') ? (float)atof(strchr(bp, '@') + 1) : 0.f);
   if (strstr(c, "side")) dbgSide = 1.5708f; if (const char* fp = strstr(c, "fx")) dbgFx = atoi(fp + 2); if (strstr(c, "bow")) B.weapon = 1; if (strstr(c, "melee")) B.weapon = 0; if (strstr(c, "hold")) dbgDrawHold = true; if (strstr(c, "run")) dbgWalk = 2; else if (strstr(c, "walk")) dbgWalk = 1; if (const char* p = strstr(c, "shoot")) dbgShoot = atoi(p + 5) > 0 ? atoi(p + 5) : 30;
   if (strstr(c, "horde")) startKingdomSiege(true); if (strstr(c, "hostile")) { for (int k = 0; k < 3; k++) bounty[k] = 120; } if (strstr(c, "noai")) for (Npc& n : npcs) if (n.used && n.role >= R_MON && n.role == R_MON) n.used = false;
   if (const char* p = strstr(c, "enter")) { int want = atoi(p + 5), best = -1; float bd = 1e30f; for (size_t i = 0; i < enters.size(); i++) if (enters[i].idx == want) { float d = dist2(enters[i].x, enters[i].z, P.x, P.z); if (d < bd) { bd = d; best = (int)i; } } if (best >= 0) { CI.ox = enters[best].x + enters[best].R; CI.oz = enters[best].z; doEnter(best); } }
@@ -388,7 +388,7 @@ void update(float dtReal, const pl::Input& inRaw) {
     P.hurtT = std::max(0.f, P.hurtT - dt); P.stagT = std::max(0.f, P.stagT - dt); if (P.regenWait > 0) P.regenWait -= dt; else P.hp = std::min(P.maxHp, P.hp + dt * 2.5f);
   }
   if (!CI.in && prevHour < 20.f && clockH >= 20.f && clockH < 21.f) startKingdomSiege(false);
-  prevHour = clockH; arrowsUpdate(dt); cellUpdate(dt); updateKingdom(dt, in); faunaUpdate(dt); solidStep(dt); townTick(dt);
+  prevHour = clockH; arrowsUpdate(dt); cellUpdate(dt); updateKingdom(dt, in); faunaUpdate(dt); solidStep(dt); townTick(dt); bumpTick();
   for (int k = 0; k < 3; k++) bounty[k] = std::max(0.f, bounty[k] - dt * (huntCount > 0 ? 0.04f : 0.6f));
   { float mb = std::max(bounty[0], std::max(bounty[1], bounty[2])); H.wanted = mb > 12.f ? 1 + (int)(mb / 55.f) : 0; if (H.wanted > 4) H.wanted = 4; }
   H.weapon = B.weapon; H.draw = B.draw; H.arrows = B.arrows; H.gold = gold; H.inside = CI.in; H.zoom = B.zoom; H.hitT = std::max(0.f, H.hitT - dt);
