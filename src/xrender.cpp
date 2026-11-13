@@ -80,7 +80,7 @@ void main(){
   float n1 = vn2(vWp.xz*.35), n2 = vn2(vWp.xz*1.7), n3 = vn2(vWp.xz*7.); float det = (.8 + .4*n1) * (.9 + .2*n2) * (.93 + .14*n3); det = mix(det, 1., smoothstep(90., 420., d)); col *= det;
   float slope = 1. - N.y; float lum = dot(col, vec3(.3,.55,.15));
   float snowK = smoothstep(.62, .86, lum + .06*(n1-.5)) * (1. - .85*smoothstep(.3, .7, B.g));
-  float rockK = smoothstep(.105 + .085*B.g, .27 + .06*B.g, slope) * (1. - snowK);   // same tan(theta) window as the CPU bake's rock weight (xworld bakeRows), so baked grey ground never shows without cliff detail   // wooded flanks keep their forest floor longer (no bare pale ramps under trees)
+  float rockK = smoothstep(.105 + .085*B.g, .27 + .06*B.g, slope + (n2 - .5)*.05*(1. - smoothstep(60., 300., d))) * (1. - snowK);   // same tan(theta) window as the CPU bake's rock weight (xworld bakeRows), so baked grey ground never shows without cliff detail   // wooded flanks keep their forest floor longer (no bare pale ramps under trees)
   float near = 1. - smoothstep(70., 380., d);
   // macro colour life on grass: warm/cool patches, slightly calmer saturation
   float gk = clamp(A.a*1.4, 0., 1.) * (1. - rockK) * (1. - snowK);
@@ -105,7 +105,8 @@ void main(){
   float wob = vn2(vWp.xz*.05)*3.;
   float band = .5 + .5*sin(vWp.y*1.55 + wob*2. + n2*1.4), band2 = mix(.5, .5 + .5*sin(vWp.y*5.3 + wob*3.), 1. - smoothstep(.2, .55, .85*fp));
   vec3 tint = mix(vec3(.82,.87,.96), vec3(1.1,.98,.8), band) * .92;
-  float cr = abs(vn2(vec2(vWp.x + vWp.z, vWp.y*1.35)*1.7 + 4.) - .5)*2.; cr = mix(1., smoothstep(0., .16, cr), 1. - smoothstep(.2, .55, 1.7*fp));
+  float rA = abs(vn(vWp*vec3(.7,1.7,.7) + 7.) - .5)*2., rB = abs(vn(vWp*vec3(1.2,.4,1.2) + 3.) - .5)*2., rC = abs(vn(vWp*3. + 11.) - .5)*2.;   /* stratified bedding planes + vertical joints + fine fractures: blocky sedimentary cliff instead of meandering contour lines */
+  float cr = min(min(smoothstep(0., .035, rA), smoothstep(0., .03, rB)), mix(1., smoothstep(0., .1, rC), .3)); cr = mix(1., cr, 1. - smoothstep(.2, .55, 1.7*fp));
   cr = mix(1., cr, smoothstep(.38, .85, rockK));   // crack network only on real cliffs (it drew a dark web over 20-30 deg grass hills at distance)
   float rk3 = mix(.5, vn(vWp*vec3(2.4,3.2,2.4)), 1. - smoothstep(.2, .55, 3.2*fp)), rk4 = mix(.5, vn(vWp*vec3(9.,11.,9.)), 1. - smoothstep(.2, .55, 11.*fp));
   vec3 rcol = col * tint * (.62 + .5*rk3) * mix(.62, 1., cr) * (.9 + .2*band2);
@@ -279,10 +280,10 @@ void main(){
   vec3 pos; vec3 col; vec3 nrm = vec3(0.,1.,0.);
   if (uMode == 0) {
     float bid = aP.w; float ang = h21(cell*1.7 + bid*3.3)*6.2831; vec2 off = (vec2(h21(cell+bid*1.3), h21(cell-bid*2.1))-.5)*.5; float pa = h21(floor(xz*.07)+4.), pb = h21(floor(xz*.31)+9.), pc = h21(floor(xz*.045)+11.); float Hh = (.15 + .32*h21(cell+bid*7.7)) * (1.-.4*B.g) * vFade * (1. + .5*hr) * (.8 + 1.0*smoothstep(.5,.92,pc)) * mix(.5, 1., smoothstep(.3,.85,A.a)); float w = .034*(1.+h21(cell+bid)*.7);   /* sparse (sandy / road-edge) grass stays short instead of tall lone spikes; fuller blades */
-    float y = aP.y; float side = aP.x*w*(1.-y*.92); vec2 dir = vec2(cos(ang), sin(ang)); float lean = (.25 + .6*h21(cell+bid*4.4)) * y*y; vec2 bend = dir*lean*Hh*.8 + vec2(wind*.18, wind*.1)*y*y*Hh;
+    float y = aP.y; float side = aP.x*w*(1.-y*y*.5-y*.2)*1.25; vec2 dir = vec2(cos(ang), sin(ang)); float lean = (.25 + .6*h21(cell+bid*4.4)) * y*y; vec2 bend = dir*lean*Hh*.8 + vec2(wind*.18, wind*.1)*y*y*Hh;
     pos = vec3(xz.x + off.x + side*dir.y + bend.x, h0 + y*Hh, xz.y + off.y - side*dir.x + bend.y);
     float L0 = dot(base, vec3(.3,.55,.15)); vec3 gb = mix(vec3(L0), base, .7); gb = mix(gb, vec3(.24,.18,.05)*(.6+2.*L0), smoothstep(.58,.95,pa)*.6*(1.-.5*B.g)); gb = mix(gb, vec3(.04,.075,.012)*(.7+2.*L0), smoothstep(.62,.92,pb)*.4);
-    float bv = h21(cell+bid); col = gb*mix(.3, 1.12, smoothstep(0., .75, y))*(.72 + .5*bv); col = mix(col, col*vec3(1.3,1.18,.6), y*y*.5*h21(cell+1.9)); col = mix(col, vec3(.3,.26,.1)*(.5+bv), step(.93, h21(cell+bid*2.9))*y); nrm = normalize(vec3(dir.x*.35, 1., dir.y*.35)); }
+    float bv = h21(cell+bid); col = gb*mix(.22, 1.02, smoothstep(0., .8, y))*(.66 + .5*bv); col = mix(col, col*vec3(1.12,1.1,.72), y*y*.4*h21(cell+1.9)); col *= vec3(.92,.98,.86); col = mix(col, vec3(.3,.26,.1)*(.5+bv), step(.93, h21(cell+bid*2.9))*y); nrm = normalize(vec3(dir.x*.35, 1., dir.y*.35)); }
   else {
     vec3 lp = aP.xyz; float kind = aP.w; float sz = (.75 + .6*hr) * vFade; float c = cos(yaw), s = sin(yaw); vec3 q = vec3(lp.x*c - lp.z*s, lp.y, lp.x*s + lp.z*c)*sz; float sway = q.y*q.y*(wind*.35);
     pos = vec3(xz.x + q.x + sway, h0 + q.y, xz.y + q.z + sway*.5);

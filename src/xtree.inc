@@ -129,3 +129,26 @@ void buildPalmN(MB& b) {
     V3 nr = norm(V3{dir.x * 0.4f, 1.f, dir.z * 0.4f}); float aoV = (k % 3 == 0) ? 1.f : 0.78f; leafCard(b, top + V3{0, 0.1f, 0}, u, v, 1.6f, g.r(3.2f, 4.0f), nr, mix3(C(0x3c8429), C(0x5fa73c), g.f()), aoV, true);
     V3 v2 = norm(dir + V3{0, up - 0.5f, 0}); leafCard(b, top + dir * 1.6f + V3{0, 0.25f, 0}, u, v2, 1.2f, 1.9f, nr, mix3(C(0x3c8429), C(0x5fa73c), g.f()), aoV * 0.9f, true); }
 }
+
+// v3.3 shrubs & ferns made of leaf cards (the old versions were one faceted blob with hexagon flowers / flat neon blades)
+void buildShrubN(MB& b, bool flowering) {
+  TRng g(flowering ? 811u : 823u); Sty wd = sty(0x4a3a2a, 9, 0.6f, 4.f);
+  for (int k = 0; k < 6; k++) { float a = k * 1.047f + g.r(-0.3f, 0.3f), el = g.r(0.55f, 1.0f); V3 d{std::cos(a) * std::cos(el), std::sin(el), std::sin(a) * std::cos(el)}; tube(b, {0, -0.1f, 0}, d * g.r(0.55f, 0.85f) + V3{0, 0.1f, 0}, 0.045f, 0.015f, 4, wd); }
+  const V3 cen{0, 0.52f, 0}; const float rx = 0.95f, ry = 0.62f; const int NL = 110;
+  for (int i = 0; i < NL; i++) {
+    float t = (i + 0.5f) / NL, y = 1.f - 1.55f * t, rr = std::sqrt(std::max(0.f, 1.f - y * y)), a = i * 2.39996f + g.r(-0.15f, 0.15f); float sh = g.r(0.62f, 1.0f);
+    V3 e{std::cos(a) * rr * sh, y * sh, std::sin(a) * rr * sh}; V3 pos = cen + V3{e.x * rx, e.y * ry, e.z * rx}; if (pos.y < 0.05f) pos.y = 0.05f + g.f() * 0.1f;
+    V3 nrm = norm(V3{e.x, e.y * 0.9f + 0.3f, e.z}); V3 face = norm(nrm * 0.55f + V3{g.r(-1, 1), g.r(-0.6f, 1), g.r(-1, 1)} * 0.7f); V3 u = anyPerp(face); u = rotAxis(u, face, g.r(0, TAU)); V3 v = cross(face, u);
+    float s = g.r(0.34f, 0.5f); float ao = clampf(0.36f + 0.7f * sh * sh + 0.15f * e.y, 0.3f, 1.f); V3 col = mix3(flowering ? C(0x2f5e26) : C(0x3a6a2a), flowering ? C(0x55862f) : C(0x5f8f35), g.f());
+    leafCard(b, pos - v * (s * 0.5f), u, v, s, s, nrm, col, ao, false, 1.f);
+  }
+  if (flowering) { const uint32_t fc[4] = {0xf0a0c0, 0xf6f1ea, 0xf3cf48, 0xb08ae6}; int pal = (int)(g.f() * 4.f) & 3;
+    for (int i = 0; i < 34; i++) { float t = (i + 0.5f) / 34, y = 0.95f - 1.0f * t, rr = std::sqrt(std::max(0.f, 1.f - y * y)), a = i * 2.39996f + 1.f; V3 e{std::cos(a) * rr, y, std::sin(a) * rr}; V3 pos = cen + V3{e.x * rx * 1.02f, e.y * ry * 1.02f, e.z * rx * 1.02f}; if (pos.y < 0.25f) continue;
+      V3 nrm = norm(V3{e.x, e.y * 0.9f + 0.2f, e.z}); V3 u = anyPerp(nrm); u = rotAxis(u, nrm, g.r(0, TAU)); V3 v = cross(nrm, u); float s = g.r(0.13f, 0.2f); uint32_t c = fc[(i % 5 == 0) ? (pal + 1) & 3 : pal];
+      leafCard(b, pos - v * (s * 0.5f), u, v, s, s, nrm, C(c), 1.f, false, 1.f); } }
+}
+void buildFernN(MB& b) {
+  TRng g(907u); for (int k = 0; k < 11; k++) { float a = k * 2.39996f + g.r(-0.2f, 0.2f), up = g.r(0.35f, 0.9f), len = g.r(0.85f, 1.3f); V3 dir{std::cos(a), 0, std::sin(a)};
+    for (int sgm = 0; sgm < 2; sgm++) { float el = up - sgm * 0.55f; V3 v = norm(dir * std::cos(el) + V3{0, std::sin(el), 0}); V3 o = V3{0, 0.04f, 0} + (sgm ? dir * (len * 0.55f * std::cos(up)) + V3{0, len * 0.55f * std::sin(up), 0} : V3{0, 0, 0}); V3 u = norm(cross(v, V3{0, 1, 0}));
+      V3 nrm = norm(V3{dir.x * 0.4f, 1.f, dir.z * 0.4f}); float ao = sgm ? 1.f : 0.6f; leafCard(b, o, u, v, 0.34f, len * (sgm ? 0.5f : 0.6f), nrm, mix3(C(0x2f5a26), C(0x58903a), g.f()), ao, true, 1.f); } }
+}
