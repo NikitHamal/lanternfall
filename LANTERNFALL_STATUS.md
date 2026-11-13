@@ -320,3 +320,4 @@ Plan: (1) real far/near LOD parity sweep (camera along a ray at 30..900 m, same 
 ## v3.2.0 - session start (this session)
 Env: molab placeholders unfilled again (no notebook, no heartbeat). Local apt xvfb/mesa/x11-dev + cmake via pip. v3.1.0 was never tagged on origin (latest tag v3.0.0) -> next tag is v3.2.0 and carries v3.1.0 content.
 Plan: (1) look at the game with fresh eyes (citizens, lanterns, far/near LOD parity, collisions), (2) fix what the captures show, (3) keep app heap < 120 MB (LF_MEM=1), (4) docs/TODO update.
+Session note (v3.2.0, tool call ~12): molab URL from the prompt answers HTTP 410 (terminated) -> never used, no heartbeat. Local user-space sysroot rebuilt (`apt-get ... Dir::State=/tmp/agentA_apt` download-only -> `dpkg -x` into /tmp/agentA_sys, Xvfb byte-patched `/usr/bin` -> `/tmp/xb`), cmake via pip; Release build OK, capture script `/tmp/agentA_cap.sh <name> <args>`.
