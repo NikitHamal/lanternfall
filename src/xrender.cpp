@@ -106,6 +106,7 @@ void main(){
   float band = .5 + .5*sin(vWp.y*1.55 + wob*2. + n2*1.4), band2 = mix(.5, .5 + .5*sin(vWp.y*5.3 + wob*3.), 1. - smoothstep(.2, .55, .85*fp));
   vec3 tint = mix(vec3(.82,.87,.96), vec3(1.1,.98,.8), band) * .92;
   float cr = abs(vn2(vec2(vWp.x + vWp.z, vWp.y*1.35)*1.7 + 4.) - .5)*2.; cr = mix(1., smoothstep(0., .16, cr), 1. - smoothstep(.2, .55, 1.7*fp));
+  cr = mix(1., cr, smoothstep(.38, .85, rockK));   // crack network only on real cliffs (it drew a dark web over 20-30 deg grass hills at distance)
   float rk3 = mix(.5, vn(vWp*vec3(2.4,3.2,2.4)), 1. - smoothstep(.2, .55, 3.2*fp)), rk4 = mix(.5, vn(vWp*vec3(9.,11.,9.)), 1. - smoothstep(.2, .55, 11.*fp));
   vec3 rcol = col * tint * (.62 + .5*rk3) * mix(.62, 1., cr) * (.9 + .2*band2);
   float moss = smoothstep(.48,.7, vn2(vWp.xz*.9+vWp.y*.35)) * smoothstep(.2,.8,N.y);
@@ -424,7 +425,8 @@ void setLitX(GLuint p, const float* pl, const float* plc) {
 static void objToI(IData& d, const Obj& o) { M4 m = mul(translate(o.x, o.y, o.z), mul(rotY(o.ry), scale4(o.sx, o.sy, o.sz))); memcpy(d.m, m.m, 64); d.tint[0] = o.r / 128.f; d.tint[1] = o.g / 128.f; d.tint[2] = o.b / 128.f; d.tint[3] = o.sway ? 1.f : 0.f; }
 // instance staging grows on demand (rare, doubles up to the old fixed capacity) instead of reserving the worst case for 110 slots up front
 static bool growStage(int s) { int cur = (int)stage[s].size(); if (cur >= stageMax[s]) return false; int nc = std::min(stageMax[s], std::max(cur * 2, 256)); stage[s].resize(nc); glBindBuffer(GL_ARRAY_BUFFER, pm[s].inst); glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)nc * sizeof(IData), nullptr, GL_STREAM_DRAW); return true; }
-static inline IData* stagePush(int s) { if (stageN[s] >= (int)stage[s].size() && !growStage(s)) return nullptr; return &stage[s][stageN[s]++]; }
+static int stageDrop[NSLOT];
+static inline IData* stagePush(int s) { if (stageN[s] >= (int)stage[s].size() && !growStage(s)) { stageDrop[s]++; return nullptr; } return &stage[s][stageN[s]++]; }
 void gather(const Frame& f, bool shadowOnly) {
   for (int s = 0; s < NSLOT; s++) stageN[s] = 0; float cx = f.eye.x, cz = f.eye.z;
   static int dbgSkipLo = -2, dbgSkipHi = -2, dbgOnly = -2; if (dbgSkipLo == -2) { const char* e = getenv("LF_SKIPLO"); dbgSkipLo = e ? atoi(e) : -1; e = getenv("LF_SKIPK"); dbgSkipHi = e ? atoi(e) : -1; e = getenv("LF_ONLYK"); dbgOnly = e ? atoi(e) : -1; }
@@ -436,6 +438,7 @@ void gather(const Frame& f, bool shadowOnly) {
           if (IData* d = stagePush(k)) { objToI(*d, o); d->tint[3] += 2.f * q; }
           if (q && !(kd.lo == SLOT_ROCK && d2 > 360.f * 360.f && o.sx < 4.6f) && kd.lo != dbgSkipLo) if (IData* d = stagePush(kd.lo)) { objToI(*d, o); d->tint[3] += 2.f * (16 + q); } }
         else if (hasLo && d2 < loR2) { if (kd.lo == SLOT_ROCK && d2 > 360.f * 360.f && o.sx < 4.6f) continue; if (kd.lo != dbgSkipLo) if (IData* d = stagePush(kd.lo)) objToI(*d, o); } } } }
+  if (!shadowOnly) { static int once = 0; static const bool rep = getenv("LF_MEM") != nullptr; if (rep) for (int q = 0; q < NSLOT; q++) { if (stageDrop[q] && once < 24) { once++; fprintf(stderr, "STAGE OVERFLOW slot %d dropped %d (cap %d)\n", q, stageDrop[q], stageMax[q]); } stageDrop[q] = 0; } }
   if (f.dyn) for (int i = 0; i < f.ndyn; i++) {
     int k = f.dyn[i].kind < 0 ? (int)K_ARROW : f.dyn[i].kind; if (k < 0 || k >= NK || !pm[k].ok) continue;
     if (shadowOnly) { if (!KD[k].shadow || f.dyn[i].mode < -0.5f) continue; float dx = f.dyn[i].m.m[12] - cx, dz = f.dyn[i].m.m[14] - cz; if (dx * dx + dz * dz > 95.f * 95.f) continue; }
