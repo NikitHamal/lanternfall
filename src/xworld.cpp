@@ -159,9 +159,11 @@ static void makeLake(float cx, float cz, float R, float forceLevel, const char* 
   for (int j = z0; j <= z1; j++) for (int i = x0; i <= x1; i++) { float x = -HALF + (i + 0.5f) * CS, z = -HALF + (j + 0.5f) * CS; float wob = 1.f + (fb(x * 0.012f, z * 0.012f, 2, SEED + 77) - 0.5f) * 0.5f; float d = std::sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz)) / (R * wob);
     float t = d; float prof = t < 0.9f ? level - 5.5f * (1 - (t / 0.9f) * (t / 0.9f)) : level + (t - 0.9f) * 5.5f; float& h = Hh[j * GS + i]; h = smin(h, prof, 2.f);
     if (t < 1.15f && h < level + 0.02f) Wl[j * GS + i] = level; }
+  if (getenv("LF_NEAR")) { fprintf(stderr, "LAKE %s R %.0f level %.2f rim %.2f profile:", name, R, level, rim); for (int k = 0; k <= 16; k++) { float rr = R * (0.2f + k * 0.1f); float x = cx + rr, z = cz; int ii = ci(cellOf(x), 0, GS - 1), jj = ci(cellOf(z), 0, GS - 1); fprintf(stderr, " %.1f", Hh[jj * GS + ii] - level); } fprintf(stderr, "\n"); }
   Poi p; memset(&p, 0, sizeof p); p.x = cx; p.z = cz; p.y = level; p.r = R * 0.9f; snprintf(p.name, 32, "%s", name); p.kind = poiKind; p.found = false; pois.push_back(p);
 }
 
+static void dbgProf(const char* tag) { if (!getenv("LF_NEAR")) return; fprintf(stderr, "HM %s:", tag); for (int k = -12; k <= 12; k += 2) { float x = 802.2f + k * 3.5f; fprintf(stderr, " %.0f", Hh[ci(cellOf(75.4f), 0, GS - 1) * GS + ci(cellOf(x), 0, GS - 1)] - 13.18f); } fprintf(stderr, "\n"); }
 // ------------------------------------------------------------------ rivers
 struct RP { float x, z, bed, w, lvl, dep; };
 static std::vector<RP> rivers[18]; static int nRiv = 0;
@@ -178,7 +180,7 @@ static void traceRiver(float sx, float sz, int id) {
 }
 static void carveRivers() {
   for (int id = 0; id < nRiv; id++) { std::vector<RP>& P = rivers[id]; int n = (int)P.size(); if (n < 40) { P.clear(); continue; } float prev = 1e9f;
-    for (int i = 0; i < n; i++) { float t = (float)i / (n - 1); P[i].dep = 0.9f + 1.9f * std::sqrt(t); P[i].w = 6.f + 14.f * std::sqrt(t); float b = std::min(prev - 0.035f, P[i].bed - P[i].dep); P[i].bed = b; prev = b; }
+    for (int i = 0; i < n; i++) { float t = (float)i / (n - 1); P[i].dep = 0.9f + 1.9f * std::sqrt(t); P[i].w = 6.f + 14.f * std::sqrt(t); float nat = P[i].bed - P[i].dep; float b = std::max(std::min(prev - 0.035f, nat), nat - 4.5f); if (Wl[ci(cellOf(P[i].z), 0, GS - 1) * GS + ci(cellOf(P[i].x), 0, GS - 1)] > -1e8f) { b = nat + P[i].dep + 0.2f; P[i].bed = b; prev = std::min(prev, b); continue; } P[i].bed = b; prev = b; }   // monotone descent, but never more than 4.5 m under the land (it used to dig 70 m vertical pits across plains / ponds)
     // one waterfall per river: steepest 7-sample window of bed in the upper reaches
     int bi = -1; float bd = 8.5f; for (int i = 6; i < n * 7 / 10 - 8; i++) if (height(P[i].x, P[i].z) > 12.f) { float d = P[i].bed - P[i + 7].bed; if (d > bd) { bd = d; bi = i; } }
     if (bi >= 0) { float upB = P[bi].bed, loB = P[bi + 7].bed; for (int j = bi + 1; j <= bi + 3; j++) P[j].bed = upB - 0.05f; for (int j = bi + 4; j <= bi + 7; j++) P[j].bed = loB; for (int j = bi + 4; j <= bi + 8 && j < n; j++) { P[j].w *= 1.5f; P[j].dep += 0.8f; P[j].bed -= 0.5f; }
@@ -397,9 +399,9 @@ void generate(uint32_t seed) {
   { int made = 0; for (int t = 0; t < 400 && made < 1; t++) { float x = urand(-0.6f, 0.6f) * HALF, z = urand(-0.75f, -0.35f) * HALF; if (height(x, z) > 60 && height(x, z) < 100 && slopeAt(x, z) < 0.25f) { makeLake(x, z, 36.f, -1e9f, "Frostmere", 2); made++; } } }
   // rivers from the high country
   { std::vector<V3> src; for (int t = 0; t < 9000 && nRiv < 15; t++) { float x = urand(-0.85f, 0.85f) * HALF, z = urand(-0.9f, 0.1f) * HALF; float h = height(x, z); if (h < 62.f || h > 175.f) continue; bool far = true; for (const V3& s : src) if ((s.x - x) * (s.x - x) + (s.z - z) * (s.z - z) < 260.f * 260.f) far = false; if (!far) continue; if (Wl[ci(cellOf(z), 0, GS - 1) * GS + ci(cellOf(x), 0, GS - 1)] > -1e8f) continue; src.push_back({x, 0, z}); traceRiver(x, z, nRiv); if (rivers[nRiv].size() > 60) nRiv++; else rivers[nRiv].clear(); } }
-  carveRivers();
+  dbgProf("lakes"); carveRivers(); dbgProf("rivers");
   for (int i = 0; i < GS * GS; i++) if (Hh[i] < SEA) Wl[i] = std::max(Wl[i], SEA);
-  pickSites(); connect();
+  pickSites(); dbgProf("sites"); connect(); dbgProf("connect");
   // inner streets
   for (size_t i = 0; i < settles.size(); i++) { Settle& s = settles[i]; if (s.type > ST_FORT) continue; float gx, gz; gatePoint(s, gx, gz); Road r; V3 a{gx, height(gx, gz), gz}, b{s.x + s.gateX * (s.type == ST_CAPITAL ? 2.f : 0.f), 0, s.z + s.gateZ * (s.type == ST_CAPITAL ? 2.f : 0.f)}; b.y = height(b.x, b.z); r.pts.push_back(a); r.pts.push_back(b); r.a = r.b = (int)i; roads.push_back(r); std::vector<V3> pp = r.pts; gradeRoad(pp); }
   for (int i = 0; i < GS * GS; i++) if (gradeW[i] > 0) Hh[i] = lerpf(Hh[i], gDecH(gradeY[i]), gradeW[i] * (1.f / 65535.f));
@@ -479,6 +481,7 @@ void generate(uint32_t seed) {
       for (int j = 1; j < GS - 1; j++) { float* r = &wbK[(size_t)j * GS]; const float* nx = r + GS; for (int i = 0; i < GS; i++) { float cur = r[i]; r[i] = std::max(rowPrev[i], std::max(cur, nx[i])); rowPrev[i] = cur; } }
     } }
   { float lo = 1e9f, hi = -1e9f; for (int i = 0; i < GS * GS; i += 7) { lo = std::min(lo, Hh[i]); hi = std::max(hi, Hh[i]); } fprintf(stderr, "world heights %.1f .. %.1f m (texture range -128..896)\n", lo, hi); }
+  if (getenv("LF_NEAR")) { fprintf(stderr, "HM_FINAL x 802..:"); for (int k = -12; k <= 12; k++) { float x = 802.2f + k * 3.5f; fprintf(stderr, " %.1f", Hh[ci(cellOf(75.4f), 0, GS - 1) * GS + ci(cellOf(x), 0, GS - 1)] - 13.18f); } fprintf(stderr, "\n"); }
   mem::mark("gen: end");
 
   Hq.resize((size_t)GS * GS); for (size_t i = 0; i < Hq.size(); i++) Hq[i] = (uint16_t)(clampf((Hh[i] + 128.f) * (1.f / 1024.f), 0.f, 1.f) * 65535.f + 0.5f);   // runtime keeps 16-bit heights (1.6 cm steps, same as the GPU texture); Hh / Wl / flow / fields live until the renderer has baked the ground textures (bakeEnd)
