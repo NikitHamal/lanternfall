@@ -482,6 +482,7 @@ void generate(uint32_t seed) {
     } }
   { float lo = 1e9f, hi = -1e9f; for (int i = 0; i < GS * GS; i += 7) { lo = std::min(lo, Hh[i]); hi = std::max(hi, Hh[i]); } fprintf(stderr, "world heights %.1f .. %.1f m (texture range -128..896)\n", lo, hi); }
   if (getenv("LF_NEAR")) { fprintf(stderr, "HM_FINAL x 802..:"); for (int k = -12; k <= 12; k++) { float x = 802.2f + k * 3.5f; fprintf(stderr, " %.1f", Hh[ci(cellOf(75.4f), 0, GS - 1) * GS + ci(cellOf(x), 0, GS - 1)] - 13.18f); } fprintf(stderr, "\n"); }
+  if (getenv("LF_NEAR")) { int steepW = 0, water = 0; float worst = 0; for (int j = 1; j < GS - 1; j++) for (int i = 1; i < GS - 1; i++) { int k = j * GS + i; if (Wl[k] < -1e8f) continue; water++; float d = std::max(std::max(std::fabs(Hh[k + 1] - Hh[k]), std::fabs(Hh[k - 1] - Hh[k])), std::max(std::fabs(Hh[k + GS] - Hh[k]), std::fabs(Hh[k - GS] - Hh[k]))); if (d > 2.5f * CS) steepW++; worst = std::max(worst, d); } fprintf(stderr, "WATERCENSUS water cells %d, banks steeper than 68deg %d, worst step %.1f m (cell %.2f m)\n", water, steepW, worst, CS); }
   mem::mark("gen: end");
 
   Hq.resize((size_t)GS * GS); for (size_t i = 0; i < Hq.size(); i++) Hq[i] = (uint16_t)(clampf((Hh[i] + 128.f) * (1.f / 1024.f), 0.f, 1.f) * 65535.f + 0.5f);   // runtime keeps 16-bit heights (1.6 cm steps, same as the GPU texture); Hh / Wl / flow / fields live until the renderer has baked the ground textures (bakeEnd)
