@@ -316,3 +316,7 @@ Plan: (1) real far/near LOD parity sweep (camera along a ray at 30..900 m, same 
 - **Memory** (LF_MEM=1, seed 7): app C++ heap steady 45-52 MB, peak 109.4 MB (renderer init, while Hh float + Hq u16 coexist) - under the 120 MB target. Next cut: build Hq strips during bake so Hh can be freed earlier (-8 MB peak). Binary 2.6 MB, assets 26 MB. RSS under Xvfb/llvmpipe (0.4-1.5 GB) is Mesa, not the app.
 - QA shots Read: base, sheet_oak (inside-trunk probe, bad camera), sheet_lod (forced proxies inside woods), p_v1, f1 + f1_crop (dither), f2/f3 (identical: f3 was a failed build, `//` swallowed a one-line function), f4 (ridge experiment), sheet_t (TDBG 1 + 3), sheet_pine (forced proxies overflow the 14000-slot cap - stress artefact only), sheet_poi (waterfall pool from inside the water, others inside water/rock), cit2 (lake), tk (villager dialogue).
 - Not done: Blender/free-model replacement of citizens (no Blender binary, procedural human kit stays), chunk streaming, proxy colour re-match (needs a controlled A/B at 150 m), combat capture, real-GPU timing. molab placeholders unfilled again - never used.
+
+## v3.2.0 - session start (this session)
+Env: molab placeholders unfilled again (no notebook, no heartbeat). Local apt xvfb/mesa/x11-dev + cmake via pip. v3.1.0 was never tagged on origin (latest tag v3.0.0) -> next tag is v3.2.0 and carries v3.1.0 content.
+Plan: (1) look at the game with fresh eyes (citizens, lanterns, far/near LOD parity, collisions), (2) fix what the captures show, (3) keep app heap < 120 MB (LF_MEM=1), (4) docs/TODO update.
