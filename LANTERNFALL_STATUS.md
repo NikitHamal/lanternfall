@@ -366,3 +366,7 @@ Finding: the previous session had already (a) reverted the procedural citizen ki
 Credits for CC-BY models: `docs/MODEL_CREDITS.txt`.
 
 CI: tag run 43419268803 (commit 3877b43) - Windows/Linux/macOS + release all success; release v3.4.0 published with 3 assets (linux 16.5 MB, macOS 17.2 MB, windows 16.9 MB). Main run 43419258591 green.
+
+## v3.5.0 - "Sculpt QA, Blender variants & lean memory" - session start (this session)
+Env: molab ALIVE this session (20 cores, 160 GB, root, Debian trixie, Python 3.13; heartbeat running). Plan: build + capture on molab, apt Blender for variants, local box (2 cores/2 GB) for edits only.
+State found: the prompt's "revert the people" step was already done upstream (c3864a2 reverted the procedural citizen kit; fe2d8fd/9c4317d/e34402f use the Sketchfab sculpts for people + animals). This session = visual QA of every sculpt, fix mess/bugs, Blender-made variants, memory + size optimisation (<120 MB heap).
