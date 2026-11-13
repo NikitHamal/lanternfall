@@ -479,10 +479,15 @@ void main(){
     float gr = n2(vec2(uv.x*260., uv.y*9.)), g2 = n2(vec2(uv.x*60., uv.y*3.)+4.);
     h = gr*.0016; col *= .6+.34*gr+.26*g2;
   } else if (ty < 8.5) {
-    float s = fb3(rp*5.), s2 = fb3(rp*23.+5.), s3 = n3(rp*90.);
-    h = s*.03 + s2*.01 + s3*.0015; col *= .42+.6*s2+.25*s;
-    float lich = smoothstep(.5,.6, fb3(rp*3.7+11.)); col = mix(col, vec3(.035,.05,.025), lich*.7);
-    float l2 = smoothstep(.64,.7, fb3(rp*8.1+31.)); col = mix(col, vec3(.2,.2,.17), l2*.4);
+    float fr = length(fwidth(rp));   /* object-space size of one pixel: fade detail that would alias into speckle */
+    float s = fb3(rp*5.), s2 = mix(.5, fb3(rp*23.+5.), 1. - smoothstep(.012, .05, fr)), s3 = mix(.5, n3(rp*90.), 1. - smoothstep(.003, .012, fr));
+    h = s*.03 + s2*.01 + s3*.0015; col *= .5+.5*s2+.25*s;
+    /* dressed-stone masonry: 31 cm courses, staggered joints, per-block tint, mortar fades with distance so it never aliases */
+    float mr = rp.y*3.2, rowi = floor(mr), cu = (rp.x + rp.z)*1.9 + rowi*.5; vec2 fq = vec2(fract(cu), fract(mr)); float bh = fract(sin(dot(vec2(floor(cu), rowi), vec2(12.9898, 78.233)))*43758.5453);
+    float jw = mix(.05, .16, smoothstep(.01, .06, fr)); float mort = (1. - smoothstep(0., jw, min(fq.x, 1. - fq.x)*.7)) + (1. - smoothstep(0., jw*.8, min(fq.y, 1. - fq.y))); mort = clamp(mort, 0., 1.)*(1. - smoothstep(.08, .25, fr))*step(.6, rp.y + 1.);
+    col *= (.86 + .28*bh)*(1. - .38*mort); h += mort*-.012 + bh*.004;
+    float lich = smoothstep(.5,.66, fb3(rp*3.7+11.)); col = mix(col, vec3(.085,.11,.05)*(.8+.5*s), lich*.55);
+    float l2 = smoothstep(.64,.7, mix(.5, fb3(rp*8.1+31.), 1. - smoothstep(.02, .08, fr))); col = mix(col, vec3(.2,.2,.17), l2*.4);
     mudK = .4;
   } else if (ty < 9.5) {
     float rd = abs(n2(vec2(uv.x*80., uv.y*13.))-.5)*2., s2 = fb3(rp*14.);
