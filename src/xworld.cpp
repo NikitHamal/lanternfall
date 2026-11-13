@@ -423,8 +423,8 @@ void generate(uint32_t seed) {
   for (float gz = -HALF + 6; gz < HALF - 6; gz += 4.4f) for (float gx = -HALF + 6; gx < HALF - 6; gx += 4.4f) {
     float x = gx + (rng() - 0.5f) * 4.2f, z = gz + (rng() - 0.5f) * 4.2f; float h = height(x, z); if (h < 1.6f || Wl[ci(cellOf(z), 0, GS - 1) * GS + ci(cellOf(x), 0, GS - 1)] > -1e8f) continue; float rd = roadDist(x, z); if (rd < 6.5f) continue; if (settleNear(x, z, 12) >= 0) continue;
     float sl = slopeAt(x, z); float fm = forestMask(x, z, h); float q = fb(x * 0.0022f + 50, z * 0.0022f, 3, SEED + 41); float r1 = rng();
-    if (sl > 0.95f) { if (r1 < 0.075f && h > 25) { float s = 2.2f + rng() * rng() * 6.f; float tq = 0.74f + rng() * 0.26f; Obj* o = put(K_BIGROCK, x, z, rng() * TAU, s, tq, tq * 0.97f, tq * 0.92f, -s * 0.2f); o->sy = s * (0.7f + rng() * 0.6f); } continue; }
-    if (sl > 0.55f && h > 20 && r1 < 0.03f) { float s = 1.6f + rng() * rng() * 6.f; float tq = 0.74f + rng() * 0.26f; Obj* o = put(K_BIGROCK, x, z, rng() * TAU, s, tq, tq * 0.97f, tq * 0.92f, -s * 0.2f); o->sy = s * (0.7f + rng() * 0.6f); continue; }
+    if (sl > 0.95f) { if (r1 < 0.075f && h > 25) { float s = 2.2f + rng() * rng() * 6.f; float tq = 0.74f + rng() * 0.26f; Obj* o = put(K_BIGROCK, x, z, rng() * TAU, s, tq, tq * 0.97f, tq * 0.92f, -s * std::min(0.2f + 0.8f * sl, 1.05f)); o->sy = s * (0.7f + rng() * 0.6f); } continue; }
+    if (sl > 0.55f && h > 20 && r1 < 0.03f) { float s = 1.6f + rng() * rng() * 6.f; float tq = 0.74f + rng() * 0.26f; Obj* o = put(K_BIGROCK, x, z, rng() * TAU, s, tq, tq * 0.97f, tq * 0.92f, -s * std::min(0.2f + 0.8f * sl, 1.05f)); o->sy = s * (0.7f + rng() * 0.6f); continue; }
     float zc0, zj0, zb0, za0; zones(x, z, h, zc0, zj0, zb0, za0);
     if (r1 < fm * 0.62f && sl < 0.8f && h < 52.f && (zc0 > 0.5f || zj0 > 0.5f)) biomeTree(x, z, zc0, zj0);
     else if (r1 < fm * 0.62f && sl < 0.8f) {

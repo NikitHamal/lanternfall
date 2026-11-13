@@ -487,7 +487,7 @@ void main(){
   } else if (ty < 9.5) {
     float rd = abs(n2(vec2(uv.x*80., uv.y*13.))-.5)*2., s2 = fb3(rp*14.);
     h = rd*.008 + s2*.008; col *= .45+.5*rd+.4*s2;
-    { float bl = dot(col, vec3(.2126,.7152,.0722)); col = mix(vec3(bl)*vec3(1.16,1.,.78), col, .45); col *= 1.25 + .5*fb3(rp*4.+vec3(2.)); }
+    { float bl = dot(col, vec3(.2126,.7152,.0722)); col = mix(vec3(bl)*vec3(1.42,1.,.58), col, .35); col *= 1.2 + .5*fb3(rp*4.+vec3(2.)); }
   } else if (ty < 10.5) {
     em += col * vMat.w * uGlow; col *= .05; mudK = 0.;
   } else {
