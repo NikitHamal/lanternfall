@@ -264,8 +264,9 @@ def build_human(name, pose=False):
     ref = np.percentile(P[:, 1], 95) - np.percentile(P[:, 1], 1)   # stray props authored at another scale would wreck the height fit
     bad = (P[:, 1] > np.percentile(P[:, 1], 1) + 1.5 * ref) | (np.abs(P[:, 0]) > 1.5 * ref) | (np.abs(P[:, 2]) > 1.5 * ref)
     if bad.any(): T = T[~bad[T].any(1)]
-    if name == 'artorias':  # file contains Artorias (skin 0) and Sif the wolf: keep the biped (taller than wide) cluster
-        pass
+    if name == 'artorias':  # file contains Artorias and Sif the wolf (materials 10/11 + a few more); the wolf was fused to the knight in v3.4 -> keep knight materials only
+        wolfv = np.isin(g['mat'], (10, 11)); wolfv |= (P[:, 2] < -0.5) & (P[:, 0] > 0.15)
+        T = T[~wolfv[T].any(1)]
     # normalise: feet on y=0, centre x/z on the torso, scale to H
     Pu = P[np.unique(T)]   # height fit from vertices that survive the stray-geometry cut (farmer.glb carries props ~40 m away)
     lo, hi = np.percentile(Pu[:, 1], .05), np.percentile(Pu[:, 1], 99.95)

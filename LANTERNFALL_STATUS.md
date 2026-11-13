@@ -370,3 +370,5 @@ CI: tag run 43419268803 (commit 3877b43) - Windows/Linux/macOS + release all suc
 ## v3.5.0 - "Sculpt QA, Blender variants & lean memory" - session start (this session)
 Env: molab ALIVE this session (20 cores, 160 GB, root, Debian trixie, Python 3.13; heartbeat running). Plan: build + capture on molab, apt Blender for variants, local box (2 cores/2 GB) for edits only.
 State found: the prompt's "revert the people" step was already done upstream (c3864a2 reverted the procedural citizen kit; fe2d8fd/9c4317d/e34402f use the Sketchfab sculpts for people + animals). This session = visual QA of every sculpt, fix mess/bugs, Blender-made variants, memory + size optimisation (<120 MB heap).
+Notebook died at tool call ~26 (molab 410 after ~6 min alive; Blender 4.3.2 apt-install + 20-core build + Xvfb captures worked before it died). Fallback: local build (2 cores) + local numpy sheets (tools/lfm_sheet.py runs under plain python3).
+Finding 1: assets/people/farmer.lfm was broken (whole mesh ~6 cm tall: GLB carries stray props ~40 m away, the percentile height fit used them). Fixed in tools/glb_to_lfm.py (height fit from surviving verts) and farmer.lfm regenerated.
