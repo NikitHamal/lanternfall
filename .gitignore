@@ -2,3 +2,5 @@
 /_ref_js/
 /shots/
 /package.json
+__pycache__/
+*.pyc
