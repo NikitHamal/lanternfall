@@ -16,6 +16,11 @@ Vision: a proper fantasy immersive third-person game (Athran-style kingdom defen
 - [x] verified: citizens are real clothed humans, people/animals/monsters are solid, lanterns hang from hooks/belts (night shot), app heap peak 104 MB
 - [ ] next: box colliders for the remaining procedural kinds (mill, tent, ore) + derive colliders from mesh footprint automatically; chunk streaming; same-tree distance sweep for LOD parity
 
+## Shipped v3.4.0 - "Folk & Fauna from real sculpts"
+- [x] skinned sculpt animals (horse x2, cow, sheep, cat, husky, stag) replace the procedural fauna parts, ridden horse included
+- [x] welded decimation fix in tools/glb_animals.py, per-instance tint variation (animals + citizens)
+- [ ] next: sculpts for hen / rabbit / more cows (cow.glb), foliage cards (flat shards close-up), rider seat IK, wolves/tiger as wild predators, move source_models out of git
+
 ## Next up (ordered)
 1. [ ] Walk/run/sprint polish: slope foot IK (raycast per foot), turn-in-place, start/stop steps, strafe + backpedal sets, crouch + sneak
 2. [ ] Melee: full-body attack arcs (weight shift, foot slide), directional block, stagger types, finishers
