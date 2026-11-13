@@ -333,3 +333,8 @@ Fresh-eyes capture of ponds found the biggest remaining ugliness: **every pond /
 - QA shots Read: base (capital gate), poi3 (old pit, before), t1-t3/sheet_t (rock/normal/colour debug), pa (inside the pit), nw (no-water: pit wall is terrain), poi3b (after), sheet_q (Ravenfall / Redmill / Fort Ember / Observatory - debug cameras land in trees/slopes), sheet_f + o3 + sheet_g (waterfall footings, old vs new; the sky-blue sheets are the debug camera spawning under the pool surface), sheet_gr (grass after).
 - Deferred / open: the `--xcmd fallN` / `--poi` camera can start inside water, trees or slopes (debug only); water slabs where a river pool meets a steep gorge are reduced but not proven gone from a normal gameplay camera; chunk streaming; bake-time snow colour; citizen face pass; combat capture; real-GPU timing.
 - Measured (`LF_NEAR=1` WATERCENSUS, seed 7): water-cell banks steeper than 68 deg **1479 -> 81** (old `LF_OLDRIVER=1` vs new), worst one-cell height step **82.9 m -> 25.8 m** (the remaining ~81 are the waterfall drops themselves).
+
+## v3.3.0 - session start (this session)
+Env: molab placeholders unfilled again (no notebook, no heartbeat). Local: `sudo apt-get install xvfb libgl1-mesa-dri libx11-dev ...` works now (sudo present) + cmake via pip; Release build 33 s on 4 cores; `/tmp/agentA_cap.sh <name> <args>` captures 960x540 q0.
+Baseline `shots/base.png` read (capital gate, 09:31): works; foreground grass blades read as large pale spikes, wall stone texture is noisy/speckled, HUD text overlaps at 960x540. app C++ heap steady 45-50 MB, peak 109.4 MB (renderer init).
+Plan: (1) ground-level grass / wall-stone quality, (2) cut renderer-init peak heap, (3) far/near parity re-check, (4) docs.
