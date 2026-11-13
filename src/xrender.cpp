@@ -196,9 +196,10 @@ const char* PROP_VS = R"GLSL(
 layout(location=0) in vec3 aPos; layout(location=1) in vec3 aNrm; layout(location=2) in vec4 aCol; layout(location=3) in vec2 aUv; layout(location=4) in vec4 aMat; layout(location=5) in vec4 aBn;
 layout(location=6) in vec4 iM0; layout(location=7) in vec4 iM1; layout(location=8) in vec4 iM2; layout(location=9) in vec4 iM3; layout(location=10) in vec4 iT;
 uniform mat4 uVP; uniform float uTime;
-out vec3 vWp; out vec3 vN; out vec3 vCol; out vec3 vRest; out vec4 vMat; out vec2 vUvS; out float vAO; out float vCav;
+out vec3 vWp; out vec3 vN; out vec3 vCol; out vec3 vRest; out vec4 vMat; out vec2 vUvS; out float vAO; out float vCav; out float vDis;
 void main(){ mat4 M = mat4(iM0,iM1,iM2,iM3); vec4 wp = M*vec4(aPos,1.);
-  if (iT.a > .5) { float k = smoothstep(1.5, 9., aPos.y)*.07; wp.x += sin(uTime*1.25 + wp.x*.17 + wp.z*.11)*k*iM1.y*1.0; wp.z += cos(uTime*1.05 + wp.z*.15 + wp.x*.09)*k*iM1.y; }
+  float sw = 0.; vDis = 0.; if (iT.a > -.5) { float qs = floor(iT.a*.5 + .001); sw = (iT.a - 2.*qs) > .5 ? 1. : 0.; if (qs > .5) vDis = qs < 16.5 ? qs/16. : -(qs-16.)/16.; }   // LOD cross-fade: a = sway + 2*q (hi: q 1..15, lo: 16+q)
+  if (sw > .5) { float k = smoothstep(1.5, 9., aPos.y)*.07; wp.x += sin(uTime*1.25 + wp.x*.17 + wp.z*.11)*k*iM1.y*1.0; wp.z += cos(uTime*1.05 + wp.z*.15 + wp.x*.09)*k*iM1.y; }
   vWp = wp.xyz; vN = normalize(mat3(M)*aNrm); vCol = aCol.rgb*aCol.rgb*iT.rgb; vAO = aCol.a; vCav = aBn.w/255.*2.-1.; vMat = vec4(aMat.xy, aMat.z*255., aMat.w*2.);
   if (iT.a < -.5) { vCol = (aCol.rgb*aCol.rgb*.65 + vec3(.14)) * iT.rgb * (1.0 + .16*sin(uTime*6.)); vAO = mix(aCol.a, 1., .30); vMat = vec4(.45, .08, 8., 0.); }
   vUvS = aUv; vRest = aPos; gl_Position = uVP*wp; }
@@ -208,6 +209,7 @@ layout(location=0) in vec3 aPos; layout(location=6) in vec4 iM0; layout(location
 void main(){ gl_Position = uVP*(mat4(iM0,iM1,iM2,iM3)*vec4(aPos,1.)); }
 )GLSL";
 const char* LEAF_GLSL = R"GLSL(
+in float vDis;
 float lh12(vec2 p){ vec3 p3 = fract(vec3(p.xyx)*.1031); p3 += dot(p3, p3.yzx+33.33); return fract((p3.x+p3.y)*p3.z); }
 vec4 leafTex(vec2 uv, float needle){
   float pxw = max(fwidth(uv.x), fwidth(uv.y));
@@ -256,7 +258,7 @@ const char* LEAF_BRANCH = R"GLSL(} else if (ty > 12.5) {
     float gr = n2(vec2(uv.x*150.)GLSL";
 std::string leafPatch(std::string fs) {
   auto rep = [&](const char* a, const std::string& b) { size_t i = fs.find(a); if (i == std::string::npos) { fprintf(stderr, "leafPatch miss: %s\n", a); return; } fs.replace(i, strlen(a), b); };
-  rep("void main(){\n  float ty = vMat.z;", std::string(LEAF_GLSL) + "void main(){\n  float ty = vMat.z;"); rep("float fol = 0.;", "float fol = 0.; float leafA = 1.;");
+  rep("void main(){\n  float ty = vMat.z;", std::string(LEAF_GLSL) + "void main(){\n  float ty = vMat.z;"); rep("float fol = 0.;", "float fol = 0.; float leafA = 1.; if (vDis != 0.) { float nz = fract(52.9829189*fract(dot(gl_FragCoord.xy, vec2(.06711056,.00583715)))); float tt = abs(vDis); if (vDis > 0. ? nz < tt : nz >= tt) discard; }");
   rep("} else {\n    float gr = n2(vec2(uv.x*150.", std::string(LEAF_BRANCH));
   rep("vec3 N = normalize(vN); if (!gl_FrontFacing) N = -N;", "vec3 N = normalize(vN); if (!gl_FrontFacing && (ty < 11.5 || ty > 12.5)) N = -N;"); rep("oC = vec4(c, 1.); }", "oC = vec4(c, leafA); }");
   return fs;
@@ -427,9 +429,13 @@ void gather(const Frame& f, bool shadowOnly) {
   for (int s = 0; s < NSLOT; s++) stageN[s] = 0; float cx = f.eye.x, cz = f.eye.z;
   static int dbgSkipLo = -2, dbgSkipHi = -2, dbgOnly = -2; if (dbgSkipLo == -2) { const char* e = getenv("LF_SKIPLO"); dbgSkipLo = e ? atoi(e) : -1; e = getenv("LF_SKIPK"); dbgSkipHi = e ? atoi(e) : -1; e = getenv("LF_ONLYK"); dbgOnly = e ? atoi(e) : -1; }
   for (int k = 0; k < NK; k++) { if (!pm[k].ok || ids[k].empty() || k == dbgSkipHi || (dbgOnly >= 0 && k != dbgOnly)) continue; const KindDef& kd = KD[k]; if (shadowOnly && !kd.shadow) continue; float rMax = (kd.lo >= 0 ? kd.rLo : kd.rHi); if (shadowOnly) rMax = 90.f; int c0x = std::max(0, (int)((cx - rMax - CELL + HALF) / CELL)), c1x = std::min(NC - 1, (int)((cx + rMax + CELL + HALF) / CELL)), c0z = std::max(0, (int)((cz - rMax - CELL + HALF) / CELL)), c1z = std::min(NC - 1, (int)((cz + rMax + CELL + HALF) / CELL));
-    float hiR2 = (shadowOnly ? std::min(kd.rHi, 90.f) : kd.rHi) * (shadowOnly ? std::min(kd.rHi, 90.f) : kd.rHi), loR2 = kd.rLo * kd.rLo; bool hasLo = kd.lo >= 0 && !shadowOnly;
+    static float lodS = -1.f; if (lodS < 0.f) { const char* e = getenv("LF_LODSCALE"); lodS = e ? (float)atof(e) : 1.f; }
+    float hiR2 = (shadowOnly ? std::min(kd.rHi, 90.f) : kd.rHi) * (shadowOnly ? std::min(kd.rHi, 90.f) : kd.rHi) * (kd.lo >= 0 && !shadowOnly ? lodS * lodS : 1.f), loR2 = kd.rLo * kd.rLo; bool hasLo = kd.lo >= 0 && !shadowOnly; const float fadeR = std::sqrt(hiR2) * 0.86f, fadeW = std::sqrt(hiR2) * 0.14f + 0.01f, fadeR2 = fadeR * fadeR;
     for (int cz2 = c0z; cz2 <= c1z; cz2++) for (int cx2 = c0x; cx2 <= c1x; cx2++) { int c = cz2 * NC + cx2; int a = cellStart[k][c], b = cellStart[k][c + 1]; if (a == b) continue; float mx = -HALF + (cx2 + 0.5f) * CELL, mz = -HALF + (cz2 + 0.5f) * CELL; float dc = std::sqrt((mx - cx) * (mx - cx) + (mz - cz) * (mz - cz)); if (dc - CELL * 0.75f > rMax) continue; if (!shadowOnly && !sphereVis(mx, f.eye.y > 400.f ? f.eye.y : 40.f, mz, CELL * 0.8f + 60.f)) continue;
-      for (int i = a; i < b; i++) { const Obj& o = objs[ids[k][i]]; float dx = o.x - cx, dz = o.z - cz, d2 = dx * dx + dz * dz; if (d2 < hiR2) { if (IData* d = stagePush(k)) objToI(*d, o); } else if (hasLo && d2 < loR2) { if (kd.lo == SLOT_ROCK && d2 > 360.f * 360.f && o.sx < 4.6f) continue; if (kd.lo != dbgSkipLo) if (IData* d = stagePush(kd.lo)) objToI(*d, o); } } } }
+      for (int i = a; i < b; i++) { const Obj& o = objs[ids[k][i]]; float dx = o.x - cx, dz = o.z - cz, d2 = dx * dx + dz * dz; if (d2 < hiR2) { int q = 0; if (hasLo && d2 > fadeR2) { q = (int)((std::sqrt(d2) - fadeR) / fadeW * 16.f); q = q < 1 ? 1 : q > 15 ? 15 : q; }
+          if (IData* d = stagePush(k)) { objToI(*d, o); d->tint[3] += 2.f * q; }
+          if (q && !(kd.lo == SLOT_ROCK && d2 > 360.f * 360.f && o.sx < 4.6f) && kd.lo != dbgSkipLo) if (IData* d = stagePush(kd.lo)) { objToI(*d, o); d->tint[3] += 2.f * (16 + q); } }
+        else if (hasLo && d2 < loR2) { if (kd.lo == SLOT_ROCK && d2 > 360.f * 360.f && o.sx < 4.6f) continue; if (kd.lo != dbgSkipLo) if (IData* d = stagePush(kd.lo)) objToI(*d, o); } } } }
   if (f.dyn) for (int i = 0; i < f.ndyn; i++) {
     int k = f.dyn[i].kind < 0 ? (int)K_ARROW : f.dyn[i].kind; if (k < 0 || k >= NK || !pm[k].ok) continue;
     if (shadowOnly) { if (!KD[k].shadow || f.dyn[i].mode < -0.5f) continue; float dx = f.dyn[i].m.m[12] - cx, dz = f.dyn[i].m.m[14] - cz; if (dx * dx + dz * dz > 95.f * 95.f) continue; }
