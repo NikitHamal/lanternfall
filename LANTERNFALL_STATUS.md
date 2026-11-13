@@ -303,3 +303,7 @@ Env: no molab (placeholders unfilled), local cmake/xvfb/Mesa. Plan: (1) fix the 
 - **Memory** (LF_MEM=1, seed 7): app C++ heap steady 44.5 MB, peak 104.4 MB (< 120 MB); RSS under Xvfb/llvmpipe is dominated by Mesa and is not the app footprint. Binary 2.6 MB, assets 26 MB.
 - QA shots Read: base, base2 (identical, no regression), ramp, ramp_hi, r_none, r_sky, t1, t2, t3, ramp2, lu0 (villagers), lu1 (knights/soldiers), night (lit braziers + wall torches, no floating lanterns), far, near.
 - Deferred: chunk streaming, bake-time snow colour (commented out), boxes for Polyfork props other than buildings, citizen face detail pass, combat capture, real-GPU timing. molab never available (placeholders).
+
+## v3.1.0 - "True Distance" (this session) - IN PROGRESS
+Env: molab placeholders unfilled again -> no notebook. Local: apt xvfb/mesa/x11-dev, cmake+Pillow via pip, 1280x720 q2 capture ~40 s. Baseline `shots/base.png` read (capital gate 11:01): fine; app C++ steady 45-52 MB, peak 109 MB (< 120).
+Plan: (1) real far/near LOD parity sweep (camera along a ray at 30..900 m, same spot) for trees / mountains / props, fix pops + colour/scale mismatches, (2) walk-into collision test for the remaining kinds (mill, tent, ore, wells, fences), (3) keep app heap < 120 MB, (4) docs.
