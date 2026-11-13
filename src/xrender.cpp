@@ -105,11 +105,12 @@ void main(){
   float wob = vn2(vWp.xz*.05)*3.;
   float band = .5 + .5*sin(vWp.y*1.55 + wob*2. + n2*1.4), band2 = mix(.5, .5 + .5*sin(vWp.y*5.3 + wob*3.), 1. - smoothstep(.2, .55, .85*fp));
   vec3 tint = mix(vec3(.82,.87,.96), vec3(1.1,.98,.8), band) * .92;
-  float rA = abs(vn(vWp*vec3(.7,1.7,.7) + 7.) - .5)*2., rB = abs(vn(vWp*vec3(1.2,.4,1.2) + 3.) - .5)*2., rC = abs(vn(vWp*3. + 11.) - .5)*2.;   /* stratified bedding planes + vertical joints + fine fractures: blocky sedimentary cliff instead of meandering contour lines */
-  float cr = min(min(smoothstep(0., .035, rA), smoothstep(0., .03, rB)), mix(1., smoothstep(0., .1, rC), .3)); cr = mix(1., cr, 1. - smoothstep(.2, .55, 1.7*fp));
-  cr = mix(1., cr, smoothstep(.38, .85, rockK));   // crack network only on real cliffs (it drew a dark web over 20-30 deg grass hills at distance)
+  float bedy = vWp.y*.8 + wob*.5 + n2*.25, bedi = floor(bedy); float jx = (vWp.x + vWp.z)*.55 + bedi*.37 + (vn2(vec2(vWp.x + vWp.z, vWp.y)*.8) - .5)*.5;   /* jointed bedrock: wavy bedding planes + staggered vertical joints (straight-ish fractures, not iso-contours of a noise field) */
+  float cr = min(smoothstep(0., .05, fract(bedy)*(1. - fract(bedy)))*1.6 + .0, smoothstep(0., .035, fract(jx)*(1. - fract(jx)))*1.4 + .0); cr = clamp(cr, 0., 1.); cr = mix(cr, 1., smoothstep(.3, .6, vn2(vWp.xz*.9 + vWp.y*.4))*.5); cr = mix(1., cr, 1. - smoothstep(.2, .55, 1.7*fp));
+  cr = mix(1., cr, smoothstep(.62, .97, rockK));   /* cracks only on true cliffs (not 30 deg grass flanks) */
   float rk3 = mix(.5, vn(vWp*vec3(2.4,3.2,2.4)), 1. - smoothstep(.2, .55, 3.2*fp)), rk4 = mix(.5, vn(vWp*vec3(9.,11.,9.)), 1. - smoothstep(.2, .55, 11.*fp));
-  vec3 rcol = col * tint * (.62 + .5*rk3) * mix(.62, 1., cr) * (.9 + .2*band2);
+  vec3 rbase = mix(vec3(dot(col, vec3(.33)))*vec3(1.06, 1.0, .92), col, .3);   /* cliff stone is grey-brown even where the baked ground colour is grass green */
+  vec3 rcol = rbase * tint * (.62 + .5*rk3) * mix(.6, 1., cr) * (.9 + .2*band2);
   float moss = smoothstep(.48,.7, vn2(vWp.xz*.9+vWp.y*.35)) * smoothstep(.2,.8,N.y);
   rcol = mix(rcol, vec3(.16,.26,.09)*(.7+.6*rk4), moss*.55*near);
   col = mix(col, rcol, rockK);
