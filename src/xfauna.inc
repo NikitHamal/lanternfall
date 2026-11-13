@@ -181,7 +181,7 @@ void faunaUpdate(float dt) {
 }
 int appendFaunaDyn(xr::Dyn* out, int k, int cap) {
   if (CI.in) return k; auto put = [&](int kind, const M4& m, float r, float g, float b) { if (k >= cap) return; xr::Dyn& o = out[k++]; o.kind = kind; o.m = m; o.mode = 0.f; o.tint[0] = r; o.tint[1] = g; o.tint[2] = b; };
-  if (rideH && K.mounted && P.view != 0) { if (nFAV[rideF.sp]) put(K_AN_SADDLE, mul(translate(rideF.x, rideF.y, rideF.z), mul(rotY(rideF.face), scale4(rideF.sc, rideF.sc, rideF.sc))), 1.f, 1.f, 1.f); else k = emitAnimal(out, k, cap, rideF, true, tAbs); }
+  if (rideH && K.mounted && P.view != 0) { if (!nFAV[rideF.sp]) k = emitAnimal(out, k, cap, rideF, true, tAbs); }
   for (int pass = 0; pass < 2; pass++) for (int i = 0; i < nFA; i++) { const Fauna& f = FA[i]; if (!f.used || nFAV[f.sp]) continue; float d2 = dist2(f.x, f.z, P.x, P.z); float lim = (SPD[f.sp].legLen < 0.3f ? 70.f : 125.f); float nearR = 48.f; if (pass == 0 ? d2 > nearR * nearR : (d2 <= nearR * nearR || d2 > lim * lim)) continue; if (k > cap - 20) break; k = emitAnimal(out, k, cap, f, false, tAbs); }
   // birds
   if (clockH > 5.6f && clockH < 19.4f) for (int i = 0; i < nBD; i++) { const Bird& b = BD[i]; if (k > cap - 40) break; float ang = b.dir * tAbs * b.spd / b.r + b.ph; float x = b.cx + std::cos(ang) * b.r, z = b.cz + std::sin(ang) * b.r; if (dist2(x, z, P.x, P.z) > 240.f * 240.f) continue;

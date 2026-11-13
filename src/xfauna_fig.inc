@@ -44,7 +44,7 @@ int faunaFigs(FigDraw* fd, int nfd, int cap, float dt) {
       else figAddRot(an, *a, nk, 1, 0, 0, 0.5f, a->head[nk]); }
     figAnimPose(an, *a);
     float dead = f.alive ? 0.f : smooth(0.f, 0.45f, f.deadT), sink = f.alive ? 0.f : smooth(36.f, 45.f, f.deadT) * 0.6f;
-    M4 base = mul(translate(f.x, f.y - sink, f.z), mul(rotY(f.face), scale4(S, S, S)));
+    M4 base = mul(translate(f.x, f.y - sink, f.z), mul(rotY(f.face), mul(scale4(S, S, S), translate(0.f, 0.f, idx == MAXF ? -0.38f / S : 0.f))));   // ridden: saddle of the sculpt sits under the rider
     if (dead > 0.f) { float ang = dead * 1.5708f, Y = A.bodyY * f.sc / S; base = mul(base, mul(translate(0, dead * Y * 1.25f, 0), mul(translate(Y, 0, 0), mul(rotZ(ang), translate(-Y, 0, 0))))); }
     FigDraw& o = fd[nfd++]; o.a = a; o.mat = an.mat; o.model = base; o.dissolve = 0.f; o.disH = 1.f; o.glow = 1.f; o.shadow = d < 45.f; o.dim = 1.f; o.lantern = false; o.vm = false; o.noBaked = false;
     o.disCol[0] = o.disCol[1] = o.disCol[2] = 0.f; float hit = f.hitT > 0 ? f.hitT * 2.4f : 0.f; o.flash[0] = hit * 1.2f; o.flash[1] = hit * 0.5f; o.flash[2] = hit * 0.3f; faTint(f, variant, o.tint); n++; };
