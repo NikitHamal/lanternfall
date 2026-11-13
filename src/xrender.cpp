@@ -109,10 +109,10 @@ void main(){
   float cr = min(smoothstep(0., .05, fract(bedy)*(1. - fract(bedy)))*1.6 + .0, smoothstep(0., .035, fract(jx)*(1. - fract(jx)))*1.4 + .0); cr = clamp(cr, 0., 1.); cr = mix(cr, 1., smoothstep(.3, .6, vn2(vWp.xz*.9 + vWp.y*.4))*.5); cr = mix(1., cr, 1. - smoothstep(.2, .55, 1.7*fp));
   cr = mix(1., cr, smoothstep(.62, .97, rockK));   /* cracks only on true cliffs (not 30 deg grass flanks) */
   float rk3 = mix(.5, vn(vWp*vec3(2.4,3.2,2.4)), 1. - smoothstep(.2, .55, 3.2*fp)), rk4 = mix(.5, vn(vWp*vec3(9.,11.,9.)), 1. - smoothstep(.2, .55, 11.*fp));
-  vec3 rbase = mix(vec3(dot(col, vec3(.33)))*vec3(1.06, 1.0, .92), col, .3);   /* cliff stone is grey-brown even where the baked ground colour is grass green */
+  vec3 rbase = mix(vec3(dot(col, vec3(.33)))*vec3(1.06, 1.0, .9)*.82, col, .1);   /* cliff stone is grey-brown even where the baked ground colour is grass green */
   vec3 rcol = rbase * tint * (.62 + .5*rk3) * mix(.6, 1., cr) * (.9 + .2*band2);
-  float moss = smoothstep(.48,.7, vn2(vWp.xz*.9+vWp.y*.35)) * smoothstep(.2,.8,N.y);
-  rcol = mix(rcol, vec3(.16,.26,.09)*(.7+.6*rk4), moss*.55*near);
+  float moss = smoothstep(.58,.76, vn2(vWp.xz*.9+vWp.y*.35) + (vn2(vWp.xz*3.1+vWp.y*1.7) - .5)*.3) * smoothstep(.5,.92,N.y) * (.35 + .9*rk3);   /* moss sits in ledges and cracks, not as a green wash over whole faces */
+  rcol = mix(rcol, vec3(.13,.2,.075)*(.7+.6*rk4), moss*.6*near);
   col = mix(col, rcol, rockK);
   // snow: soft blue shade, sparkle
   vec3 sn = vec3(.93,.96,1.04) * (.9 + .1*vn2(vWp.xz*2.5));
