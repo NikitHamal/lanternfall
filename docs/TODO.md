@@ -131,3 +131,22 @@ Vision: a proper fantasy immersive third-person game (Athran-style kingdom defen
 - [x] FIX river carve dug 70 m vertical pits around ponds/rivers (bed clamp + no carve in lakes); waterfalls 9 -> 13
 - [x] grass: shorter on sparse ground, fuller blades
 - [ ] next: audit all rivers for remaining over-steep banks (add a worldgen steepness census), water-sheet at fall pools, debug cameras that spawn inside water/trees, snow bake colour, chunk streaming
+
+## v3.3.0 - "Stone & Leaf" (graphics refinement) - shipped
+- [x] Shrubs (K_FBUSH) and ferns (K_FERN) rebuilt from alpha-tested leaf cards (`buildShrubN`, `buildFernN` in xtree.inc): leafy volumes with real blossom clusters instead of one faceted blob with hexagon flowers / flat neon blades
+- [x] Dressed-stone masonry (31 cm courses, staggered joints, per-block tint) in the stone surface shader; mortar + fine grain fade with pixel footprint (`fwidth(rp)`), which also removed the black speckle on far walls
+- [x] Cliff shader: jointed bedrock (wavy bedding planes + staggered vertical joints) instead of iso-contour "topographic" lines; grey-brown stone even on grass-green baked slopes; moss only in ledges; cracks only where rockK > .62
+- [x] Grass: 8 thinner blades per clump (was 5 wide), calmer straw / dead-blade colours, darker roots
+- [x] Verified: collision self-test `--xcmd bump0..6` (NPC, animal, cottage, barn, chapel, wall: all hold; gate-tower "FAIL" is the test probing with a 0.2 m radius, player is wider), lanterns hang from hooks/braziers only (night shots), app C++ heap steady 45-48 MB / peak 109.4 MB
+## Next session candidates (pick ONE major pillar)
+1. [ ] **Kingdom defence loop (Athran-style)**: nightly demon hordes at the capital, tower / wall building with persisted fortifications, troop commands, spells - the gameplay pillar the user wants most
+2. [ ] Chunk streaming + LOD tiles; build Hq (u16) during bake so Hh (16 MB) frees earlier (-8 MB peak); compress infoA/infoB (BC) and pack water level/flow (-17 MB GPU)
+3. [ ] Citizens: second body kit (children, elders, armour variants) + face detail; real free CC0 models need a Blender-capable machine (none available in the sandbox)
+4. [ ] Water: dedicated waterfall-water mode at the lip (Ravenfall), slab artefacts at fall pools, camera inside water in debug placements
+5. [ ] Tree canopy seen from inside (leaf cards become huge flat quads when the camera is in the crown): fade cards by camera distance
+6. [ ] Foot IK, turn-in-place, crouch/sneak, directional block
+
+| version | binary | assets | app heap steady / peak | notes |
+|---|---|---|---|---|
+| v3.2.0 | 2.6 MB | 26 MB | 45-49 / 109 MB | rivers without pits |
+| v3.3.0 | 2.66 MB | 26 MB | 45-48 / 109 MB | masonry, bedrock, leaf-card shrubs/ferns, denser grass |
