@@ -40,7 +40,7 @@ int faunaFigs(FigDraw* fd, int nfd, int cap, float dt) {
     int nk = figBone(*a, "neck", -1), rt = figBone(*a, "root", 0); float lie = f.alive ? f.lie : 0.f;
     if (lie > 0.01f) figAddMove(an, *a, rt, 0.f, -lie * (A.bodyY - A.lieY) * f.sc / S * 0.9f, 0.f);
     if (nk >= 0) {
-      if (f.alive) { float pt = f.headP + f.graze * A.grazeP * 0.85f + lie * 0.18f; figAddRot(an, *a, nk, 1, 0, 0, pt, a->head[nk]); if (std::fabs(f.look) > 1e-3f) figAddRot(an, *a, nk, 0, 1, 0, f.look, a->head[nk]); }
+      if (f.alive) { static const float GM[SP_N] = {0.55f, 0.55f, 0.f, 0.42f, 0.42f, 0.62f, 0.62f, 0.f}; float pt = f.headP * 0.6f + f.graze * A.grazeP * GM[f.sp] + lie * 0.12f; figAddRot(an, *a, nk, 1, 0, 0, pt, a->head[nk]); float lk = clampf(f.look, -0.5f, 0.5f); if (std::fabs(lk) > 1e-3f) figAddRot(an, *a, nk, 0, 1, 0, lk * 0.7f, a->head[nk]); }
       else figAddRot(an, *a, nk, 1, 0, 0, 0.5f, a->head[nk]); }
     figAnimPose(an, *a);
     float dead = f.alive ? 0.f : smooth(0.f, 0.45f, f.deadT), sink = f.alive ? 0.f : smooth(36.f, 45.f, f.deadT) * 0.6f;
