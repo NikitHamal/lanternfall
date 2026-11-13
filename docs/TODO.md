@@ -117,3 +117,12 @@ Vision: a proper fantasy immersive third-person game (Athran-style kingdom defen
 3. [ ] Collision audit with a scripted walk-into test (NPCs, animals, houses, walls)
 4. [ ] Hh as int16 on CPU, mesh CPU copies freed after upload, BC-compress infoA/infoB
 5. [ ] Chunk streaming for a bigger map
+
+## v3.1.0 (True Distance) - shipped
+- [x] Dithered near/proxy LOD cross-fade for trees + rocks; cliff cracks only on cliffs; `LF_LODSCALE`, `tr_*eye`, staging-overflow report
+- [x] Collision / citizens / lanterns re-audited (see status); app heap peak 109 MB, steady ~48 MB
+## Next session candidates
+1. [ ] Controlled A/B of proxy vs near tree colour/silhouette at 150-300 m (camera on a ray, fixed exposure) and re-tint proxies
+2. [ ] Remove the thin gully lines baked into far hillsides (height-field upstream river channels): fade channel depth at source or widen/soften
+3. [ ] Free Hh earlier (Hq strips during bake): peak heap 109 -> ~100 MB
+4. [ ] Chunk streaming + free-model (CC0) citizen/NPC rebuild when a Blender notebook exists
