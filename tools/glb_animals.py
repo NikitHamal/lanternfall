@@ -9,6 +9,11 @@ from glb_to_lfm import decimate, clean, transfer_color, vnormals, curvature, fit
 ANIMALS = {
     'stag': dict(f='stag_realistic.glb', donor='hollowstag', tris=10000, metal=0.0, rough=.85, ty=12, tint=(1.0, .92, .8)),
     'husky': dict(f='realistic_3d_husky_dog_model.glb', donor='gloamhound', tris=9000, metal=0.0, rough=.85, ty=12, tint=(1, 1, 1), fallback=(.62, .58, .55)),
+    'horse_bay': dict(f='balt_horse_12-13th_century.glb', donor='hollowstag', tris=11000, metal=0.0, rough=.8, ty=12, tint=(1, 1, 1)),
+    'horse_black': dict(f='midnight_black_horse_3d_model_free.glb', donor='hollowstag', tris=11000, metal=0.0, rough=.7, ty=12, tint=(1, 1, 1)),
+    'cow': dict(f='brown_cow_3d_model.glb', donor='gloamhound', tris=9000, metal=0.0, rough=.85, ty=12, tint=(1, 1, 1)),
+    'sheep': dict(f='sheep.glb', donor='gloamhound', tris=6000, metal=0.0, rough=.95, ty=12, tint=(1, 1, 1)),
+    'cat': dict(f='cat_in_motion_3d_model_free.glb', donor='gloamhound', tris=6000, metal=0.0, rough=.85, ty=12, tint=(1, 1, 1)),
     'tiger': dict(f='old_tiger_3d_model.glb', donor='gloamhound', tris=12000, metal=0.0, rough=.85, ty=12, tint=(1, 1, 1)),
 }
 RAD = {'hips': .24, 'spine': .22, 'chest': .24, 'neck': .12, 'head': .13, 'jaw': .08, 'tail1': .07, 'tail2': .05,
@@ -71,3 +76,8 @@ def build(name):
     out = os.path.join(ROOT, 'assets', 'animals'); os.makedirs(out, exist_ok=True)
     lfm_io.write_like(donor, v, Td.astype(np.uint16), name, os.path.join(out, name + '.lfm'), height=float(Pd[:, 1].max()))
     print(f'{name}: {len(g["P"])}v -> {len(Pd)}v/{len(Td)}t  {os.path.getsize(os.path.join(out, name + ".lfm")) / 1e6:.2f} MB  scale {s:.3f}')
+
+
+if __name__ == '__main__':
+    for n in (sys.argv[1:] or list(ANIMALS)):
+        build(n)
