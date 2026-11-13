@@ -36,7 +36,7 @@ struct Npc {
   bool used = false, alive = true, hitDone = false, lair = false, boss = false, onWall = false, vis = false, talking = false, asleep = false; int role = 0, rig = 0, mon = 0, state = 0, post = -1, road = -1, dir = 1, tgtKind = 0, tgtIdx = -1, settle = -1;
   float x = 0, y = 0, z = 0, face = 0, vx = 0, vz = 0, sc = 1, hp = 50, maxHp = 50, dmg = 10, spd = 1.5f, runSpd = 3.4f, hitT = 0, deadT = 0, cd = 0, atkT = -1, atkWind = 0.4f, atkRec = 0.5f, atkRange = 2.f, stT = 0, homeX = 0, homeZ = 0, tx = 0, tz = 0, aggro = 20, pathD = 0, wallY = 0, ax = 0, az = 0, bx = 0, bz = 0, moving = 0, ph = 0, look = 0, wander = 14, lastPlayerD = 99, angry = 0, limp = 0, panic = 0, stun = 0; bool brave = false, interior = false; char name[22] = {0}; FigAnim an;
 };
-Npc npcs[MAXN]; int monList[MAXN], nMonL = 0; RigDef rigs[40]; int nRigs = 0; int poolVill[10], nPoolVill = 0, poolGuard[4], nPoolGuard = 0, poolKnight[4], nPoolKnight = 0, poolSold[4], nPoolSold = 0;
+Npc npcs[MAXN]; int monList[MAXN], nMonL = 0; RigDef rigs[56]; int nRigs = 0; int poolVill[16], nPoolVill = 0, poolGuard[10], nPoolGuard = 0, poolKnight[10], nPoolKnight = 0, poolSold[10], nPoolSold = 0;
 FigAsset polyHeroes[6]; bool polyLoaded = false; float WID[FMAXB * 12];
 struct PathInfo { std::vector<float> cum; float total = 0; }; std::vector<PathInfo> paths; std::vector<V3> campfires;
 struct PlayerS { float x = 0, y = 0, z = 0, vy = 0, vx = 0, vz = 0, yaw = 0, pitch = 0.15f, face = 0, speed = 0, hp = 100, maxHp = 100, st = 100, atkT = -1, atkWind = 0.3f, atkRec = 0.36f, blockK = 0, hurtT = 0, deadT = 0, stagT = 0, rollSink = 0, camDist = 4.6f, comboT = 0, bobT = 0, regenWait = 0; bool ground = true, swim = false, fly = false, hitDone = false, block = false, tired = false; int combo = 0, view = 1; float dmgMul = 1; V3 eye, tgt; float fov = 1.16f; bool camInit = false; } P;
@@ -54,7 +54,7 @@ const char* L_KNIGHT[] = {"For the crown and the realm.", "I have fought the glo
 const char* L_SOLD[] = {"On patrol. Stay safe out there.", "The road to the next town is clear. For now.", "Seen anything strange in the woods?"};
 inline float dist2(float ax, float az, float bx, float bz) { return (ax - bx) * (ax - bx) + (az - bz) * (az - bz); }
 const FigAsset* asset(int i) { return rigs[i].a; }
-int addRig(const FigAsset* a, int wR, int wL, float sc, const char* title) { if (!a || !a->ok || nRigs >= 40) return -1; rigs[nRigs] = {a, wR, wL, sc, title, false}; return nRigs++; }
+int addRig(const FigAsset* a, int wR, int wL, float sc, const char* title) { if (!a || !a->ok || nRigs >= 56) return -1; rigs[nRigs] = {a, wR, wL, sc, title, false}; return nRigs++; }
 float groundAt(float x, float z) { return height(x, z); }
 bool badStep(float x, float z, float fromY) { float d; if (inWater(x, z, &d) && d > 0.75f) return true; float g = height(x, z); return g - fromY > 0.7f && slopeAt(x, z) > 1.1f; }
 void onNewNpcSlot(int i);
@@ -209,6 +209,26 @@ void start() { gFigNoBaked = true;
     if ((v = addRig(&gFH[WARDEN], -1, -1, gFH[WARDEN].scale, "GUARD")) >= 0) poolGuard[nPoolGuard++] = v; if ((v = addRig(&gFMAlt[RUSTBOUND], roster::WP_CLEAVER, roster::WP_ROUND, MON[RUSTBOUND].scale * 0.82f, "GATE WARDEN")) >= 0) poolGuard[nPoolGuard++] = v; if ((v = addRig(&polyHeroes[3], roster::WP_SWORD, roster::WP_KITE, 1.f, "GUARD")) >= 0) poolGuard[nPoolGuard++] = v;
     if ((v = addRig(&polyHeroes[3], roster::WP_SWORD, roster::WP_KITE, 1.08f, "KNIGHT")) >= 0) poolKnight[nPoolKnight++] = v; if ((v = addRig(&polyHeroes[4], roster::WP_GREATSWORD, roster::WP_NONE, 1.05f, "CHAMPION")) >= 0) poolKnight[nPoolKnight++] = v; if ((v = addRig(&gFH[REAVER], -1, -1, gFH[REAVER].scale, "CHAMPION")) >= 0) poolKnight[nPoolKnight++] = v;
     if ((v = addRig(&gFH[WARDEN], -1, -1, gFH[WARDEN].scale, "SOLDIER")) >= 0) poolSold[nPoolSold++] = v; if ((v = addRig(&polyHeroes[3], roster::WP_SWORD, roster::WP_KITE, 1.f, "SOLDIER")) >= 0) poolSold[nPoolSold++] = v; if ((v = addRig(&gFMAlt[RUSTBOUND], roster::WP_CLEAVER, roster::WP_ROUND, MON[RUSTBOUND].scale * 0.82f, "SOLDIER")) >= 0) poolSold[nPoolSold++] = v;
+    {   // v3.4 people: Sketchfab sculpts re-rigged on the native biped (tools/glb_to_lfm.py -> assets/people/*.lfm). When present they REPLACE the old hero-skin citizens.
+      struct PD { const char* key; const char* title; int role, wR, wL; float sc; }; static const PD PDS[] = {
+        {"farmer", "FARMER", 0, -1, -1, 1.f}, {"village_head", "VILLAGE ELDER", 0, roster::WP_STAFF, -1, 1.f}, {"female_warrior", "HUNTRESS", 0, roster::WP_BOW, -1, 1.f},
+        {"strong_knight", "GUARD", 1, roster::WP_SWORD, roster::WP_KITE, 1.f}, {"female_warrior", "GUARD", 1, roster::WP_SWORD, roster::WP_ROUND, 1.f}, {"dark_knight", "GATE WARDEN", 1, roster::WP_CLEAVER, roster::WP_ROUND, 1.f},
+        {"strong_knight", "SOLDIER", 2, roster::WP_SWORD, roster::WP_ROUND, 1.f}, {"female_warrior", "SOLDIER", 2, roster::WP_SWORD, roster::WP_KITE, 1.f}, {"valkyrie", "SHIELD-MAIDEN", 2, roster::WP_CLEAVER, roster::WP_ROUND, 1.f},
+        {"dark_knight", "KNIGHT", 3, roster::WP_SWORD, roster::WP_KITE, 1.f}, {"crimson_vanguard", "CRIMSON CHAMPION", 3, roster::WP_GREATSWORD, -1, 1.f}, {"obsidian_warden", "OBSIDIAN CHAMPION", 3, roster::WP_GREATSWORD, -1, 1.f}, {"artorias", "ABYSS KNIGHT", 3, roster::WP_GREATSWORD, -1, 1.f}};
+      static FigAsset folk[16]; int nf = 0, got[4] = {0, 0, 0, 0};
+      static const char* done[16]; int nd = 0; int fidx[16];
+      for (const PD& d : PDS) { int fi = -1; for (int q = 0; q < nd; q++) if (!strcmp(done[q], d.key)) fi = fidx[q];
+        if (fi < 0) { char path[64]; snprintf(path, sizeof path, "people/%s", d.key); if (nf < 16 && figLoad(folk[nf], path)) { fi = nf++; done[nd] = d.key; fidx[nd++] = fi; } else continue; }
+        int r = addRig(&folk[fi], d.wR, d.wL, folk[fi].scale * d.sc, d.title); if (r < 0) continue; got[d.role]++;
+        (void)r; }
+      // rebuild pools: new people only (old pools kept as fallback when nothing loaded)
+      int nv2 = 0, ng2 = 0, nk2 = 0, ns2 = 0; int vp[16], gp[10], kp[10], sp[10];
+      for (int r = 0; r < nRigs; r++) { if (!rigs[r].a) continue; bool isNew = false; for (int q = 0; q < nf; q++) if (rigs[r].a == &folk[q]) isNew = true; if (!isNew) continue; const char* t = rigs[r].title;
+        if (!strcmp(t, "FARMER") || !strcmp(t, "VILLAGE ELDER") || !strcmp(t, "HUNTRESS")) { if (nv2 < 16) vp[nv2++] = r; }
+        else if (!strcmp(t, "GUARD") || !strcmp(t, "GATE WARDEN")) { if (ng2 < 10) gp[ng2++] = r; }
+        else if (!strcmp(t, "SOLDIER") || !strcmp(t, "SHIELD-MAIDEN")) { if (ns2 < 10) sp[ns2++] = r; }
+        else { if (nk2 < 10) kp[nk2++] = r; } }
+      if (nv2) { nPoolVill = nv2; for (int i = 0; i < nv2; i++) poolVill[i] = vp[i]; } if (ng2) { nPoolGuard = ng2; for (int i = 0; i < ng2; i++) poolGuard[i] = gp[i]; } if (ns2) { nPoolSold = ns2; for (int i = 0; i < ns2; i++) poolSold[i] = sp[i]; } if (nk2) { nPoolKnight = nk2; for (int i = 0; i < nk2; i++) poolKnight[i] = kp[i]; } }
     if (!nPoolVill) poolVill[nPoolVill++] = 0; if (!nPoolGuard) poolGuard[nPoolGuard++] = 0; if (!nPoolKnight) poolKnight[nPoolKnight++] = 0; if (!nPoolSold) poolSold[nPoolSold++] = 0; mem::mark("after figures"); populate(); faunaInit(); releaseGen(); mem::mark("after npc+fauna"); H.discTotal = (int)pois.size(); }
   gfx::suspend(); on = true; memset(&P, 0, sizeof P); P = PlayerS(); const roster::Hero& hr = roster::at(roster::sel()); P.maxHp = P.hp = hr.hp; P.st = 100; P.dmgMul = hr.dmg;
   { const Settle& s = settles[nations[0].capital >= 0 ? nations[0].capital : 0]; float gx = s.x + s.gateX * 66.f, gz = s.z + s.gateZ * 66.f; P.x = gx; P.z = gz; P.y = height(gx, gz); P.yaw = std::atan2(-s.gateX, -s.gateZ); P.face = P.yaw; }
