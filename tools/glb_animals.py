@@ -14,6 +14,7 @@ ANIMALS = {
     'cow': dict(f='brown_cow_3d_model.glb', donor='gloamhound', tris=9000, metal=0.0, rough=.85, ty=12, tint=(1, 1, 1)),
     'sheep': dict(f='sheep.glb', donor='gloamhound', tris=6000, metal=0.0, rough=.95, ty=12, tint=(1, 1, 1)),
     'cat': dict(f='cat_in_motion_3d_model_free.glb', donor='gloamhound', tris=6000, metal=0.0, rough=.85, ty=12, tint=(1, 1, 1)),
+    'wolf': dict(f='knight_artorias_and_great_grey_wolf_sif.glb', sel='wolf', donor='gloamhound', tris=11000, metal=0.0, rough=.9, ty=12, tint=(1, 1, 1)),
     'tiger': dict(f='old_tiger_3d_model.glb', donor='gloamhound', tris=12000, metal=0.0, rough=.85, ty=12, tint=(1, 1, 1)),
 }
 RAD = {'hips': .24, 'spine': .22, 'chest': .24, 'neck': .12, 'head': .13, 'jaw': .08, 'tail1': .07, 'tail2': .05,
@@ -24,6 +25,9 @@ def build(name):
     cfg = ANIMALS[name]
     g = load_glb(os.path.join(SRC, cfg['f']), 1024)
     P, T, Cl = g['P'].astype(np.float64), g['T'], g['Cl']
+    if cfg.get('sel') == 'wolf':   # Sif lives in the same GLB as Artorias: keep only the wolf materials, re-index
+        m = np.isin(g['mat'], (10, 11)); T = T[m[T].all(1)]; used = np.unique(T)
+        rm = -np.ones(len(P), np.int64); rm[used] = np.arange(len(used)); P, Cl, T = P[used], Cl[used], rm[T]
     donor = lfm_io.read(os.path.join(ROOT, 'assets', cfg['donor'] + '.lfm'))
     dv = donor['v']['p'][:donor['bnv']]
     # forward axis: the longest horizontal axis, head end = the end whose top vertices are higher
