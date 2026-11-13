@@ -23,7 +23,6 @@ extern FigAsset gFH[NCLS], gFM[NMON], gFMAlt[9], gFW[NWEAP], gFP[NPFP];
 extern const float IDENT_BONE[12];
 bool figInit(const char* argv0); const char* figAssetDir();
 void figShutdown();
-bool figFromMesh(FigAsset& dst, const FigAsset& rig, const void* verts, int nv, const uint16_t* idx, int ni, const char* key, float height);   // procedural skinned mesh (36-byte .lfm vertices) on an existing rig (shares its clips)
 bool figLoad(FigAsset& a, const char* key); void figFree(FigAsset& a); int figBone(const FigAsset& a, const char* name, int fallback);
 struct FigAnim {
   uint32_t id = 0xffffffffu; float t = 0, ph = 0, moveW = 0, readyW = 0, downW = 0, guardW = 0, dodgeW = 0, actW = 0, actLastU = 0, stagK = 9, dim = 1;

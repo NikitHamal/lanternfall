@@ -81,7 +81,6 @@ void rockCluster(MB& b, int seg, int rings, bool sats) {
 #include "xmesh_new.inc"
 #include "xtree.inc"
 #include "xmesh_fauna.inc"
-#include "xhuman.inc"
 void arrowMesh(MB& b) { Sty sh = wood(0x8a6a3c, 0.9f), hd = metal(0x9aa0a6), fl = cloth(0xe8e0cc), fl2 = cloth(0xa83030); box(b, 0, 0, 0, 0.011f, 0.011f, 0.46f, sh); box(b, 0, 0, 0.5f, 0.016f, 0.016f, 0.06f, hd); box(b, 0, 0, 0.56f, 0.008f, 0.008f, 0.03f, hd); for (int k = 0; k < 3; k++) { float a = k * 2.0944f; boxR(b, 0.f, 0.f, -0.38f, 0.002f + 0.0f, 0.03f, 0.1f, 0, k == 0 ? fl2 : fl); (void)a; } box(b, 0, 0, -0.38f, 0.03f, 0.002f, 0.1f, fl); }
 void build(int kind, MB& b) {
   if (kind == xw::K_INHOME || kind == xw::K_INHALL || kind == xw::K_INCHAPEL) { buildInterior(kind, b); return; } if (kind == xw::K_ARROW) { arrowMesh(b); return; }
@@ -157,5 +156,3 @@ void build(int kind, MB& b) {
 bool xmBuild(int kind, std::vector<LV>& v, std::vector<uint16_t>& idx) {
   v.clear(); idx.clear(); MB b{&v, &idx}; build(kind, b); if (!v.empty() && std::getenv("LF_MESHSTAT")) fprintf(stderr, "mesh kind %d: %zu verts %zu tris\n", kind, v.size(), idx.size() / 3); return !v.empty();
 }
-bool xmBuildHuman(int variant, std::vector<LV>& v, std::vector<uint16_t>& idx) { v.clear(); idx.clear(); if (variant < 0 || variant >= XM_NHUMAN) return false; MB b{&v, &idx}; float keep = gDim; gDim = 1.f; buildHuman(variant, b); gDim = keep; if (std::getenv("LF_MESHSTAT")) fprintf(stderr, "human %d: %zu verts %zu tris\n", variant, v.size(), idx.size() / 3); return !v.empty() && v.size() < 65000; }
-int xmHumanCount() { return XM_NHUMAN; }

@@ -512,15 +512,6 @@ void main(){
   if (fol > 0.) c += col * uMoonCol * fol * .5 * pow(max(dot(-N, uMoonDir), 0.), 1.4) * sh * (.5 + .5*vAO);
   oC = vec4(c, 1.); }
 )GLSL";
-bool figFromMesh(FigAsset& dst, const FigAsset& rig, const void* verts, int nv, const uint16_t* idx, int ni, const char* key, float height) {
-  if (!rig.ok || nv <= 0 || ni <= 0) return false; dst = rig; dst.clipMem = nullptr; dst.vao = dst.vbo = dst.ibo = dst.ibo2 = 0; dst.baseNI2 = dst.ni2 = 0;
-  dst.nv = nv; dst.ni = ni; dst.baseNV = nv; dst.baseNI = ni; dst.lant = false; dst.height = height; snprintf(dst.key, sizeof dst.key, "%s", key);
-  glGenVertexArrays(1, &dst.vao); glBindVertexArray(dst.vao); glGenBuffers(1, &dst.vbo); glBindBuffer(GL_ARRAY_BUFFER, dst.vbo); glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)nv * 36, verts, GL_STATIC_DRAW);
-  glEnableVertexAttribArray(0); glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 36, (void*)0); glEnableVertexAttribArray(1); glVertexAttribPointer(1, 3, GL_BYTE, GL_TRUE, 36, (void*)12);
-  glEnableVertexAttribArray(2); glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, 36, (void*)16); glEnableVertexAttribArray(3); glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 36, (void*)20);
-  glEnableVertexAttribArray(4); glVertexAttribPointer(4, 4, GL_UNSIGNED_BYTE, GL_TRUE, 36, (void*)28); glEnableVertexAttribArray(5); glVertexAttribPointer(5, 4, GL_UNSIGNED_BYTE, GL_FALSE, 36, (void*)32);
-  glGenBuffers(1, &dst.ibo); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, dst.ibo); glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)ni * 2, idx, GL_STATIC_DRAW); glBindVertexArray(0); dst.ok = true; return true;
-}
 bool figLoad(FigAsset& a, const char* key) { a = FigAsset(); if (!loadFig(a, key)) { free(a.clipMem); a = FigAsset(); return false; } return true; }
 void figFree(FigAsset& a) { if (a.vao) glDeleteVertexArrays(1, &a.vao); if (a.vbo) glDeleteBuffers(1, &a.vbo); if (a.ibo) glDeleteBuffers(1, &a.ibo); if (a.ibo2) glDeleteBuffers(1, &a.ibo2); free(a.clipMem); a = FigAsset(); }
 int figBone(const FigAsset& a, const char* name, int fallback) { for (int i = 0; i < a.nb; i++) if (!strcmp(a.bone[i], name)) return i; return fallback; }

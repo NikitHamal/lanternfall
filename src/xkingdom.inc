@@ -207,7 +207,7 @@ void makeSworn(Npc& n) {
   int idx = (int)(&n - npcs); KEX[idx].sworn = true;
   n.road = -1; n.post = -1; n.onWall = false;
   if (n.role == R_VILL) {
-    n.role = R_SOLDIER; n.rig = rigSold[0] >= 0 ? rigSold[nationAt(n.x, n.z)] : poolSold[(int)(rng() * nPoolSold) % std::max(1, nPoolSold)];
+    n.role = R_SOLDIER; n.rig = poolSold[(int)(rng() * nPoolSold) % std::max(1, nPoolSold)];
     n.hp = n.maxHp = 210.f; n.dmg = 22.f; n.atkRange = 2.4f;
   } else {
     n.maxHp *= 1.35f; n.hp = n.maxHp; n.dmg *= 1.25f;

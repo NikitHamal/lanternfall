@@ -1,5 +1,4 @@
 #include "explore.h"
-#include "xmesh.h"
 #include "xworld.h"
 #include "xrender.h"
 #include "roster.h"
@@ -31,13 +30,13 @@ static void weatherUpdate(float dt);
 bool on = false, built = false; Rng rng(77); float clockH = 9.5f, tMul = 1.f, tAbs = 0, sinceStart = 0;
 enum Role { R_VILL, R_GUARD, R_KNIGHT, R_SOLDIER, R_MON, R_STAG, R_BOAR };
 enum St { S_IDLE, S_WALK, S_PATROL, S_CHASE, S_ATK, S_FLEE, S_RETURN };
-constexpr int MAXN = 1500; constexpr int NHUM = 19;
+constexpr int MAXN = 1500;
 struct RigDef { const FigAsset* a; int wR, wL; float scale; const char* title; bool own; };
 struct Npc {
   bool used = false, alive = true, hitDone = false, lair = false, boss = false, onWall = false, vis = false, talking = false, asleep = false; int role = 0, rig = 0, mon = 0, state = 0, post = -1, road = -1, dir = 1, tgtKind = 0, tgtIdx = -1, settle = -1;
   float x = 0, y = 0, z = 0, face = 0, vx = 0, vz = 0, sc = 1, hp = 50, maxHp = 50, dmg = 10, spd = 1.5f, runSpd = 3.4f, hitT = 0, deadT = 0, cd = 0, atkT = -1, atkWind = 0.4f, atkRec = 0.5f, atkRange = 2.f, stT = 0, homeX = 0, homeZ = 0, tx = 0, tz = 0, aggro = 20, pathD = 0, wallY = 0, ax = 0, az = 0, bx = 0, bz = 0, moving = 0, ph = 0, look = 0, wander = 14, lastPlayerD = 99, angry = 0, limp = 0, panic = 0, stun = 0; bool brave = false, interior = false; char name[22] = {0}; FigAnim an;
 };
-Npc npcs[MAXN]; int monList[MAXN], nMonL = 0; RigDef rigs[72]; int nRigs = 0; int rigGuard[3] = {-1, -1, -1}, rigSold[3] = {-1, -1, -1}, rigKnight[3] = {-1, -1, -1}, rigChamp[3] = {-1, -1, -1}; int poolVill[20], nPoolVill = 0, poolGuard[4], nPoolGuard = 0, poolKnight[4], nPoolKnight = 0, poolSold[4], nPoolSold = 0;
+Npc npcs[MAXN]; int monList[MAXN], nMonL = 0; RigDef rigs[40]; int nRigs = 0; int poolVill[10], nPoolVill = 0, poolGuard[4], nPoolGuard = 0, poolKnight[4], nPoolKnight = 0, poolSold[4], nPoolSold = 0;
 FigAsset polyHeroes[6]; bool polyLoaded = false; float WID[FMAXB * 12];
 struct PathInfo { std::vector<float> cum; float total = 0; }; std::vector<PathInfo> paths; std::vector<V3> campfires;
 struct PlayerS { float x = 0, y = 0, z = 0, vy = 0, vx = 0, vz = 0, yaw = 0, pitch = 0.15f, face = 0, speed = 0, hp = 100, maxHp = 100, st = 100, atkT = -1, atkWind = 0.3f, atkRec = 0.36f, blockK = 0, hurtT = 0, deadT = 0, stagT = 0, rollSink = 0, camDist = 4.6f, comboT = 0, bobT = 0, regenWait = 0; bool ground = true, swim = false, fly = false, hitDone = false, block = false, tired = false; int combo = 0, view = 1; float dmgMul = 1; V3 eye, tgt; float fov = 1.16f; bool camInit = false; } P;
@@ -55,7 +54,7 @@ const char* L_KNIGHT[] = {"For the crown and the realm.", "I have fought the glo
 const char* L_SOLD[] = {"On patrol. Stay safe out there.", "The road to the next town is clear. For now.", "Seen anything strange in the woods?"};
 inline float dist2(float ax, float az, float bx, float bz) { return (ax - bx) * (ax - bx) + (az - bz) * (az - bz); }
 const FigAsset* asset(int i) { return rigs[i].a; }
-int addRig(const FigAsset* a, int wR, int wL, float sc, const char* title) { if (!a || !a->ok || nRigs >= 72) return -1; rigs[nRigs] = {a, wR, wL, sc, title, false}; return nRigs++; }
+int addRig(const FigAsset* a, int wR, int wL, float sc, const char* title) { if (!a || !a->ok || nRigs >= 40) return -1; rigs[nRigs] = {a, wR, wL, sc, title, false}; return nRigs++; }
 float groundAt(float x, float z) { return height(x, z); }
 bool badStep(float x, float z, float fromY) { float d; if (inWater(x, z, &d) && d > 0.75f) return true; float g = height(x, z); return g - fromY > 0.7f && slopeAt(x, z) > 1.1f; }
 void onNewNpcSlot(int i);
@@ -65,11 +64,11 @@ void setName(Npc& n, const char* s) { snprintf(n.name, sizeof n.name, "%s", s); 
 
 // ------------------------------------------------------------------ spawning
 Npc* spawnHuman(int role, float x, float z, float face, int settle, int pool = -1) {
-  Npc* n = newNpc(); if (!n) return nullptr; n->role = role; n->x = x; n->z = z; n->y = groundAt(x, z); n->face = face; n->homeX = x; n->homeZ = z; n->settle = settle; int r; int nat = settle >= 0 && settle < (int)settles.size() ? settles[settle].nation : nationAt(x, z); if (nat < 0 || nat > 2) nat = 0;
+  Npc* n = newNpc(); if (!n) return nullptr; n->role = role; n->x = x; n->z = z; n->y = groundAt(x, z); n->face = face; n->homeX = x; n->homeZ = z; n->settle = settle; int r;
   if (role == R_VILL) { int pi = (int)(rng() * nPoolVill) % std::max(1, nPoolVill); r = poolVill[pi]; n->hp = n->maxHp = 40; n->dmg = 4; n->spd = 1.15f; n->runSpd = 3.6f; setName(*n, VN[(int)(rng() * 24) % 24]); n->wander = 12 + rng() * 10; }
-  else if (role == R_GUARD) { r = rigGuard[nat] >= 0 ? rigGuard[nat] : poolGuard[(int)(rng() * nPoolGuard) % nPoolGuard]; n->hp = n->maxHp = 150; n->dmg = 16; n->spd = 1.2f; n->runSpd = 4.8f; setName(*n, GN[(int)(rng() * 10) % 10]); n->aggro = 30; }
-  else if (role == R_KNIGHT) { r = rigKnight[nat] >= 0 ? (rng() < 0.4f ? rigChamp[nat] : rigKnight[nat]) : poolKnight[(int)(rng() * nPoolKnight) % nPoolKnight]; n->hp = n->maxHp = 280; n->dmg = 30; n->spd = 1.2f; n->runSpd = 5.0f; setName(*n, GN[(int)(rng() * 10) % 10]); n->aggro = 34; }
-  else { r = rigSold[nat] >= 0 ? rigSold[nat] : poolSold[(int)(rng() * nPoolSold) % nPoolSold]; n->hp = n->maxHp = 190; n->dmg = 20; n->spd = 1.6f; n->runSpd = 4.6f; setName(*n, GN[(int)(rng() * 10) % 10]); n->aggro = 30; }
+  else if (role == R_GUARD) { r = poolGuard[(int)(rng() * nPoolGuard) % nPoolGuard]; n->hp = n->maxHp = 150; n->dmg = 16; n->spd = 1.2f; n->runSpd = 4.8f; setName(*n, GN[(int)(rng() * 10) % 10]); n->aggro = 30; }
+  else if (role == R_KNIGHT) { r = poolKnight[(int)(rng() * nPoolKnight) % nPoolKnight]; n->hp = n->maxHp = 280; n->dmg = 30; n->spd = 1.2f; n->runSpd = 5.0f; setName(*n, GN[(int)(rng() * 10) % 10]); n->aggro = 34; }
+  else { r = poolSold[(int)(rng() * nPoolSold) % nPoolSold]; n->hp = n->maxHp = 190; n->dmg = 20; n->spd = 1.6f; n->runSpd = 4.6f; setName(*n, GN[(int)(rng() * 10) % 10]); n->aggro = 30; }
   if (pool >= 0) r = pool; n->rig = r; n->sc = rigs[r].scale * (0.94f + rng() * 0.12f); n->atkWind = 0.4f; n->atkRec = 0.5f; n->atkRange = role == R_VILL ? 1.9f : 2.4f; n->brave = rng() < 0.45f; if (role == R_VILL) n->dmg = 7; return n;
 }
 Npc* spawnMon(int type, float x, float z, bool lair, bool boss) {
@@ -210,20 +209,6 @@ void start() { gFigNoBaked = true;
     if ((v = addRig(&gFH[WARDEN], -1, -1, gFH[WARDEN].scale, "GUARD")) >= 0) poolGuard[nPoolGuard++] = v; if ((v = addRig(&gFMAlt[RUSTBOUND], roster::WP_CLEAVER, roster::WP_ROUND, MON[RUSTBOUND].scale * 0.82f, "GATE WARDEN")) >= 0) poolGuard[nPoolGuard++] = v; if ((v = addRig(&polyHeroes[3], roster::WP_SWORD, roster::WP_KITE, 1.f, "GUARD")) >= 0) poolGuard[nPoolGuard++] = v;
     if ((v = addRig(&polyHeroes[3], roster::WP_SWORD, roster::WP_KITE, 1.08f, "KNIGHT")) >= 0) poolKnight[nPoolKnight++] = v; if ((v = addRig(&polyHeroes[4], roster::WP_GREATSWORD, roster::WP_NONE, 1.05f, "CHAMPION")) >= 0) poolKnight[nPoolKnight++] = v; if ((v = addRig(&gFH[REAVER], -1, -1, gFH[REAVER].scale, "CHAMPION")) >= 0) poolKnight[nPoolKnight++] = v;
     if ((v = addRig(&gFH[WARDEN], -1, -1, gFH[WARDEN].scale, "SOLDIER")) >= 0) poolSold[nPoolSold++] = v; if ((v = addRig(&polyHeroes[3], roster::WP_SWORD, roster::WP_KITE, 1.f, "SOLDIER")) >= 0) poolSold[nPoolSold++] = v; if ((v = addRig(&gFMAlt[RUSTBOUND], roster::WP_CLEAVER, roster::WP_ROUND, MON[RUSTBOUND].scale * 0.82f, "SOLDIER")) >= 0) poolSold[nPoolSold++] = v;
-    {   // v2.8 citizens: proportioned humans skinned to the polyfork biped rig replace the re-skinned heroes / monsters
-      static FigAsset humans[NHUM]; std::vector<LV> hv; std::vector<uint16_t> hi; const FigAsset& base = polyHeroes[3]; int vr[NHUM]; bool allOk = base.ok;
-      for (int i = 0; i < NHUM && allOk; i++) { vr[i] = -1; allOk = xmBuildHuman(i, hv, hi) && figFromMesh(humans[i], base, hv.data(), (int)hv.size(), hi.data(), (int)hi.size(), "human", 1.85f); }
-      if (allOk) {
-        nPoolVill = nPoolGuard = nPoolKnight = nPoolSold = 0;
-        static const int VW[14] = {0, 0, 1, 1, 2, 3, 3, 4, 5, 6, 7, 8, 9, 8}; static const char* VT[10] = {"FARMER", "VILLAGER", "VILLAGER", "VILLAGER", "ELDER", "BAKER", "CHILD", "HERBALIST", "HUNTER", "MERCHANT"};
-        int wr[10] = {-1, -1, -1, -1, roster::WP_STAFF, -1, -1, roster::WP_STAFF, roster::WP_BOW, -1}; int vrig[10];
-        for (int i = 0; i < 10; i++) vrig[i] = addRig(&humans[i], wr[i], roster::WP_NONE, i == 6 ? 0.68f : 1.f, VT[i]);
-        for (int i = 0; i < 14; i++) poolVill[nPoolVill++] = vrig[VW[i]];
-        for (int nt = 0; nt < 3; nt++) { rigGuard[nt] = addRig(&humans[10 + nt * 3], roster::WP_SWORD, roster::WP_KITE, 1.f, "GUARD"); rigSold[nt] = addRig(&humans[11 + nt * 3], roster::WP_SWORD, roster::WP_ROUND, 1.f, "SOLDIER");
-          rigKnight[nt] = addRig(&humans[12 + nt * 3], roster::WP_SWORD, roster::WP_KITE, 1.04f, "KNIGHT"); rigChamp[nt] = addRig(&humans[12 + nt * 3], roster::WP_GREATSWORD, roster::WP_NONE, 1.06f, "CHAMPION"); }
-        poolGuard[nPoolGuard++] = rigGuard[0]; poolKnight[nPoolKnight++] = rigKnight[0]; poolSold[nPoolSold++] = rigSold[0];
-      }
-    }
     if (!nPoolVill) poolVill[nPoolVill++] = 0; if (!nPoolGuard) poolGuard[nPoolGuard++] = 0; if (!nPoolKnight) poolKnight[nPoolKnight++] = 0; if (!nPoolSold) poolSold[nPoolSold++] = 0; mem::mark("after figures"); populate(); faunaInit(); releaseGen(); mem::mark("after npc+fauna"); H.discTotal = (int)pois.size(); }
   gfx::suspend(); on = true; memset(&P, 0, sizeof P); P = PlayerS(); const roster::Hero& hr = roster::at(roster::sel()); P.maxHp = P.hp = hr.hp; P.st = 100; P.dmgMul = hr.dmg;
   { const Settle& s = settles[nations[0].capital >= 0 ? nations[0].capital : 0]; float gx = s.x + s.gateX * 66.f, gz = s.z + s.gateZ * 66.f; P.x = gx; P.z = gz; P.y = height(gx, gz); P.yaw = std::atan2(-s.gateX, -s.gateZ); P.face = P.yaw; }
@@ -268,13 +253,8 @@ void keyPress(int key) {
     for (const V3& c : campfires) if (dist2(c.x, c.z, P.x, P.z) < 3.8f * 3.8f) { restT = 3.2f; return; } }
 }
 void debugPlace(float x, float z, float yawDeg, float pitchDeg) { P.x = x; P.z = z; { float dk = deckTop(x, z); P.y = dk > -1e8f ? dk : height(x, z); } P.yaw = yawDeg * PI / 180.f; P.face = P.yaw; P.pitch = pitchDeg * PI / 180.f; P.camInit = false; } void debugHour(float h) { clockH = h; } void debugCam(float d) { P.camDist = d; } void debugFly(bool f) { P.fly = f; H.fly = f; } void debugView(int v) { P.view = v; H.view = v; } void debugMap(bool m) { H.map = m; }
-void debugPoi(int i) { if (pois.empty()) return; const Poi& p = pois[((i % (int)pois.size()) + (int)pois.size()) % (int)pois.size()]; float back = p.kind == 3 ? 24.f : p.kind == 0 ? 120.f : p.kind == 4 ? 60.f : 38.f; float a = p.kind == 3 ? 0.f : 0.9f; float x = p.x + std::sin(a) * back, z = p.z + std::cos(a) * back; if (p.kind == 3 && !falls.empty()) { for (const Fall& f : falls) if (std::fabs(f.x - p.x) < 1 && std::fabs(f.z - p.z) < 1) { x = f.x + f.dx * 22.f + f.dz * 6.f; z = f.z + f.dz * 22.f - f.dx * 6.f; } } if (getenv("LF_NEAR")) fprintf(stderr, "POI %s kind %d at %.1f %.1f y %.2f r %.1f; cam %.1f %.1f\n", p.name, p.kind, p.x, p.z, p.y, p.r, x, z); P.x = x; P.z = z; P.y = height(x, z); P.yaw = std::atan2(p.x - x, p.z - z); P.face = P.yaw; P.pitch = p.kind == 4 ? 0.05f : 0.12f; P.camInit = false; }
-void debugCmd(const char* c) { if (const char* lu = strstr(c, "lineup")) { int part = atoi(lu + 6); float fx = std::sin(P.yaw), fz = std::cos(P.yaw), rx = fz, rz = -fx; int col = 0, row = 0; int seen = 0;
-    for (int k = 0; k < nRigs; k++) { const RigDef& rd = rigs[k]; if (!rd.a || strcmp(rd.a->key, "human")) continue; bool vill = seen < 10; seen++; if ((part == 0) != vill && part < 2) continue; if (part == 0 ? !vill : false) continue; if (part == 1 && vill) continue;
-      Npc* n = newNpc(); if (!n) { int bi = 0; float bd = -1.f; for (int j = 0; j < MAXN; j++) { float dd = dist2(npcs[j].x, npcs[j].z, P.x, P.z); if (dd > bd) { bd = dd; bi = j; } } npcs[bi] = Npc(); n = &npcs[bi]; n->used = true; n->an = FigAnim(); n->an.id = (uint32_t)bi; } int ro = !strcmp(rd.title, "GUARD") ? R_GUARD : !strcmp(rd.title, "SOLDIER") ? R_SOLDIER : (!strcmp(rd.title, "KNIGHT") || !strcmp(rd.title, "CHAMPION")) ? R_KNIGHT : R_VILL;
-      float d = (strchr(c, '@') ? (float)atof(strchr(c, '@') + 1) : 6.2f) + row * 2.4f, off = (col - (part == 0 ? 4.5f : 4.f)) * 1.05f; n->role = ro; n->rig = k; n->x = P.x + fx * d + rx * off; n->z = P.z + fz * d + rz * off; n->y = groundAt(n->x, n->z); n->face = P.yaw + PI; n->homeX = n->x; n->homeZ = n->z; n->sc = rd.scale; n->wander = 0.5f; n->spd = 0.05f; n->runSpd = 0.1f; setName(*n, rd.title); n->hp = n->maxHp = 99999; n->settle = -1;
-      if (++col == (part == 0 ? 5 : 8)) { col = 0; row++; } } }
-  if (const char* sq = strstr(c, "spd=")) dbgSpd = (float)atof(sq + 4); if (strstr(c, "clean")) { dbgClean = true; P.view = 1; H.view = 1; } if (strstr(c, "rain")) { wxForce = 1; wxW = 1.f; } if (strstr(c, "mapview")) H.map = true; if (const char* sk = strstr(c, "sky")) { P.fly = true; H.fly = true; P.y += (float)atof(sk + 3); }
+void debugPoi(int i) { if (pois.empty()) return; const Poi& p = pois[((i % (int)pois.size()) + (int)pois.size()) % (int)pois.size()]; float back = p.kind == 3 ? 24.f : p.kind == 0 ? 120.f : p.kind == 4 ? 60.f : 38.f; float a = p.kind == 3 ? 0.f : 0.9f; float x = p.x + std::sin(a) * back, z = p.z + std::cos(a) * back; if (p.kind == 3 && !falls.empty()) { for (const Fall& f : falls) if (std::fabs(f.x - p.x) < 1 && std::fabs(f.z - p.z) < 1) { x = f.x + f.dx * 22.f + f.dz * 6.f; z = f.z + f.dz * 22.f - f.dx * 6.f; } } P.x = x; P.z = z; P.y = height(x, z); P.yaw = std::atan2(p.x - x, p.z - z); P.face = P.yaw; P.pitch = p.kind == 4 ? 0.05f : 0.12f; P.camInit = false; }
+void debugCmd(const char* c) { if (const char* sq = strstr(c, "spd=")) dbgSpd = (float)atof(sq + 4); if (strstr(c, "clean")) { dbgClean = true; P.view = 1; H.view = 1; } if (strstr(c, "rain")) { wxForce = 1; wxW = 1.f; } if (strstr(c, "mapview")) H.map = true; if (const char* sk = strstr(c, "sky")) { P.fly = true; H.fly = true; P.y += (float)atof(sk + 3); }
   { static const char* AN[SP_N] = {"dog", "cat", "hen", "sheep", "cow", "horse", "deer", "rabbit"}; int want = -1; for (int q = 0; q < SP_N; q++) if (strstr(c, AN[q])) want = q; if (want >= 0) { int bi = -1; float bd = 1e30f; for (int i = 0; i < nFA; i++) if (FA[i].used && FA[i].alive && FA[i].sp == want) { float d = dist2(FA[i].x, FA[i].z, P.x, P.z); if (d < bd) { bd = d; bi = i; } }
     if (bi >= 0) { Fauna& f = FA[bi]; float dd = SPD[want].legLen < 0.3f ? 1.6f : want == SP_HORSE || want == SP_COW || want == SP_DEER ? 4.4f : 2.6f; if (const char* dp = strstr(c, "@")) dd = (float)atof(dp + 1); float ang = strstr(c, "front") ? 0.f : strstr(c, "back") ? PI : 1.1f; float x = f.x + std::sin(f.face + ang) * dd, z = f.z + std::cos(f.face + ang) * dd; P.x = x; P.z = z; P.y = height(x, z); P.yaw = std::atan2(f.x - x, f.z - z); P.face = P.yaw; P.pitch = 0.05f; P.camDist = dd; P.camInit = false; if (dbgClean) { dbgTrack = bi; dbgAng = ang; dbgDist = dd; if (const char* hp = strstr(c, "h=")) dbgHF = (float)atof(hp + 2); }
       if (strstr(c, "ride") && want == SP_HORSE) { P.x = f.x; P.z = f.z; P.y = height(f.x, f.z); P.face = f.face; P.yaw = f.face + 0.55f; P.pitch = 0.1f; P.camDist = 5.2f; rideH = true; K.mounted = true; rideF = f; rideF.used = true; rideF.sc = 1.f; rideF.act = 0; mountT = 1.f; dmT = 0.f; f.used = false; if (dbgClean) dbgTrack = -2; }
