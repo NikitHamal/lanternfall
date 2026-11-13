@@ -36,6 +36,43 @@ HUMANS = {
     'artorias': dict(f='knight_artorias_and_great_grey_wolf_sif.glb', tris=20000, H=2.05, flip=False, metal=.45, rough=.5, ty=12),
 }
 
+# ---- colour variants (v3.5): same sculpt, different cloth palette -> crowds of villagers no longer look cloned.
+# rules: (hue_lo, hue_hi, d_hue, sat_mul, val_mul) on display-space HSV, only for saturated pixels (s > .16)
+VARIANTS = {
+    'farmer_b': dict(base='farmer', rules=[(.22, .50, -.30, 1.1, .95), (.50, .72, -.46, .6, .75)]),
+    'farmer_c': dict(base='farmer', rules=[(.22, .50, +.24, .9, .9), (.50, .72, -.30, .3, 1.0)]),
+    'village_head_b': dict(base='village_head', rules=[(.45, .80, -.28, 1.0, .85)]),
+    'female_warrior_b': dict(base='female_warrior', rules=[(.0, .12, +.30, .45, .8), (.92, 1.0, +.38, .45, .8)]),
+}
+for _k, _v in VARIANTS.items():
+    HUMANS[_k] = dict(HUMANS[_v['base']], rules=_v['rules'])
+
+
+def rgb2hsv(c):
+    mx = c.max(1); mn = c.min(1); d = mx - mn; h = np.zeros(len(c)); nz = d > 1e-6
+    r, g, b = c[:, 0], c[:, 1], c[:, 2]
+    m = nz & (mx == r); h[m] = ((g - b)[m] / d[m]) % 6
+    m = nz & (mx == g); h[m] = (b - r)[m] / d[m] + 2
+    m = nz & (mx == b); h[m] = (r - g)[m] / d[m] + 4
+    return h / 6, np.where(mx > 1e-6, d / np.maximum(mx, 1e-6), 0), mx
+
+
+def hsv2rgb(h, s, v):
+    i = np.floor(h * 6).astype(int) % 6; f = h * 6 - np.floor(h * 6)
+    p, q, t = v * (1 - s), v * (1 - f * s), v * (1 - (1 - f) * s)
+    out = np.zeros((len(h), 3))
+    for k, (a, b, c) in enumerate(((v, t, p), (q, v, p), (p, v, t), (p, q, v), (t, p, v), (v, p, q))):
+        m = i == k; out[m, 0], out[m, 1], out[m, 2] = a[m], b[m], c[m]
+    return out
+
+
+def recolor(col, rules):
+    d = np.sqrt(np.clip(col, 0, 1)); h, s, v = rgb2hsv(d); nh, ns, nv = h.copy(), s.copy(), v.copy()
+    for lo, hi, dh, sm, vm in rules:
+        m = (h >= lo) & (h < hi) & (s > .16)
+        nh[m] = (h[m] + dh) % 1; ns[m] = np.clip(s[m] * sm, 0, 1); nv[m] = np.clip(v[m] * vm, 0, 1)
+    return hsv2rgb(nh, ns, nv) ** 2
+
 
 def lin2store(c):
     """linear rgb [0,1] -> stored u8 (shader squares the stored value => stored = sqrt(linear))."""
@@ -285,6 +322,7 @@ def build_human(name, pose=False):
     Pd, Td, used = clean(Pd, Td)
     Cd = transfer_color(P, Cl, Pd)
     Cd = fit_colors(Cd)
+    if cfg.get('rules'): Cd = recolor(Cd, cfg['rules'])
     lum = Cd.mean(1); p90 = np.percentile(lum, 90)
     gain = float(np.clip(0.30 / max(p90, 1e-3), 0.55, 3.5))   # auto exposure: very dark PBR albedo is lifted, pure-white placeholder albedo is pulled to steel
     Cd = np.clip(Cd * gain, 0, 1)
