@@ -191,8 +191,16 @@ static void weatherUpdate(float dt) {
 bool active() { return on; } float danger() { int c = 0; for (int k = 0; k < nMonL; k++) { const Npc& m = npcs[monList[k]]; if (m.alive && m.role == R_MON && dist2(m.x, m.z, P.x, P.z) < 35 * 35 && m.tgtKind == 1) c++; } return std::min(1.f, c * 0.35f); }
 int poiCount() { return (int)pois.size(); } const char* poiName(int i) { return pois[i].name; } bool poiFound(int i) { return pois[i].found; } void poiPos(int i, float& x, float& z) { x = pois[i].x; z = pois[i].z; }
 void resize(int w, int h) { if (built) xr::resize(w, h); }
+// v3.2 LF_FLOATAUDIT=1: how far does the ground fall away under each building footprint (visible gap under the walls = "floating building")
+static void floatAudit() {
+  struct KH { int k; float hx, hz; const char* nm; }; const KH L[] = {{xw::K_COTTAGE, 2.95f, 1.95f, "cottage"}, {xw::K_BARN, 2.f, 3.4f, "barn"}, {xw::K_CHAPEL, 2.2f, 3.2f, "chapel"}, {xw::K_HOUSE, 2.5f, 2.5f, "house"}, {xw::K_LONG, 3.5f, 2.f, "long"}, {xw::K_WATCH, 1.6f, 1.6f, "watch"}, {xw::K_STOWER, 2.f, 2.f, "stower"}, {xw::K_KEEP, 4.f, 4.f, "keep"}, {xw::K_MILL, 2.f, 2.f, "mill"}, {xw::K_GATE, 3.f, 2.f, "gate"}};
+  for (const KH& e : L) { int n = 0, bad = 0, worst = -1; float wg = 0, sum = 0; for (size_t i = 0; i < xw::objs.size(); i++) { const xw::Obj& o = xw::objs[i]; if (o.kind != e.k) continue; n++; float c = std::cos(o.ry), sn = std::sin(o.ry), lo = 1e9f, hi = -1e9f;
+      for (int q = 0; q < 8; q++) { float lx = (q & 1 ? 1.f : -1.f) * e.hx * o.sx * (q < 4 ? 1.f : 0.f), lz = (q & 2 ? 1.f : -1.f) * e.hz * o.sz * (q < 4 ? 1.f : 0.f); if (q >= 4) { int m = q - 4; lx = (m == 0 ? -1.f : m == 1 ? 1.f : 0.f) * e.hx * o.sx; lz = (m == 2 ? -1.f : m == 3 ? 1.f : 0.f) * e.hz * o.sz; } float h = xw::height(o.x + lx * c + lz * sn, o.z - lx * sn + lz * c); lo = std::min(lo, h); hi = std::max(hi, h); }
+      float gap = o.y - lo; sum += gap; if (gap > 0.35f) { bad++; if (gap > wg) { wg = gap; worst = (int)i; } } }
+    if (n) std::printf("FLOATAUDIT %-8s n=%d gap>0.35m: %d worst %.2f m at (%.1f, %.1f) mean %.2f\n", e.nm, n, bad, wg, worst >= 0 ? xw::objs[worst].x : 0.f, worst >= 0 ? xw::objs[worst].z : 0.f, sum / n); }
+}
 void start() { gFigNoBaked = true;
-  if (!built) { built = true; mem::mark("before worldgen"); generate(7); mem::mark("after worldgen"); buildEnters(); initKingdomWorld(); mem::mark("after kingdom init"); xr::init(); mem::mark("after renderer init");
+  if (!built) { built = true; mem::mark("before worldgen"); generate(7); mem::mark("after worldgen"); if (getenv("LF_FLOATAUDIT")) floatAudit(); buildEnters(); initKingdomWorld(); mem::mark("after kingdom init"); xr::init(); mem::mark("after renderer init");
     memset(WID, 0, sizeof WID); for (int b = 0; b < FMAXB; b++) { float* o = WID + b * 12; o[0] = o[5] = o[10] = 1; }
     static const char* PK[6] = {"polyfork/apothecary", "polyfork/lamplighter", "polyfork/rimebinder", "polyfork/warden", "polyfork/reaver", "polyfork/fletcher"}; for (int i = 0; i < 6; i++) figLoad(polyHeroes[i], PK[i]);
     int v;
