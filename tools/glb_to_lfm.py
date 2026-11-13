@@ -267,7 +267,8 @@ def build_human(name, pose=False):
     if name == 'artorias':  # file contains Artorias (skin 0) and Sif the wolf: keep the biped (taller than wide) cluster
         pass
     # normalise: feet on y=0, centre x/z on the torso, scale to H
-    lo, hi = np.percentile(P[:, 1], .05), np.percentile(P[:, 1], 99.95)
+    Pu = P[np.unique(T)]   # height fit from vertices that survive the stray-geometry cut (farmer.glb carries props ~40 m away)
+    lo, hi = np.percentile(Pu[:, 1], .05), np.percentile(Pu[:, 1], 99.95)
     P[:, 1] -= lo
     # exclude stray weapons/wings from the height estimate via percentile
     Hm = hi - lo
