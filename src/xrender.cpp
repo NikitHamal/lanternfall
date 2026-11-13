@@ -149,7 +149,7 @@ vec3 skyR(vec3 r){ vec3 c = mix(uHor, uZen, pow(clamp(r.y,0.,1.), .45)); float s
 void main(){
   vec2 uv = vWp.xz/uWorld+.5; float th = texture(uHeight, uv).r*1024.-128.; float depth = vWp.y - th; if (depth < 0.) discard;
   { float ee = 3./uWorld; float gx = (texture(uHeight, uv+vec2(ee,0.)).r - texture(uHeight, uv-vec2(ee,0.)).r)*1024./6., gz = (texture(uHeight, uv+vec2(0.,ee)).r - texture(uHeight, uv-vec2(0.,ee)).r)*1024./6.; if (depth > .1 && length(vec2(gx,gz)) > .85) discard; }
-  vec4 Wt = texture(uWater, uv); Wt = vec4(Wt.r*1024.-128., Wt.gb*2.-1., Wt.a); if (vWp.y - Wt.r > .4) discard; vec2 flow = Wt.gb; float spd = length(flow); vec2 fd = spd > .02 ? flow/spd : vec2(0.); float river = smoothstep(.02,.6,spd);
+  vec4 Wt = texture(uWater, uv); Wt = vec4(Wt.r*1024.-128., Wt.gb*2.-1., Wt.a); if (vWp.y - Wt.r > .4) discard;   vec2 flow = Wt.gb; float spd = length(flow); vec2 fd = spd > .02 ? flow/spd : vec2(0.); float river = smoothstep(.02,.6,spd);
   float t = uTime; vec2 p = vWp.xz; float v1 = mix(.25, 2.2, river), v2 = mix(.4, 3.4, river);
   vec2 q1 = p*.42 - fd*t*v1 + vec2(t*.05, t*.03), q2 = p*1.15 - fd*t*v2 + vec2(-t*.06, t*.04), q3 = p*3.1 - fd*t*v2*1.4;
   float e = .08; float a1 = mix(.35, .6, river);
@@ -278,7 +278,7 @@ void main(){
   float h0 = textureLod(uHeight, uv, 0.).r*1024.-128.; float hr = h21(cell+5.5); float yaw = hr*6.2831; vec3 base = A.rgb*A.rgb; float wind = sin(uTime*1.6 + xz.x*.35 + xz.y*.22)*.5 + sin(uTime*2.7 + xz.y*.6)*.25;
   vec3 pos; vec3 col; vec3 nrm = vec3(0.,1.,0.);
   if (uMode == 0) {
-    float bid = aP.w; float ang = h21(cell*1.7 + bid*3.3)*6.2831; vec2 off = (vec2(h21(cell+bid*1.3), h21(cell-bid*2.1))-.5)*.5; float pa = h21(floor(xz*.07)+4.), pb = h21(floor(xz*.31)+9.), pc = h21(floor(xz*.045)+11.); float Hh = (.15 + .32*h21(cell+bid*7.7)) * (1.-.4*B.g) * vFade * (1. + .5*hr) * (.8 + 1.0*smoothstep(.5,.92,pc)); float w = .024*(1.+h21(cell+bid)*.7);
+    float bid = aP.w; float ang = h21(cell*1.7 + bid*3.3)*6.2831; vec2 off = (vec2(h21(cell+bid*1.3), h21(cell-bid*2.1))-.5)*.5; float pa = h21(floor(xz*.07)+4.), pb = h21(floor(xz*.31)+9.), pc = h21(floor(xz*.045)+11.); float Hh = (.15 + .32*h21(cell+bid*7.7)) * (1.-.4*B.g) * vFade * (1. + .5*hr) * (.8 + 1.0*smoothstep(.5,.92,pc)) * mix(.5, 1., smoothstep(.3,.85,A.a)); float w = .034*(1.+h21(cell+bid)*.7);   /* sparse (sandy / road-edge) grass stays short instead of tall lone spikes; fuller blades */
     float y = aP.y; float side = aP.x*w*(1.-y*.92); vec2 dir = vec2(cos(ang), sin(ang)); float lean = (.25 + .6*h21(cell+bid*4.4)) * y*y; vec2 bend = dir*lean*Hh*.8 + vec2(wind*.18, wind*.1)*y*y*Hh;
     pos = vec3(xz.x + off.x + side*dir.y + bend.x, h0 + y*Hh, xz.y + off.y - side*dir.x + bend.y);
     float L0 = dot(base, vec3(.3,.55,.15)); vec3 gb = mix(vec3(L0), base, .7); gb = mix(gb, vec3(.24,.18,.05)*(.6+2.*L0), smoothstep(.58,.95,pa)*.6*(1.-.5*B.g)); gb = mix(gb, vec3(.04,.075,.012)*(.7+2.*L0), smoothstep(.62,.92,pb)*.4);

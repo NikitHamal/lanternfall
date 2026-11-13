@@ -126,3 +126,8 @@ Vision: a proper fantasy immersive third-person game (Athran-style kingdom defen
 2. [ ] Remove the thin gully lines baked into far hillsides (height-field upstream river channels): fade channel depth at source or widen/soften
 3. [ ] Free Hh earlier (Hq strips during bake): peak heap 109 -> ~100 MB
 4. [ ] Chunk streaming + free-model (CC0) citizen/NPC rebuild when a Blender notebook exists
+
+## v3.2.0 - "No More Pits"
+- [x] FIX river carve dug 70 m vertical pits around ponds/rivers (bed clamp + no carve in lakes); waterfalls 9 -> 13
+- [x] grass: shorter on sparse ground, fuller blades
+- [ ] next: audit all rivers for remaining over-steep banks (add a worldgen steepness census), water-sheet at fall pools, debug cameras that spawn inside water/trees, snow bake colour, chunk streaming
